@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 const TownScreen = ({ onLogout }) => {
   const navigate = useNavigate()
@@ -8,6 +9,9 @@ const TownScreen = ({ onLogout }) => {
   const [showNews, setShowNews] = useState(true)
   const [showTwillyMessage, setShowTwillyMessage] = useState(false)
   const [isHealing, setIsHealing] = useState(false)
+  const [showStatsTooltip, setShowStatsTooltip] = useState(false)
+  const portraitRef = useRef(null)
+  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
 
   const handleTwillyClick = () => {
     fullHeal()
@@ -89,15 +93,15 @@ const TownScreen = ({ onLogout }) => {
       </div>
 
       {/* Town Content */}
-      <div className="relative z-10 w-full h-full">
+      <div className="relative z-10 w-full h-full" style={{ overflow: 'visible' }}>
         {/* Top UI */}
         <div className="absolute top-4 left-4 right-4 flex justify-between">
           {/* News Panel */}
-          <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-800 rounded-lg shadow-2xl w-96 max-h-96 overflow-hidden">
-            <div className="bg-amber-900 text-yellow-200 font-bold text-lg px-4 py-2 border-b-2 border-amber-700">
+          <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-800 rounded-lg shadow-2xl w-96 flex flex-col max-h-96">
+            <div className="bg-amber-900 text-yellow-200 font-bold text-lg px-4 py-2 border-b-2 border-amber-700 flex-shrink-0">
               BattleOn News!
             </div>
-            <div className="p-4 overflow-y-auto max-h-80 text-sm text-amber-900 space-y-3">
+            <div className="p-4 overflow-y-auto flex-1 text-sm text-amber-900 space-y-3 min-h-0">
               <p>
                 <strong>Explore the town buildings and talk to everyone you see.</strong> Click on the mountains to battle monsters, with new enemies every level!
               </p>
@@ -108,7 +112,7 @@ const TownScreen = ({ onLogout }) => {
                 <strong>LIMITED-TIME SHOP:</strong> Chibi Loco Pets are now available! During the month of April, this little guy can channel more of Loco's power, dealing a lot more damage!
               </p>
             </div>
-            <div className="border-t-2 border-amber-700 p-2 space-y-1">
+            <div className="border-t-2 border-amber-700 p-2 space-y-1 flex-shrink-0">
               <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded border-2 border-red-800 text-sm">
                 TODAY'S EVENT
               </button>
@@ -254,11 +258,252 @@ const TownScreen = ({ onLogout }) => {
         </div>
 
         {/* Character Info Panel */}
-        <div className="absolute bottom-4 left-4 bg-gradient-to-br from-amber-800 to-amber-900 border-4 border-amber-700 rounded-lg shadow-2xl p-4">
+        <div className="absolute bottom-4 left-4 bg-gradient-to-br from-amber-800 to-amber-900 border-4 border-amber-700 rounded-lg shadow-2xl p-4" style={{ zIndex: 10 }}>
           <div className="flex items-start gap-4">
             {/* Character Portrait */}
-            <div className="w-20 h-20 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full border-4 border-amber-600 flex items-center justify-center overflow-hidden">
+            <div 
+              ref={portraitRef}
+              className="relative w-20 h-20 bg-gradient-to-br from-amber-200 to-amber-300 rounded-full border-4 border-amber-600 flex items-center justify-center cursor-pointer transition-transform hover:scale-110"
+              style={{ zIndex: 1000 }}
+              onMouseEnter={() => {
+                if (portraitRef.current) {
+                  const tooltipWidth = 500
+                  const padding = 20
+                  
+                  // Position it at the very top center of the viewport
+                  const finalLeft = Math.max(padding, (window.innerWidth - tooltipWidth) / 2)
+                  const finalTop = 10 // Position at very top of viewport
+                  
+                  console.log('Tooltip position:', { 
+                    top: finalTop, 
+                    left: finalLeft,
+                    windowWidth: window.innerWidth,
+                    windowHeight: window.innerHeight,
+                    scrollY: window.scrollY
+                  })
+                  
+                  setTooltipPosition({
+                    top: finalTop,
+                    left: finalLeft
+                  })
+                  setShowStatsTooltip(true)
+                } else {
+                  console.log('Portrait ref is null!')
+                }
+              }}
+              onMouseLeave={() => {
+                console.log('Mouse left portrait')
+                setShowStatsTooltip(false)
+              }}
+            >
               <div className="text-4xl">🧙</div>
+              
+              {/* Stats Tooltip - Rendered via Portal */}
+              {showStatsTooltip && tooltipPosition.top > 0 && createPortal(
+                <div 
+                  className="fixed animate-fade-in" 
+                  style={{ 
+                    position: 'fixed',
+                    width: '500px',
+                    maxWidth: '500px',
+                    zIndex: 99999,
+                    pointerEvents: 'none',
+                    top: '10px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    maxHeight: 'calc(100vh - 20px)',
+                    overflowY: 'auto'
+                  }}
+                >
+                  <div 
+                    className="bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-800 rounded-lg shadow-2xl p-6 min-w-96"
+                    style={{ pointerEvents: 'auto' }}
+                    onMouseEnter={() => setShowStatsTooltip(true)}
+                    onMouseLeave={() => setShowStatsTooltip(false)}
+                  >
+                    {/* Tooltip arrow */}
+                    <div className="absolute bottom-0 left-8 transform translate-y-full">
+                      <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-amber-800"></div>
+                    </div>
+                    
+                    <div className="text-amber-900">
+                      {/* Character Profile */}
+                      <div className="mb-4 pb-3 border-b-2 border-amber-700">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-lg">Race:</span>
+                          <span className="text-blue-800 font-semibold">Human</span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-lg">Class:</span>
+                          <span className="text-purple-800 font-semibold">Warrior</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-lg">Clan:</span>
+                          <span className="text-gray-700 font-semibold">None</span>
+                        </div>
+                      </div>
+
+                      {/* Information Section */}
+                      <div className="mb-4 pb-3 border-b-2 border-amber-700">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold">Level:</span>
+                          <span className="text-blue-700 font-bold">{player.level}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold">Gold:</span>
+                          <span className="text-yellow-700 font-bold">{player.gold.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">Tokens:</span>
+                          <span className="text-green-700 font-bold">0</span>
+                        </div>
+                      </div>
+
+                      {/* Combat Defense */}
+                      <div className="mb-4 pb-3 border-b-2 border-amber-700">
+                        <h5 className="font-bold mb-2 text-amber-800">Combat Defense</h5>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Melee:</span>
+                            <span className="font-bold text-red-700">{Math.floor(player.level * 2) + 30}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Ranged:</span>
+                            <span className="font-bold text-blue-700">{Math.floor(player.level * 1.8) + 25}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Magic:</span>
+                            <span className="font-bold text-purple-700">{Math.floor(player.level * 1.8) + 25}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Attributes */}
+                      <div className="mb-4 pb-3 border-b-2 border-amber-700">
+                        <h5 className="font-bold mb-2 text-amber-800">Attributes</h5>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Strength:</span>
+                            <span className="font-bold text-red-700">{Math.floor(player.level * 10) + 50}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Dexterity:</span>
+                            <span className="font-bold text-purple-700">{Math.floor(player.level * 7) + 35}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Intellect:</span>
+                            <span className="font-bold text-blue-700">{Math.floor(player.level * 8) + 40}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Endurance:</span>
+                            <span className="font-bold text-orange-700">{Math.floor(player.level * 9) + 45}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Charisma:</span>
+                            <span className="font-bold text-pink-700">{Math.floor(player.level * 6) + 30}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Luck:</span>
+                            <span className="font-bold text-yellow-700">{Math.floor(player.level * 5) + 25}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Element Modifier */}
+                      <div className="mb-4 pb-3 border-b-2 border-amber-700">
+                        <h5 className="font-bold mb-2 text-amber-800">Element Modifier</h5>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="flex justify-between">
+                            <span>Fire:</span>
+                            <span className="font-bold text-red-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Water:</span>
+                            <span className="font-bold text-blue-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Wind:</span>
+                            <span className="font-bold text-green-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Ice:</span>
+                            <span className="font-bold text-cyan-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Earth:</span>
+                            <span className="font-bold text-amber-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Energy:</span>
+                            <span className="font-bold text-yellow-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Light:</span>
+                            <span className="font-bold text-yellow-300">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Darkness:</span>
+                            <span className="font-bold text-gray-800">{50 + Math.floor(player.level * 0.5)}%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Equipment */}
+                      <div className="mb-4 pb-3 border-b-2 border-amber-700">
+                        <h5 className="font-bold mb-2 text-amber-800">Equipment</h5>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span>🛡️</span>
+                            <div className="flex-1">
+                              <div className="text-xs text-gray-600">Helmet:</div>
+                              <div className="font-semibold">None</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>⚔️</span>
+                            <div className="flex-1">
+                              <div className="text-xs text-gray-600">Weapon:</div>
+                              <div className="font-semibold">Basic Sword</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>🛡️</span>
+                            <div className="flex-1">
+                              <div className="text-xs text-gray-600">Shield:</div>
+                              <div className="font-semibold">None</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>💍</span>
+                            <div className="flex-1">
+                              <div className="text-xs text-gray-600">Ring:</div>
+                              <div className="font-semibold">None</div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Inventory/Consumables */}
+                      <div>
+                        <h5 className="font-bold mb-2 text-amber-800">Consumables</h5>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-red-600">🧪</span>
+                            <span>Red Potion:</span>
+                            <span className="font-bold text-red-700">x 0</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-600">🧪</span>
+                            <span>Blue Potion:</span>
+                            <span className="font-bold text-blue-700">x 0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>,
+                document.body
+              )}
             </div>
             
             <div className="flex-1 min-w-48">

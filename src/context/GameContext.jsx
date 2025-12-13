@@ -32,6 +32,7 @@ export const GameProvider = ({ children }) => {
 
   const [enemy, setEnemy] = useState(null)
   const [inBattle, setInBattle] = useState(false)
+  const [battleRewards, setBattleRewards] = useState(null)
 
   // Debug: Log enemy state changes
   useEffect(() => {
@@ -59,18 +60,30 @@ export const GameProvider = ({ children }) => {
     if (victory && enemy) {
       const xpGain = enemy.xpReward || 100
       const goldGain = enemy.goldReward || 50
+      
       setPlayer(prev => {
         const newXp = prev.xp + xpGain
         const newGold = prev.gold + goldGain
         
         // Level up check
         const xpForNextLevel = prev.level * 1000
-        if (newXp >= xpForNextLevel) {
+        const willLevelUp = newXp >= xpForNextLevel
+        const newLevel = willLevelUp ? prev.level + 1 : prev.level
+        
+        // Store battle rewards for display
+        setBattleRewards({
+          xp: xpGain,
+          gold: goldGain,
+          leveledUp: willLevelUp,
+          newLevel: newLevel,
+        })
+        
+        if (willLevelUp) {
           return {
             ...prev,
             xp: newXp,
             gold: newGold,
-            level: prev.level + 1,
+            level: newLevel,
             maxHp: prev.maxHp + 50,
             hp: prev.maxHp + 50,
             maxMp: prev.maxMp + 30,
@@ -84,6 +97,8 @@ export const GameProvider = ({ children }) => {
           gold: newGold,
         }
       })
+    } else {
+      setBattleRewards(null)
     }
     setEnemy(null)
     setInBattle(false)
@@ -148,10 +163,15 @@ export const GameProvider = ({ children }) => {
     }))
   }, [])
 
+  const clearBattleRewards = useCallback(() => {
+    setBattleRewards(null)
+  }, [])
+
   const value = useMemo(() => ({
     player,
     enemy,
     inBattle,
+    battleRewards,
     updatePlayer,
     startBattle,
     endBattle,
@@ -161,7 +181,8 @@ export const GameProvider = ({ children }) => {
     useMana,
     resetPlayerStats,
     fullHeal,
-  }), [player, enemy, inBattle, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal])
+    clearBattleRewards,
+  }), [player, enemy, inBattle, battleRewards, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards])
 
   return (
     <GameContext.Provider value={value}>

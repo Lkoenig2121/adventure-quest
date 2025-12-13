@@ -4,12 +4,13 @@ import { useState, useEffect, useCallback } from 'react'
 
 const BattleScreen = () => {
   const navigate = useNavigate()
-  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer } = useGame()
+  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards } = useGame()
   const [selectedAction, setSelectedAction] = useState('attack')
   const [selectedSpell, setSelectedSpell] = useState(null)
   const [battleLog, setBattleLog] = useState([])
   const [playerTurn, setPlayerTurn] = useState(true)
   const [animating, setAnimating] = useState(false)
+  const [showVictory, setShowVictory] = useState(false)
 
 
   const addLog = useCallback((message) => {
@@ -42,25 +43,27 @@ const BattleScreen = () => {
 
 
   useEffect(() => {
-    if (!enemy) {
+    if (!enemy && !showVictory) {
       navigate('/town')
       return
     }
-  }, [enemy, navigate])
+  }, [enemy, navigate, showVictory])
 
   useEffect(() => {
-    if (enemy && enemy.hp <= 0) {
+    if (enemy && enemy.hp <= 0 && !showVictory) {
+      console.log('🎉 Enemy defeated! Showing victory screen...')
       setTimeout(() => {
+        console.log('🎉 Setting showVictory and ending battle')
+        setShowVictory(true)
         endBattle(true)
-        navigate('/town')
       }, 1500)
-    } else if (player.hp <= 0) {
+    } else if (player.hp <= 0 && !showVictory) {
       setTimeout(() => {
         endBattle(false)
         navigate('/town')
       }, 1500)
     }
-  }, [enemy?.hp, player.hp, endBattle, navigate])
+  }, [enemy?.hp, player.hp, endBattle, navigate, showVictory])
 
 
   useEffect(() => {
@@ -107,6 +110,97 @@ const BattleScreen = () => {
   const handleFlee = () => {
     endBattle(false)
     navigate('/town')
+  }
+
+  const handleVictoryContinue = () => {
+    clearBattleRewards()
+    setShowVictory(false)
+    navigate('/town')
+  }
+
+  if (!enemy && !showVictory) return null
+
+  // Show victory screen
+  if (showVictory) {
+    console.log('🏆 Victory screen should show', { showVictory, battleRewards })
+    // Wait for battle rewards to be calculated
+    if (!battleRewards) {
+      console.log('⏳ Waiting for battle rewards...')
+      return (
+        <div className="w-full h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black relative overflow-hidden flex items-center justify-center">
+          <div className="text-white text-2xl">Loading rewards...</div>
+        </div>
+      )
+    }
+    console.log('✅ Showing victory screen with rewards:', battleRewards)
+    return (
+      <div className="w-full h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black relative overflow-hidden flex items-center justify-center">
+        {/* Victory Background Effects */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-yellow-400 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500 rounded-full opacity-20 blur-3xl animate-pulse delay-1000"></div>
+        </div>
+
+        {/* Victory Banner */}
+        <div className="relative z-10 animate-fade-in">
+          {/* Victory Text */}
+          <div className="text-center mb-8">
+            <h1 className="text-8xl font-bold mb-4" style={{
+              background: 'linear-gradient(to bottom, #60a5fa, #a78bfa, #f472b6)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 0 30px rgba(147, 51, 234, 0.5)',
+              fontFamily: 'Georgia, serif'
+            }}>
+              VICTORY!
+            </h1>
+          </div>
+
+          {/* Battle Rewards Scroll */}
+          <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-8 border-amber-800 rounded-lg shadow-2xl p-8 min-w-96 max-w-lg relative">
+            {/* Scroll decorative top */}
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-8 bg-amber-700 rounded-full border-4 border-amber-800"></div>
+            
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl font-bold text-amber-900 mb-6" style={{
+                fontFamily: 'Georgia, serif',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                Battle Rewards
+              </h2>
+              
+              {/* XP Reward */}
+              <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 border-4 border-blue-400">
+                <div className="text-amber-900 font-semibold text-lg mb-1">Experience Points</div>
+                <div className="text-3xl font-bold text-blue-700">+ {battleRewards.xp} XP</div>
+              </div>
+
+              {/* Gold Reward */}
+              <div className="bg-gradient-to-r from-yellow-100 to-amber-100 rounded-lg p-4 border-4 border-yellow-400">
+                <div className="text-amber-900 font-semibold text-lg mb-1">Gold</div>
+                <div className="text-3xl font-bold text-yellow-700">+ {battleRewards.gold} GOLD</div>
+              </div>
+
+              {/* Level Up Message */}
+              {battleRewards.leveledUp && (
+                <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-4 border-green-400 animate-pulse">
+                  <div className="text-amber-900 font-semibold text-lg mb-1">🎉 Level Up! 🎉</div>
+                  <div className="text-2xl font-bold text-green-700">You are now Level {battleRewards.newLevel}!</div>
+                </div>
+              )}
+
+              {/* Next Button */}
+              <button
+                onClick={handleVictoryContinue}
+                className="w-full mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-red-800 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!enemy) return null
