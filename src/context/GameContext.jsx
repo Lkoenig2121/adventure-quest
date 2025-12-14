@@ -33,6 +33,7 @@ export const GameProvider = ({ children }) => {
   const [enemy, setEnemy] = useState(null)
   const [inBattle, setInBattle] = useState(false)
   const [battleRewards, setBattleRewards] = useState(null)
+  const [battleSource, setBattleSource] = useState('town') // 'town' or 'castle'
 
   // Debug: Log enemy state changes
   useEffect(() => {
@@ -51,9 +52,10 @@ export const GameProvider = ({ children }) => {
     setPlayer(prev => ({ ...prev, ...updates }))
   }, [])
 
-  const startBattle = useCallback((enemyData) => {
+  const startBattle = useCallback((enemyData, source = 'town') => {
     setEnemy(enemyData)
     setInBattle(true)
+    setBattleSource(source)
   }, [])
 
   const endBattle = useCallback((victory) => {
@@ -172,6 +174,7 @@ export const GameProvider = ({ children }) => {
     enemy,
     inBattle,
     battleRewards,
+    battleSource,
     updatePlayer,
     startBattle,
     endBattle,
@@ -182,7 +185,7 @@ export const GameProvider = ({ children }) => {
     resetPlayerStats,
     fullHeal,
     clearBattleRewards,
-  }), [player, enemy, inBattle, battleRewards, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards])
+  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards])
 
   return (
     <GameContext.Provider value={value}>

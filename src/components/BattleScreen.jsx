@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 const BattleScreen = () => {
   const navigate = useNavigate()
-  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards } = useGame()
+  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource } = useGame()
   const [selectedAction, setSelectedAction] = useState('attack')
   const [selectedSpell, setSelectedSpell] = useState(null)
   const [battleLog, setBattleLog] = useState([])
@@ -44,10 +44,10 @@ const BattleScreen = () => {
 
   useEffect(() => {
     if (!enemy && !showVictory) {
-      navigate('/town')
+      navigate(battleSource === 'castle' ? '/castle' : '/town')
       return
     }
-  }, [enemy, navigate, showVictory])
+  }, [enemy, navigate, showVictory, battleSource])
 
   useEffect(() => {
     if (enemy && enemy.hp <= 0 && !showVictory) {
@@ -60,7 +60,7 @@ const BattleScreen = () => {
     } else if (player.hp <= 0 && !showVictory) {
       setTimeout(() => {
         endBattle(false)
-        navigate('/town')
+        navigate(battleSource === 'castle' ? '/castle' : '/town')
       }, 1500)
     }
   }, [enemy?.hp, player.hp, endBattle, navigate, showVictory])
@@ -109,13 +109,13 @@ const BattleScreen = () => {
 
   const handleFlee = () => {
     endBattle(false)
-    navigate('/town')
+    navigate(battleSource === 'castle' ? '/castle' : '/town')
   }
 
   const handleVictoryContinue = () => {
     clearBattleRewards()
     setShowVictory(false)
-    navigate('/town')
+    navigate(battleSource === 'castle' ? '/castle' : '/town')
   }
 
   if (!enemy && !showVictory) return null
@@ -449,19 +449,19 @@ const BattleScreen = () => {
         <p className="text-white text-center text-sm">Version 34.2</p>
       </div>
 
-      {/* Back to Town Button */}
+      {/* Back Button */}
       <button
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          console.log('🏠 Back to Town clicked')
+          console.log('🏠 Back clicked')
           endBattle(false)
-          navigate('/town')
+          navigate(battleSource === 'castle' ? '/castle' : '/town')
         }}
         style={{ pointerEvents: 'auto', zIndex: 1000 }}
         className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded border-2 border-red-800 z-50"
       >
-        Back to Town
+        {battleSource === 'castle' ? 'Back to Castle' : 'Back to Town'}
       </button>
     </div>
   )
