@@ -354,6 +354,10 @@ const TownScreen = ({ onLogout }) => {
                           <span className="text-blue-700 font-bold">{player.level}</span>
                         </div>
                         <div className="flex justify-between items-center mb-1">
+                          <span className="font-semibold">Experience:</span>
+                          <span className="text-purple-700 font-bold">{player.xp || 0} / {player.level * 1000} XP</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-1">
                           <span className="font-semibold">Gold:</span>
                           <span className="text-yellow-700 font-bold">{player.gold.toLocaleString()}</span>
                         </div>

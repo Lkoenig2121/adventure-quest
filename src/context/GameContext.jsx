@@ -27,6 +27,8 @@ export const GameProvider = ({ children }) => {
       maxSp: 322,
       xp: 0,
       gold: 100,
+      healthPotions: 5,
+      manaPotions: 5,
     }
   })
 
@@ -90,6 +92,8 @@ export const GameProvider = ({ children }) => {
             hp: prev.maxHp + 50,
             maxMp: prev.maxMp + 30,
             mp: prev.maxMp + 30,
+            healthPotions: (prev.healthPotions || 0) + 1,
+            manaPotions: (prev.manaPotions || 0) + 1,
           }
         }
         
@@ -97,6 +101,8 @@ export const GameProvider = ({ children }) => {
           ...prev,
           xp: newXp,
           gold: newGold,
+          healthPotions: (prev.healthPotions || 0) + 1,
+          manaPotions: (prev.manaPotions || 0) + 1,
         }
       })
     } else {
@@ -169,6 +175,34 @@ export const GameProvider = ({ children }) => {
     setBattleRewards(null)
   }, [])
 
+  const useHealthPotion = useCallback(() => {
+    setPlayer(prev => {
+      if (prev.healthPotions > 0) {
+        const healAmount = Math.floor(prev.maxHp * 0.5) // Heal 50% of max HP
+        return {
+          ...prev,
+          healthPotions: prev.healthPotions - 1,
+          hp: Math.min(prev.maxHp, prev.hp + healAmount)
+        }
+      }
+      return prev
+    })
+  }, [])
+
+  const useManaPotion = useCallback(() => {
+    setPlayer(prev => {
+      if (prev.manaPotions > 0) {
+        const restoreAmount = Math.floor(prev.maxMp * 0.5) // Restore 50% of max MP
+        return {
+          ...prev,
+          manaPotions: prev.manaPotions - 1,
+          mp: Math.min(prev.maxMp, prev.mp + restoreAmount)
+        }
+      }
+      return prev
+    })
+  }, [])
+
   const value = useMemo(() => ({
     player,
     enemy,
@@ -185,7 +219,9 @@ export const GameProvider = ({ children }) => {
     resetPlayerStats,
     fullHeal,
     clearBattleRewards,
-  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards])
+    useHealthPotion,
+    useManaPotion,
+  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion])
 
   return (
     <GameContext.Provider value={value}>

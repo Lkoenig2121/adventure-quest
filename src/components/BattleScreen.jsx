@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 const BattleScreen = () => {
   const navigate = useNavigate()
-  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource } = useGame()
+  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, useHealthPotion, useManaPotion } = useGame()
   const [selectedAction, setSelectedAction] = useState('attack')
   const [selectedSpell, setSelectedSpell] = useState(null)
   const [battleLog, setBattleLog] = useState([])
@@ -420,10 +420,74 @@ const BattleScreen = () => {
             </button>
           )}
 
-          {/* Items placeholder */}
+          {/* Items */}
           {selectedAction === 'items' && (
-            <div className="text-yellow-200 text-center py-4">
-              No items available
+            <div className="space-y-3">
+              {/* Health Potion */}
+              <button
+                onClick={() => {
+                  if (playerTurn && !animating && player.healthPotions > 0) {
+                    useHealthPotion()
+                    const healAmount = Math.floor(player.maxHp * 0.5)
+                    addLog(`${player.name} used a Health Potion and restored ${healAmount} HP!`)
+                    setAnimating(true)
+                    setTimeout(() => {
+                      setAnimating(false)
+                      setPlayerTurn(false)
+                    }, 500)
+                  }
+                }}
+                disabled={!playerTurn || animating || player.healthPotions === 0}
+                className={`w-full px-4 py-3 font-bold rounded-lg border-2 transition ${
+                  !playerTurn || animating || player.healthPotions === 0
+                    ? 'bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-red-600 border-red-800 text-white hover:bg-red-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🧪</span>
+                    <div className="text-left">
+                      <div className="font-bold">Health Potion</div>
+                      <div className="text-sm opacity-90">Restores 50% HP</div>
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold">x{player.healthPotions || 0}</div>
+                </div>
+              </button>
+
+              {/* Mana Potion */}
+              <button
+                onClick={() => {
+                  if (playerTurn && !animating && player.manaPotions > 0) {
+                    useManaPotion()
+                    const restoreAmount = Math.floor(player.maxMp * 0.5)
+                    addLog(`${player.name} used a Mana Potion and restored ${restoreAmount} MP!`)
+                    setAnimating(true)
+                    setTimeout(() => {
+                      setAnimating(false)
+                      setPlayerTurn(false)
+                    }, 500)
+                  }
+                }}
+                disabled={!playerTurn || animating || player.manaPotions === 0}
+                className={`w-full px-4 py-3 font-bold rounded-lg border-2 transition ${
+                  !playerTurn || animating || player.manaPotions === 0
+                    ? 'bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-blue-600 border-blue-800 text-white hover:bg-blue-700'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">💧</span>
+                    <div className="text-left">
+                      <div className="font-bold">Mana Potion</div>
+                      <div className="text-sm opacity-90">Restores 50% MP</div>
+                    </div>
+                  </div>
+                  <div className="text-xl font-bold">x{player.manaPotions || 0}</div>
+                </div>
+              </button>
             </div>
           )}
         </div>
