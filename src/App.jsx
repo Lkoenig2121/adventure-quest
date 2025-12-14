@@ -4,6 +4,7 @@ import LoginScreen from './components/LoginScreen'
 import TownScreen from './components/TownScreen'
 import BattleScreen from './components/BattleScreen'
 import CastleScreen from './components/CastleScreen'
+import ShopScreen from './components/ShopScreen'
 import { GameProvider } from './context/GameContext'
 
 function App() {
@@ -66,6 +67,16 @@ function App() {
           element={
             isAuthenticated ? (
               <CastleScreen />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/shop" 
+          element={
+            isAuthenticated ? (
+              <ShopScreen />
             ) : (
               <Navigate to="/login" replace />
             )

@@ -72,6 +72,10 @@ const TownScreen = ({ onLogout }) => {
     navigate('/castle')
   }
 
+  const handleShopClick = () => {
+    navigate('/shop')
+  }
+
   const hpPercentage = (player.hp / player.maxHp) * 100
   const mpPercentage = (player.mp / player.maxMp) * 100
   const spPercentage = (player.sp / player.maxSp) * 100
@@ -246,6 +250,34 @@ const TownScreen = ({ onLogout }) => {
               </div>
             </div>
             <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-300 text-2xl animate-bounce">🏰</div>
+          </button>
+
+          {/* Shop (clickable to enter) */}
+          <button
+            onClick={handleShopClick}
+            className="relative transform transition hover:scale-110 cursor-pointer"
+          >
+            <div className="w-28 h-40 bg-gradient-to-b from-amber-600 to-amber-700 border-4 border-amber-800 relative">
+              {/* Shop roof */}
+              <div className="absolute -top-4 left-0 right-0 h-8 bg-gradient-to-b from-red-600 to-red-700 border-2 border-red-800 transform -skew-x-12"></div>
+              <div className="absolute -top-4 left-0 right-0 h-8 bg-gradient-to-b from-red-600 to-red-700 border-2 border-red-800 transform skew-x-12"></div>
+              {/* Shop windows */}
+              <div className="absolute top-8 left-2 w-6 h-8 bg-yellow-200 border-2 border-amber-900">
+                <div className="absolute top-1 left-1 right-1 bottom-1 bg-yellow-300 border border-amber-800"></div>
+              </div>
+              <div className="absolute top-8 right-2 w-6 h-8 bg-yellow-200 border-2 border-amber-900">
+                <div className="absolute top-1 left-1 right-1 bottom-1 bg-yellow-300 border border-amber-800"></div>
+              </div>
+              {/* Shop door */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-10 h-16 bg-amber-800 border-2 border-amber-900 rounded-t">
+                <div className="absolute top-2 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-yellow-600 rounded-full"></div>
+              </div>
+              {/* Shop sign */}
+              <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-16 h-6 bg-yellow-300 border-2 border-amber-900 rounded">
+                <div className="text-xs font-bold text-amber-900 text-center leading-tight">SHOP</div>
+              </div>
+            </div>
+            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-300 text-2xl animate-bounce">🏪</div>
           </button>
 
           {/* Tents */}
@@ -603,7 +635,7 @@ const TownScreen = ({ onLogout }) => {
 
         {/* Click hint */}
         <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg text-sm">
-          Click the castle to enter, or use the Battle Monsters button!
+          Click the castle or shop to enter, or use the navigation buttons!
         </div>
       </div>
     </div>

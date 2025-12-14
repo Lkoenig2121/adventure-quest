@@ -203,6 +203,26 @@ export const GameProvider = ({ children }) => {
     })
   }, [])
 
+  const purchaseItem = useCallback((itemType, price) => {
+    setPlayer(prev => {
+      if (prev.gold < price) {
+        return prev // Don't update if not enough gold
+      }
+
+      let updates = {
+        gold: prev.gold - price,
+      }
+
+      if (itemType === 'healthPotion') {
+        updates.healthPotions = (prev.healthPotions || 0) + 1
+      } else if (itemType === 'manaPotion') {
+        updates.manaPotions = (prev.manaPotions || 0) + 1
+      }
+
+      return { ...prev, ...updates }
+    })
+  }, [])
+
   const value = useMemo(() => ({
     player,
     enemy,
@@ -221,7 +241,8 @@ export const GameProvider = ({ children }) => {
     clearBattleRewards,
     useHealthPotion,
     useManaPotion,
-  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion])
+    purchaseItem,
+  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem])
 
   return (
     <GameContext.Provider value={value}>
