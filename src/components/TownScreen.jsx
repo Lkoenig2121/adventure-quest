@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 
 const TownScreen = ({ onLogout }) => {
   const navigate = useNavigate()
-  const { player, startBattle, resetPlayerStats, fullHeal } = useGame()
+  const { player, startBattle, resetPlayerStats, fullHeal, getElementModifiers } = useGame()
   const [showNews, setShowNews] = useState(true)
   const [showTwillyMessage, setShowTwillyMessage] = useState(false)
   const [isHealing, setIsHealing] = useState(false)
@@ -79,6 +79,7 @@ const TownScreen = ({ onLogout }) => {
   const hpPercentage = (player.hp / player.maxHp) * 100
   const mpPercentage = (player.mp / player.maxMp) * 100
   const spPercentage = (player.sp / player.maxSp) * 100
+  const elementModifiers = getElementModifiers()
 
   return (
     <div className="w-full h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-green-300 relative overflow-hidden">
@@ -455,31 +456,31 @@ const TownScreen = ({ onLogout }) => {
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div className="flex justify-between">
                             <span>Fire:</span>
-                            <span className="font-bold text-red-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-red-600">{Math.round(elementModifiers.fire)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Water:</span>
-                            <span className="font-bold text-blue-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-blue-600">{Math.round(elementModifiers.water)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Wind:</span>
-                            <span className="font-bold text-green-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-green-600">{Math.round(elementModifiers.wind)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Ice:</span>
-                            <span className="font-bold text-cyan-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-cyan-600">{Math.round(elementModifiers.ice)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Earth:</span>
-                            <span className="font-bold text-amber-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-amber-600">{Math.round(elementModifiers.earth)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Energy:</span>
-                            <span className="font-bold text-yellow-600">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-yellow-600">{Math.round(elementModifiers.energy)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Light:</span>
-                            <span className="font-bold text-yellow-300">{50 + Math.floor(player.level * 0.5)}%</span>
+                            <span className="font-bold text-yellow-300">{Math.round(elementModifiers.light)}%</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Darkness:</span>
@@ -616,7 +617,10 @@ const TownScreen = ({ onLogout }) => {
           >
             Battle Monsters
           </button>
-          <button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-2 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 text-sm">
+          <button 
+            onClick={() => navigate('/character')}
+            className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-2 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 text-sm"
+          >
             Character Page
           </button>
           <button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-2 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 text-sm">

@@ -29,6 +29,13 @@ export const GameProvider = ({ children }) => {
       gold: 100,
       healthPotions: 5,
       manaPotions: 5,
+      inventory: [],
+      equipped: {
+        weapon: null,
+        helmet: null,
+        armor: null,
+        boots: null,
+      },
     }
   })
 
@@ -203,7 +210,7 @@ export const GameProvider = ({ children }) => {
     })
   }, [])
 
-  const purchaseItem = useCallback((itemType, price) => {
+  const purchaseItem = useCallback((itemType, price, itemData = null) => {
     setPlayer(prev => {
       if (prev.gold < price) {
         return prev // Don't update if not enough gold
@@ -217,11 +224,95 @@ export const GameProvider = ({ children }) => {
         updates.healthPotions = (prev.healthPotions || 0) + 1
       } else if (itemType === 'manaPotion') {
         updates.manaPotions = (prev.manaPotions || 0) + 1
+      } else if (itemData) {
+        // Add equipment to inventory
+        const inventory = prev.inventory || []
+        updates.inventory = [...inventory, { ...itemData, id: Date.now() + Math.random() }]
       }
 
       return { ...prev, ...updates }
     })
   }, [])
+
+  const equipItem = useCallback((itemId, slot) => {
+    setPlayer(prev => {
+      const inventory = prev.inventory || []
+      const item = inventory.find(i => i.id === itemId)
+      if (!item) return prev
+
+      const equipped = prev.equipped || { weapon: null, helmet: null, armor: null, boots: null }
+      const currentEquipped = equipped[slot]
+
+      // Remove item from inventory
+      const newInventory = inventory.filter(i => i.id !== itemId)
+
+      // If something was already equipped, add it back to inventory
+      if (currentEquipped) {
+        newInventory.push(currentEquipped)
+      }
+
+      // Equip the new item
+      const newEquipped = {
+        ...equipped,
+        [slot]: item,
+      }
+
+      return {
+        ...prev,
+        inventory: newInventory,
+        equipped: newEquipped,
+      }
+    })
+  }, [])
+
+  const unequipItem = useCallback((slot) => {
+    setPlayer(prev => {
+      const equipped = prev.equipped || { weapon: null, helmet: null, armor: null, boots: null }
+      const item = equipped[slot]
+      if (!item) return prev
+
+      const inventory = prev.inventory || []
+      const newEquipped = {
+        ...equipped,
+        [slot]: null,
+      }
+
+      return {
+        ...prev,
+        inventory: [...inventory, item],
+        equipped: newEquipped,
+      }
+    })
+  }, [])
+
+  // Helper function to calculate Element Modifiers with equipment
+  const getElementModifiers = useCallback(() => {
+    const baseModifier = 50 + Math.floor(player.level * 0.5)
+    const equipped = player.equipped || { weapon: null, helmet: null, armor: null, boots: null }
+    
+    const modifiers = {
+      fire: baseModifier,
+      water: baseModifier,
+      wind: baseModifier,
+      ice: baseModifier,
+      earth: baseModifier,
+      energy: baseModifier,
+      light: baseModifier,
+    }
+
+    // Add bonuses from equipped items
+    Object.values(equipped).forEach(item => {
+      if (item && item.elementBonuses) {
+        Object.keys(item.elementBonuses).forEach(element => {
+          if (modifiers.hasOwnProperty(element)) {
+            modifiers[element] = (modifiers[element] || 0) + item.elementBonuses[element]
+          }
+        })
+      }
+    })
+
+    return modifiers
+  }, [player.level, player.equipped])
 
   const value = useMemo(() => ({
     player,
@@ -242,7 +333,10 @@ export const GameProvider = ({ children }) => {
     useHealthPotion,
     useManaPotion,
     purchaseItem,
-  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem])
+    equipItem,
+    unequipItem,
+    getElementModifiers,
+  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers])
 
   return (
     <GameContext.Provider value={value}>

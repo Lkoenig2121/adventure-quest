@@ -8,6 +8,7 @@ const ShopScreen = () => {
   const [purchaseMessage, setPurchaseMessage] = useState(null)
 
   const shopItems = [
+    // Potions
     {
       id: 'healthPotion',
       name: 'Health Potion',
@@ -23,14 +24,177 @@ const ShopScreen = () => {
       price: 50,
       icon: '💧',
       type: 'manaPotion'
-    }
+    },
+    // Weapons
+    {
+      id: 'fireSword',
+      name: 'Fire Sword',
+      description: 'Weapon: +15% Fire, +5% Energy',
+      price: 200,
+      icon: '⚔️',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { fire: 15, energy: 5 }
+    },
+    {
+      id: 'iceBlade',
+      name: 'Ice Blade',
+      description: 'Weapon: +15% Ice, +5% Water',
+      price: 200,
+      icon: '🗡️',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { ice: 15, water: 5 }
+    },
+    {
+      id: 'windSpear',
+      name: 'Wind Spear',
+      description: 'Weapon: +15% Wind, +5% Earth',
+      price: 200,
+      icon: '🔱',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { wind: 15, earth: 5 }
+    },
+    {
+      id: 'earthHammer',
+      name: 'Earth Hammer',
+      description: 'Weapon: +15% Earth, +5% Fire',
+      price: 200,
+      icon: '🔨',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { earth: 15, fire: 5 }
+    },
+    {
+      id: 'energyStaff',
+      name: 'Energy Staff',
+      description: 'Weapon: +10% All Elements',
+      price: 300,
+      icon: '🪄',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { fire: 10, water: 10, wind: 10, ice: 10, earth: 10, energy: 10 }
+    },
+    // Helmets
+    {
+      id: 'fireHelmet',
+      name: 'Fire Helmet',
+      description: 'Helmet: +10% Fire, +5% Energy',
+      price: 150,
+      icon: '🪖',
+      type: 'equipment',
+      slot: 'helmet',
+      elementBonuses: { fire: 10, energy: 5 }
+    },
+    {
+      id: 'iceHelmet',
+      name: 'Ice Helmet',
+      description: 'Helmet: +10% Ice, +5% Water',
+      price: 150,
+      icon: '⛑️',
+      type: 'equipment',
+      slot: 'helmet',
+      elementBonuses: { ice: 10, water: 5 }
+    },
+    {
+      id: 'windHelmet',
+      name: 'Wind Helmet',
+      description: 'Helmet: +10% Wind, +5% Earth',
+      price: 150,
+      icon: '🎩',
+      type: 'equipment',
+      slot: 'helmet',
+      elementBonuses: { wind: 10, earth: 5 }
+    },
+    // Armor
+    {
+      id: 'fireArmor',
+      name: 'Fire Armor',
+      description: 'Armor: +12% Fire, +8% Energy',
+      price: 250,
+      icon: '🛡️',
+      type: 'equipment',
+      slot: 'armor',
+      elementBonuses: { fire: 12, energy: 8 }
+    },
+    {
+      id: 'iceArmor',
+      name: 'Ice Armor',
+      description: 'Armor: +12% Ice, +8% Water',
+      price: 250,
+      icon: '❄️',
+      type: 'equipment',
+      slot: 'armor',
+      elementBonuses: { ice: 12, water: 8 }
+    },
+    {
+      id: 'windArmor',
+      name: 'Wind Armor',
+      description: 'Armor: +12% Wind, +8% Earth',
+      price: 250,
+      icon: '💨',
+      type: 'equipment',
+      slot: 'armor',
+      elementBonuses: { wind: 12, earth: 8 }
+    },
+    {
+      id: 'energyArmor',
+      name: 'Energy Armor',
+      description: 'Armor: +8% All Elements',
+      price: 350,
+      icon: '✨',
+      type: 'equipment',
+      slot: 'armor',
+      elementBonuses: { fire: 8, water: 8, wind: 8, ice: 8, earth: 8, energy: 8 }
+    },
+    // Boots
+    {
+      id: 'fireBoots',
+      name: 'Fire Boots',
+      description: 'Boots: +8% Fire, +3% Energy',
+      price: 100,
+      icon: '👢',
+      type: 'equipment',
+      slot: 'boots',
+      elementBonuses: { fire: 8, energy: 3 }
+    },
+    {
+      id: 'iceBoots',
+      name: 'Ice Boots',
+      description: 'Boots: +8% Ice, +3% Water',
+      price: 100,
+      icon: '🥾',
+      type: 'equipment',
+      slot: 'boots',
+      elementBonuses: { ice: 8, water: 3 }
+    },
+    {
+      id: 'windBoots',
+      name: 'Wind Boots',
+      description: 'Boots: +8% Wind, +3% Earth',
+      price: 100,
+      icon: '👟',
+      type: 'equipment',
+      slot: 'boots',
+      elementBonuses: { wind: 8, earth: 3 }
+    },
   ]
 
   const handlePurchase = (item) => {
     if (player.gold < item.price) {
       setPurchaseMessage({ type: 'error', text: 'Not enough gold!' })
     } else {
-      purchaseItem(item.type, item.price)
+      if (item.type === 'equipment') {
+        purchaseItem(item.type, item.price, {
+          name: item.name,
+          slot: item.slot,
+          elementBonuses: item.elementBonuses,
+          icon: item.icon,
+        })
+      } else {
+        purchaseItem(item.type, item.price)
+      }
       setPurchaseMessage({ type: 'success', text: `Purchased ${item.name}!` })
     }
     setTimeout(() => setPurchaseMessage(null), 3000)
@@ -79,7 +243,7 @@ const ShopScreen = () => {
         )}
 
         {/* Shop Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 max-h-96 overflow-y-auto p-2">
           {shopItems.map((item) => (
             <div
               key={item.id}
@@ -115,7 +279,7 @@ const ShopScreen = () => {
         {/* Player Inventory Display */}
         <div className="bg-gradient-to-br from-blue-100 to-blue-50 border-4 border-blue-600 rounded-lg p-6 mb-6">
           <h3 className="text-2xl font-bold text-blue-900 mb-4 text-center">Your Inventory</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="bg-white border-2 border-blue-400 rounded-lg p-4 text-center">
               <div className="text-4xl mb-2">🧪</div>
               <div className="text-blue-900 font-bold">Health Potions</div>
@@ -126,6 +290,10 @@ const ShopScreen = () => {
               <div className="text-blue-900 font-bold">Mana Potions</div>
               <div className="text-3xl font-bold text-blue-700 mt-2">{player.manaPotions || 0}</div>
             </div>
+          </div>
+          <div className="text-center">
+            <div className="text-blue-900 font-bold mb-2">Equipment Items: {(player.inventory || []).length}</div>
+            <div className="text-sm text-blue-700">Visit Character Page to equip items</div>
           </div>
         </div>
 
