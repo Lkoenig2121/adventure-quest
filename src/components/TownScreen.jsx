@@ -68,6 +68,10 @@ const TownScreen = ({ onLogout }) => {
     navigate('/battle')
   }
 
+  const handleCastleClick = () => {
+    navigate('/castle')
+  }
+
   const hpPercentage = (player.hp / player.maxHp) * 100
   const mpPercentage = (player.mp / player.maxMp) * 100
   const spPercentage = (player.sp / player.maxSp) * 100
@@ -223,9 +227,9 @@ const TownScreen = ({ onLogout }) => {
             </div>
           </div>
 
-          {/* Castle (clickable for battle) */}
+          {/* Castle (clickable to enter) */}
           <button
-            onClick={handleBattleClick}
+            onClick={handleCastleClick}
             className="relative transform transition hover:scale-110 cursor-pointer"
           >
             <div className="w-32 h-48 bg-gradient-to-b from-gray-500 to-gray-600 border-4 border-gray-700 relative">
@@ -241,7 +245,7 @@ const TownScreen = ({ onLogout }) => {
                 <div className="absolute top-1 right-1 w-1 h-1 bg-red-600 rounded-full"></div>
               </div>
             </div>
-            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-300 text-2xl animate-bounce">⚔️</div>
+            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 text-yellow-300 text-2xl animate-bounce">🏰</div>
           </button>
 
           {/* Tents */}
@@ -570,6 +574,12 @@ const TownScreen = ({ onLogout }) => {
 
         {/* Navigation Menu */}
         <div className="absolute bottom-4 right-4 flex flex-col gap-2">
+          <button 
+            onClick={handleBattleClick}
+            className="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 text-white font-bold py-2 px-6 rounded-lg border-4 border-yellow-400 shadow-lg transform transition hover:scale-105 text-sm"
+          >
+            Battle Monsters
+          </button>
           <button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-2 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 text-sm">
             Character Page
           </button>
@@ -589,7 +599,7 @@ const TownScreen = ({ onLogout }) => {
 
         {/* Click hint */}
         <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg text-sm">
-          Click the castle to battle monsters!
+          Click the castle to enter, or use the Battle Monsters button!
         </div>
       </div>
     </div>

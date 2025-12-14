@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import LoginScreen from './components/LoginScreen'
 import TownScreen from './components/TownScreen'
 import BattleScreen from './components/BattleScreen'
+import CastleScreen from './components/CastleScreen'
 import { GameProvider } from './context/GameContext'
 
 function App() {
@@ -55,6 +56,16 @@ function App() {
           element={
             isAuthenticated ? (
               <BattleScreen />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/castle" 
+          element={
+            isAuthenticated ? (
+              <CastleScreen />
             ) : (
               <Navigate to="/login" replace />
             )
