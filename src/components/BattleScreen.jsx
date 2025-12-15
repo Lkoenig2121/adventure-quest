@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 
 const BattleScreen = () => {
   const navigate = useNavigate()
-  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, useHealthPotion, useManaPotion } = useGame()
+  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, useHealthPotion, useManaPotion, equipItem, unequipItem, getElementModifiers, getBestElement, hasMatchingElementSet } = useGame()
   const [selectedAction, setSelectedAction] = useState('attack')
   const [selectedSpell, setSelectedSpell] = useState(null)
   const [battleLog, setBattleLog] = useState([])
@@ -366,6 +366,16 @@ const BattleScreen = () => {
               Items
             </button>
             <button
+              onClick={() => setSelectedAction('equipment')}
+              className={`px-6 py-3 font-bold rounded-lg border-2 transition ${
+                selectedAction === 'equipment'
+                  ? 'bg-red-600 border-red-800 text-white'
+                  : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
+              }`}
+            >
+              Equipment
+            </button>
+            <button
               onClick={handleFlee}
               className="px-6 py-3 font-bold rounded-lg border-2 bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800 transition"
             >
@@ -488,6 +498,124 @@ const BattleScreen = () => {
                   <div className="text-xl font-bold">x{player.manaPotions || 0}</div>
                 </div>
               </button>
+            </div>
+          )}
+
+          {/* Equipment Management */}
+          {selectedAction === 'equipment' && (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="bg-gradient-to-br from-purple-100 to-purple-50 border-4 border-purple-600 rounded-lg p-4 mb-3">
+                <h3 className="text-xl font-bold text-purple-900 mb-2">Current Element Modifiers</h3>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="flex justify-between">
+                    <span>Fire:</span>
+                    <span className="font-bold text-red-600">{Math.round(getElementModifiers().fire)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Water:</span>
+                    <span className="font-bold text-blue-600">{Math.round(getElementModifiers().water)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Wind:</span>
+                    <span className="font-bold text-green-600">{Math.round(getElementModifiers().wind)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Ice:</span>
+                    <span className="font-bold text-cyan-600">{Math.round(getElementModifiers().ice)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Earth:</span>
+                    <span className="font-bold text-amber-600">{Math.round(getElementModifiers().earth)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Energy:</span>
+                    <span className="font-bold text-yellow-600">{Math.round(getElementModifiers().energy)}%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Equipped Items */}
+              <div className="bg-gradient-to-br from-blue-100 to-blue-50 border-4 border-blue-600 rounded-lg p-3 mb-3">
+                <h3 className="text-lg font-bold text-blue-900 mb-2">Currently Equipped</h3>
+                <div className="space-y-2">
+                  {['weapon', 'helmet', 'armor', 'boots'].map(slot => {
+                    const equipped = player.equipped || {}
+                    const item = equipped[slot]
+                    const slotNames = { weapon: '⚔️ Weapon', helmet: '🪖 Helmet', armor: '🛡️ Armor', boots: '👢 Boots' }
+                    
+                    return (
+                      <div key={slot} className="bg-white border-2 border-blue-400 rounded p-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-1">
+                            <span className="text-lg">{slotNames[slot]}</span>
+                            {item ? (
+                              <>
+                                <span className="text-xl">{item.icon}</span>
+                                <span className="font-bold text-blue-900">{item.name}</span>
+                                <button
+                                  onClick={() => {
+                                    unequipItem(slot)
+                                    addLog(`Unequipped ${item.name}`)
+                                  }}
+                                  className="ml-auto px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded"
+                                >
+                                  Unequip
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-gray-500 text-sm">Empty</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Inventory Items */}
+              <div className="bg-gradient-to-br from-green-100 to-green-50 border-4 border-green-600 rounded-lg p-3">
+                <h3 className="text-lg font-bold text-green-900 mb-2">Inventory</h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {(player.inventory || []).length > 0 ? (
+                    (player.inventory || []).map(item => {
+                      const formatBonuses = (item) => {
+                        if (!item.elementBonuses) return ''
+                        return Object.entries(item.elementBonuses)
+                          .filter(([_, v]) => v > 0)
+                          .map(([e, v]) => `${e.charAt(0).toUpperCase()}: +${v}%`)
+                          .join(', ')
+                      }
+                      
+                      return (
+                        <div key={item.id} className="bg-white border-2 border-green-400 rounded p-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 flex-1">
+                              <span className="text-xl">{item.icon}</span>
+                              <div>
+                                <div className="font-bold text-green-900">{item.name}</div>
+                                <div className="text-xs text-green-700">{formatBonuses(item)}</div>
+                                <div className="text-xs text-gray-600">Slot: {item.slot}</div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  equipItem(item.id, item.slot)
+                                  addLog(`Equipped ${item.name}`)
+                                }}
+                                className="ml-auto px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded"
+                              >
+                                Equip
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    <div className="text-center text-gray-500 py-2">No items in inventory</div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>

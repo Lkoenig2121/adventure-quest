@@ -286,8 +286,10 @@ export const GameProvider = ({ children }) => {
   }, [])
 
   // Helper function to calculate Element Modifiers with equipment
+  // In Adventure Quest, 100% = normal damage, lower = less damage
+  // Stacking equipment for one element REDUCES that element's effectiveness
   const getElementModifiers = useCallback(() => {
-    const baseModifier = 50 + Math.floor(player.level * 0.5)
+    const baseModifier = 100 // 100% = normal damage
     const equipped = player.equipped || { weapon: null, helmet: null, armor: null, boots: null }
     
     const modifiers = {
@@ -300,19 +302,21 @@ export const GameProvider = ({ children }) => {
       light: baseModifier,
     }
 
-    // Add bonuses from equipped items
+    // Equipment bonuses REDUCE the element's effectiveness
+    // The more you stack one element, the worse you become with it
     Object.values(equipped).forEach(item => {
       if (item && item.elementBonuses) {
         Object.keys(item.elementBonuses).forEach(element => {
           if (modifiers.hasOwnProperty(element)) {
-            modifiers[element] = (modifiers[element] || 0) + item.elementBonuses[element]
+            // Subtract the bonus to reduce effectiveness
+            modifiers[element] = Math.max(0, (modifiers[element] || baseModifier) - item.elementBonuses[element])
           }
         })
       }
     })
 
     return modifiers
-  }, [player.level, player.equipped])
+  }, [player.equipped])
 
   const value = useMemo(() => ({
     player,
