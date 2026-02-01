@@ -144,31 +144,31 @@ const TownScreen = ({ onLogout }) => {
         </div>
 
         {/* Town Scene */}
-        <div className="absolute bottom-32 left-0 right-0 flex justify-center items-end gap-4">
+        <div className="absolute bottom-24 sm:bottom-32 left-0 right-0 flex justify-center items-end gap-2 sm:gap-4 flex-wrap px-2">
           {/* Houses */}
           <div className="relative">
-            <div className="w-24 h-32 bg-amber-800 border-4 border-amber-900 relative">
+            <div className="w-20 h-28 sm:w-24 sm:h-32 bg-amber-800 border-4 border-amber-900 relative">
               <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-700 to-gray-600"></div>
               <div className="absolute top-2 left-2 w-4 h-4 bg-amber-200 rounded"></div>
               <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-8 bg-amber-950 rounded-t"></div>
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-red-600 border border-black"></div>
             </div>
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 text-yellow-300 text-2xl">!</div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 text-yellow-300 text-xl sm:text-2xl">!</div>
           </div>
 
           {/* Fountain */}
           <div className="relative">
-            <div className="w-20 h-16 bg-blue-400 border-2 border-blue-600 rounded-t-full relative">
+            <div className="w-16 h-12 sm:w-20 sm:h-16 bg-blue-400 border-2 border-blue-600 rounded-t-full relative">
               <div className="absolute top-2 left-2 w-2 h-2 bg-white rounded-full animate-ping"></div>
               <div className="absolute top-4 right-3 w-2 h-2 bg-white rounded-full animate-ping delay-300"></div>
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-16 h-4 bg-blue-300 rounded-full"></div>
+              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-12 sm:w-16 h-4 bg-blue-300 rounded-full"></div>
             </div>
           </div>
 
           {/* Twilly - The Orange Healer */}
           <button
             onClick={handleTwillyClick}
-            className="relative transform transition hover:scale-110 cursor-pointer z-20"
+            className="relative transform transition hover:scale-110 cursor-pointer z-20 flex-shrink-0"
           >
             {/* Healing glow effect */}
             {isHealing && (
@@ -178,42 +178,43 @@ const TownScreen = ({ onLogout }) => {
             {/* Twilly's Body (Orange creature) */}
             <div className="relative">
               {/* Body */}
-              <div className={`w-16 h-20 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full border-2 border-orange-700 relative ${isHealing ? 'animate-pulse' : ''}`}>
+              <div className={`w-12 h-16 sm:w-16 sm:h-20 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full border-2 border-orange-700 relative ${isHealing ? 'animate-pulse' : ''}`}>
                 {/* Head */}
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-12 h-12 bg-gradient-to-b from-orange-300 to-orange-500 rounded-full border-2 border-orange-600">
+                <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2 w-9 h-9 sm:w-12 sm:h-12 bg-gradient-to-b from-orange-300 to-orange-500 rounded-full border-2 border-orange-600">
                   {/* Eyes */}
-                  <div className="absolute top-3 left-3 w-2 h-2 bg-black rounded-full"></div>
-                  <div className="absolute top-3 right-3 w-2 h-2 bg-black rounded-full"></div>
+                  <div className="absolute top-2 sm:top-3 left-2 sm:left-3 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></div>
+                  <div className="absolute top-2 sm:top-3 right-2 sm:right-3 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full"></div>
                   {/* Nose */}
-                  <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-700 rounded-full"></div>
+                  <div className="absolute top-4 sm:top-5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-orange-700 rounded-full"></div>
                   {/* Mouth */}
-                  <div className="absolute top-7 left-1/2 transform -translate-x-1/2 w-4 h-2 border-b-2 border-orange-700 rounded-b-full"></div>
+                  <div className="absolute top-5 sm:top-7 left-1/2 transform -translate-x-1/2 w-3 sm:w-4 h-1.5 sm:h-2 border-b-2 border-orange-700 rounded-b-full"></div>
                 </div>
                 {/* Ears */}
-                <div className="absolute -top-2 left-2 w-4 h-6 bg-orange-500 rounded-full transform rotate-12 border border-orange-600"></div>
-                <div className="absolute -top-2 right-2 w-4 h-6 bg-orange-500 rounded-full transform -rotate-12 border border-orange-600"></div>
+                <div className="absolute -top-1.5 sm:-top-2 left-1.5 sm:left-2 w-3 h-4 sm:w-4 sm:h-6 bg-orange-500 rounded-full transform rotate-12 border border-orange-600"></div>
+                <div className="absolute -top-1.5 sm:-top-2 right-1.5 sm:right-2 w-3 h-4 sm:w-4 sm:h-6 bg-orange-500 rounded-full transform -rotate-12 border border-orange-600"></div>
                 {/* Arms */}
-                <div className="absolute top-4 left-0 w-3 h-8 bg-orange-500 rounded-full transform -rotate-12"></div>
-                <div className="absolute top-4 right-0 w-3 h-8 bg-orange-500 rounded-full transform rotate-12"></div>
+                <div className="absolute top-3 sm:top-4 left-0 w-2 sm:w-3 h-6 sm:h-8 bg-orange-500 rounded-full transform -rotate-12"></div>
+                <div className="absolute top-3 sm:top-4 right-0 w-2 sm:w-3 h-6 sm:h-8 bg-orange-500 rounded-full transform rotate-12"></div>
                 {/* Staff */}
-                <div className="absolute top-2 right-0 w-1 h-16 bg-amber-800 transform rotate-12"></div>
-                <div className="absolute top-12 right-2 w-4 h-4 bg-yellow-300 rounded-full border border-yellow-400"></div>
+                <div className="absolute -top-3 sm:-top-4 left-1/2 transform -translate-x-1/2 w-3 sm:w-4 h-9 sm:h-12 bg-amber-600 rounded-t-full"></div>
+                <div className="absolute top-1.5 sm:top-2 left-0 w-0.5 sm:w-1 h-12 sm:h-16 bg-amber-800 transform -rotate-12"></div>
+                <div className="absolute top-1.5 sm:top-2 right-0 w-0.5 sm:w-1 h-12 sm:h-16 bg-amber-800 transform rotate-12"></div>
+                <div className="absolute top-9 sm:top-12 right-1.5 sm:right-2 w-3 sm:w-4 h-3 sm:h-4 bg-yellow-300 rounded-full border border-yellow-400"></div>
+                <div className="absolute bottom-1.5 sm:bottom-2 right-0 w-6 sm:w-8 h-2 sm:h-3 bg-orange-500 rounded-full transform rotate-45"></div>
+                {/* Exclamation mark */}
+                <div className="absolute -top-4 sm:-top-6 left-1/2 transform -translate-x-1/2 text-yellow-300 text-2xl sm:text-3xl animate-bounce">!</div>
               </div>
-              {/* Tail */}
-              <div className="absolute bottom-2 right-0 w-8 h-3 bg-orange-500 rounded-full transform rotate-45"></div>
-              {/* Exclamation mark */}
-              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-yellow-300 text-3xl animate-bounce">!</div>
             </div>
 
             {/* Twilly's Speech Bubble */}
             {showTwillyMessage && (
-              <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 animate-fade-in z-30">
-                <div className="bg-white border-4 border-yellow-400 rounded-lg shadow-2xl p-4 min-w-48 max-w-64 relative">
+              <div className="absolute -top-28 sm:-top-32 left-1/2 transform -translate-x-1/2 animate-fade-in z-30 w-48 sm:w-auto">
+                <div className="bg-white border-4 border-yellow-400 rounded-lg shadow-2xl p-3 sm:p-4 min-w-40 sm:min-w-48 max-w-48 sm:max-w-64 relative">
                   {/* Speech bubble tail */}
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
                     <div className="w-0 h-0 border-l-8 border-r-8 border-t-8 border-transparent border-t-yellow-400"></div>
                   </div>
-                  <p className="text-amber-900 font-bold text-sm text-center">
+                  <p className="text-amber-900 font-bold text-xs sm:text-sm text-center">
                     "There you go! All healed up and ready for adventure!"
                   </p>
                   <p className="text-orange-600 text-xs text-center mt-1">- Twilly</p>

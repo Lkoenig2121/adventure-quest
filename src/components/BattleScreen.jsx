@@ -500,7 +500,7 @@ const BattleScreen = () => {
               </button>
             </div>
           )}
-
+          
           {/* Equipment Management */}
           {selectedAction === 'equipment' && (
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -552,8 +552,8 @@ const BattleScreen = () => {
                               <>
                                 <span className="text-xl">{item.icon}</span>
                                 <span className="font-bold text-blue-900">{item.name}</span>
-                                <button
-                                  onClick={() => {
+          <button
+            onClick={() => {
                                     unequipItem(slot)
                                     addLog(`Unequipped ${item.name}`)
                                   }}
@@ -605,7 +605,7 @@ const BattleScreen = () => {
                                 className="ml-auto px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded"
                               >
                                 Equip
-                              </button>
+          </button>
                             </div>
                           </div>
                         </div>
@@ -621,11 +621,11 @@ const BattleScreen = () => {
         </div>
       </div>
 
-      {/* Battle Log */}
+      {/* Battle Log - last 4 lines only */}
       {battleLog.length > 0 && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-6 py-3 rounded-lg max-w-md">
-          {battleLog.map((log, idx) => (
-            <div key={idx} className="text-sm mb-1">{log}</div>
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-6 py-3 rounded-lg max-w-md max-h-[6.5rem] overflow-hidden">
+          {battleLog.slice(-4).map((log, idx) => (
+            <div key={idx} className="text-sm mb-1 truncate">{log}</div>
           ))}
         </div>
       )}
