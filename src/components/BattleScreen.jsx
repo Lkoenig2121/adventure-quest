@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { FLOOR_ENEMIES } from './CastleScreen'
 
 // Full pet definitions mirrored from PetShopScreen so BattleScreen can read effect data
 const PET_DEFS = {
@@ -17,7 +18,7 @@ const PET_DEFS = {
 
 const BattleScreen = () => {
   const navigate = useNavigate()
-  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, useHealthPotion, useManaPotion, equipItem, unequipItem, getElementModifiers, setActivePet } = useGame()
+  const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, battleFloor, startBattle, resetPlayerStats, useHealthPotion, useManaPotion, equipItem, unequipItem, getElementModifiers, setActivePet } = useGame()
   const [selectedAction, setSelectedAction] = useState('attack')
   const [selectedSpell, setSelectedSpell] = useState(null)
   const [battleLog, setBattleLog] = useState([])
@@ -156,6 +157,20 @@ const BattleScreen = () => {
     navigate(battleSource === 'castle' ? '/castle' : '/town')
   }
 
+  const handleNextBattle = () => {
+    const nextFloor = (battleFloor || 0) + 1
+    const nextEnemy = FLOOR_ENEMIES[nextFloor]
+    if (!nextEnemy) return
+    clearBattleRewards()
+    startBattle(nextEnemy, 'castle', nextFloor)
+    // Reset local battle state
+    setShowVictory(false)
+    setPlayerTurn(true)
+    setAnimating(false)
+    setBattleLog([])
+    setSelectedAction('attack')
+  }
+
   if (!enemy && !showVictory) return null
 
   // Show victory screen
@@ -227,13 +242,45 @@ const BattleScreen = () => {
                 </div>
               )}
 
-              {/* Next Button */}
-              <button
-                onClick={handleVictoryContinue}
-                className="w-full mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-red-800 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
-              >
-                Next
-              </button>
+              {/* Castle: Next Battle + Return | Town: Next */}
+              {battleSource === 'castle' && battleFloor && FLOOR_ENEMIES[battleFloor + 1] ? (
+                <div className="flex flex-col gap-3 mt-6">
+                  <div className="text-center text-amber-700 text-sm font-semibold">
+                    Floor {battleFloor} cleared!
+                  </div>
+                  <button
+                    onClick={handleNextBattle}
+                    className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-green-800 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
+                  >
+                    ⚔️ Next Battle — Floor {battleFloor + 1}: {FLOOR_ENEMIES[battleFloor + 1].name}
+                  </button>
+                  <button
+                    onClick={handleVictoryContinue}
+                    className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-3 px-8 rounded-lg border-4 border-gray-500 shadow-lg transform transition hover:scale-105 active:scale-95"
+                  >
+                    Return to Castle
+                  </button>
+                </div>
+              ) : battleSource === 'castle' && battleFloor === 10 ? (
+                <div className="flex flex-col gap-3 mt-6">
+                  <div className="text-center text-yellow-600 font-bold text-lg animate-pulse">
+                    🏆 Castle Conquered!
+                  </div>
+                  <button
+                    onClick={handleVictoryContinue}
+                    className="w-full bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700 text-white font-bold py-4 px-8 rounded-lg border-4 border-yellow-700 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
+                  >
+                    Return to Castle
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleVictoryContinue}
+                  className="w-full mt-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-red-800 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
+                >
+                  Next
+                </button>
+              )}
             </div>
           </div>
         </div>

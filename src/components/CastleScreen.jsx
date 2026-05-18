@@ -2,29 +2,27 @@ import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useState } from 'react'
 
+export const FLOOR_ENEMIES = {
+  1:  { name: 'Castle Guard',     hp: 100, maxHp: 100, mp: 50,  maxMp: 50,  level: 1,  xpReward: 50,  goldReward: 25,  image: 'guard',        element: 'Physical', elementIcon: '⚔️', elementResistances: { fire: 100, water: 100, wind: 130, ice: 100, earth: 100, energy: 150, light: 100, darkness: 100 } },
+  2:  { name: 'Skeleton Warrior', hp: 150, maxHp: 150, mp: 60,  maxMp: 60,  level: 2,  xpReward: 75,  goldReward: 35,  image: 'skeleton',     element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 200, water: 100, wind: 100, ice: 50,  earth: 100, energy: 100, light: 200, darkness: 0   } },
+  3:  { name: 'Dark Mage',        hp: 120, maxHp: 120, mp: 150, maxMp: 150, level: 3,  xpReward: 100, goldReward: 45,  image: 'mage',         element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 130, water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 200, darkness: 0   } },
+  4:  { name: 'Orc Berserker',    hp: 250, maxHp: 250, mp: 40,  maxMp: 40,  level: 4,  xpReward: 125, goldReward: 55,  image: 'orc',          element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 50,  water: 150, wind: 100, ice: 130, earth: 100, energy: 100, light: 100, darkness: 100 } },
+  5:  { name: 'Shadow Assassin',  hp: 180, maxHp: 180, mp: 100, maxMp: 100, level: 5,  xpReward: 150, goldReward: 65,  image: 'assassin',     element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 100, water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 180, darkness: 0   } },
+  6:  { name: 'Fire Elemental',   hp: 200, maxHp: 200, mp: 200, maxMp: 200, level: 6,  xpReward: 175, goldReward: 75,  image: 'elemental',    element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 0,   water: 200, wind: 100, ice: 180, earth: 100, energy: 100, light: 100, darkness: 100 } },
+  7:  { name: 'Ice Golem',        hp: 350, maxHp: 350, mp: 80,  maxMp: 80,  level: 7,  xpReward: 200, goldReward: 85,  image: 'golem',        element: 'Ice',      elementIcon: '❄️', elementResistances: { fire: 200, water: 100, wind: 100, ice: 0,   earth: 100, energy: 150, light: 100, darkness: 100 } },
+  8:  { name: 'Dragon Knight',    hp: 400, maxHp: 400, mp: 150, maxMp: 150, level: 8,  xpReward: 225, goldReward: 95,  image: 'dragonknight', element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 25,  water: 150, wind: 100, ice: 150, earth: 100, energy: 100, light: 100, darkness: 130 } },
+  9:  { name: 'Demon Lord',       hp: 500, maxHp: 500, mp: 250, maxMp: 250, level: 9,  xpReward: 250, goldReward: 110, image: 'demon',        element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 50,  water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 200, darkness: 0   } },
+  10: { name: 'Castle Master',    hp: 750, maxHp: 750, mp: 300, maxMp: 300, level: 10, xpReward: 300, goldReward: 150, image: 'master',       element: 'Energy',   elementIcon: '⚡', elementResistances: { fire: 100, water: 130, wind: 130, ice: 130, earth: 130, energy: 0,   light: 150, darkness: 150 } },
+}
+
 const CastleScreen = () => {
   const navigate = useNavigate()
   const { player, startBattle, resetPlayerStats } = useGame()
   const [selectedFloor, setSelectedFloor] = useState(1)
 
-  // Define enemies for each floor (10 levels)
-  const floorEnemies = {
-    1:  { name: 'Castle Guard',     hp: 100, maxHp: 100, mp: 50,  maxMp: 50,  level: 1,  xpReward: 50,  goldReward: 25,  image: 'guard',        element: 'Physical', elementIcon: '⚔️', elementResistances: { fire: 100, water: 100, wind: 130, ice: 100, earth: 100, energy: 150, light: 100, darkness: 100 } },
-    2:  { name: 'Skeleton Warrior', hp: 150, maxHp: 150, mp: 60,  maxMp: 60,  level: 2,  xpReward: 75,  goldReward: 35,  image: 'skeleton',     element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 200, water: 100, wind: 100, ice: 50,  earth: 100, energy: 100, light: 200, darkness: 0   } },
-    3:  { name: 'Dark Mage',        hp: 120, maxHp: 120, mp: 150, maxMp: 150, level: 3,  xpReward: 100, goldReward: 45,  image: 'mage',         element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 130, water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 200, darkness: 0   } },
-    4:  { name: 'Orc Berserker',    hp: 250, maxHp: 250, mp: 40,  maxMp: 40,  level: 4,  xpReward: 125, goldReward: 55,  image: 'orc',          element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 50,  water: 150, wind: 100, ice: 130, earth: 100, energy: 100, light: 100, darkness: 100 } },
-    5:  { name: 'Shadow Assassin',  hp: 180, maxHp: 180, mp: 100, maxMp: 100, level: 5,  xpReward: 150, goldReward: 65,  image: 'assassin',     element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 100, water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 180, darkness: 0   } },
-    6:  { name: 'Fire Elemental',   hp: 200, maxHp: 200, mp: 200, maxMp: 200, level: 6,  xpReward: 175, goldReward: 75,  image: 'elemental',    element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 0,   water: 200, wind: 100, ice: 180, earth: 100, energy: 100, light: 100, darkness: 100 } },
-    7:  { name: 'Ice Golem',        hp: 350, maxHp: 350, mp: 80,  maxMp: 80,  level: 7,  xpReward: 200, goldReward: 85,  image: 'golem',        element: 'Ice',      elementIcon: '❄️', elementResistances: { fire: 200, water: 100, wind: 100, ice: 0,   earth: 100, energy: 150, light: 100, darkness: 100 } },
-    8:  { name: 'Dragon Knight',    hp: 400, maxHp: 400, mp: 150, maxMp: 150, level: 8,  xpReward: 225, goldReward: 95,  image: 'dragonknight', element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 25,  water: 150, wind: 100, ice: 150, earth: 100, energy: 100, light: 100, darkness: 130 } },
-    9:  { name: 'Demon Lord',       hp: 500, maxHp: 500, mp: 250, maxMp: 250, level: 9,  xpReward: 250, goldReward: 110, image: 'demon',        element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 50,  water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 200, darkness: 0   } },
-    10: { name: 'Castle Master',    hp: 750, maxHp: 750, mp: 300, maxMp: 300, level: 10, xpReward: 300, goldReward: 150, image: 'master',       element: 'Energy',   elementIcon: '⚡', elementResistances: { fire: 100, water: 130, wind: 130, ice: 130, earth: 130, energy: 0,   light: 150, darkness: 150 } },
-  }
-
   const handleBattle = (floor) => {
     resetPlayerStats()
-    const enemy = floorEnemies[floor]
-    startBattle(enemy, 'castle')
+    startBattle(FLOOR_ENEMIES[floor], 'castle', floor)
     navigate('/battle')
   }
 
@@ -82,7 +80,7 @@ const CastleScreen = () => {
           <div className="space-y-4">
             <h3 className="text-2xl font-bold text-amber-900 mb-4 text-center">Choose Your Challenge:</h3>
             <div className="grid grid-cols-5 gap-3 max-h-96 overflow-y-auto">
-              {Object.entries(floorEnemies).map(([floor, enemy]) => (
+              {Object.entries(FLOOR_ENEMIES).map(([floor, enemy]) => (
                 <button
                   key={floor}
                   onClick={() => {
@@ -107,24 +105,24 @@ const CastleScreen = () => {
                 <div className="bg-gradient-to-br from-red-100 to-red-50 border-4 border-red-600 rounded-lg p-6 mb-4">
                   <div className="text-center mb-4">
                     <div className="text-6xl mb-2">👹</div>
-                    <div className="text-2xl font-bold text-red-900">{floorEnemies[selectedFloor].name}</div>
+                    <div className="text-2xl font-bold text-red-900">{FLOOR_ENEMIES[selectedFloor].name}</div>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm text-red-800">
                     <div className="text-center">
                       <div className="font-semibold">Level</div>
-                      <div className="font-bold text-lg">{floorEnemies[selectedFloor].level}</div>
+                      <div className="font-bold text-lg">{FLOOR_ENEMIES[selectedFloor].level}</div>
                     </div>
                     <div className="text-center">
                       <div className="font-semibold">HP</div>
-                      <div className="font-bold text-lg">{floorEnemies[selectedFloor].hp}</div>
+                      <div className="font-bold text-lg">{FLOOR_ENEMIES[selectedFloor].hp}</div>
                     </div>
                     <div className="text-center">
                       <div className="font-semibold">XP Reward</div>
-                      <div className="font-bold text-lg text-green-700">{floorEnemies[selectedFloor].xpReward}</div>
+                      <div className="font-bold text-lg text-green-700">{FLOOR_ENEMIES[selectedFloor].xpReward}</div>
                     </div>
                     <div className="text-center">
                       <div className="font-semibold">Gold Reward</div>
-                      <div className="font-bold text-lg text-yellow-700">{floorEnemies[selectedFloor].goldReward}</div>
+                      <div className="font-bold text-lg text-yellow-700">{FLOOR_ENEMIES[selectedFloor].goldReward}</div>
                     </div>
                   </div>
                 </div>
@@ -133,7 +131,7 @@ const CastleScreen = () => {
                   onClick={() => handleBattle(selectedFloor)}
                   className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-red-800 shadow-lg transform transition hover:scale-105 text-xl mb-4"
                 >
-                  Battle {floorEnemies[selectedFloor].name}!
+                  Battle {FLOOR_ENEMIES[selectedFloor].name}!
                 </button>
               </div>
             )}

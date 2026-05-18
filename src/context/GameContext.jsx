@@ -91,6 +91,7 @@ export const GameProvider = ({ children }) => {
   const [inBattle, setInBattle] = useState(false)
   const [battleRewards, setBattleRewards] = useState(null)
   const [battleSource, setBattleSource] = useState('town') // 'town' or 'castle'
+  const [battleFloor, setBattleFloor] = useState(null) // castle floor number, null for town
 
   // Debug: Log enemy state changes
   useEffect(() => {
@@ -109,10 +110,11 @@ export const GameProvider = ({ children }) => {
     setPlayer(prev => ({ ...prev, ...updates }))
   }, [])
 
-  const startBattle = useCallback((enemyData, source = 'town') => {
+  const startBattle = useCallback((enemyData, source = 'town', floor = null) => {
     setEnemy(enemyData)
     setInBattle(true)
     setBattleSource(source)
+    setBattleFloor(floor)
   }, [])
 
   const endBattle = useCallback((victory) => {
@@ -370,9 +372,9 @@ export const GameProvider = ({ children }) => {
       light: baseModifier,
     }
 
-    // Equipment bonuses REDUCE the element's effectiveness
-    // The more you stack one element, the worse you become with it
-    Object.values(equipped).forEach(item => {
+    // Only armor, helmet, and boots affect element modifiers — weapons do not
+    const { weapon: _weapon, ...defenseSlots } = equipped
+    Object.values(defenseSlots).forEach(item => {
       if (item && item.elementBonuses) {
         Object.keys(item.elementBonuses).forEach(element => {
           if (modifiers.hasOwnProperty(element)) {
@@ -392,6 +394,7 @@ export const GameProvider = ({ children }) => {
     inBattle,
     battleRewards,
     battleSource,
+    battleFloor,
     updatePlayer,
     startBattle,
     endBattle,
@@ -410,7 +413,7 @@ export const GameProvider = ({ children }) => {
     getElementModifiers,
     purchasePet,
     setActivePet,
-  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet])
+  }), [player, enemy, inBattle, battleRewards, battleSource, battleFloor, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet])
 
   return (
     <GameContext.Provider value={value}>
