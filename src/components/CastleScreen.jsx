@@ -9,16 +9,16 @@ const CastleScreen = () => {
 
   // Define enemies for each floor (10 levels)
   const floorEnemies = {
-    1: { name: 'Castle Guard', hp: 100, maxHp: 100, mp: 50, maxMp: 50, level: 1, xpReward: 50, goldReward: 25, image: 'guard' },
-    2: { name: 'Skeleton Warrior', hp: 150, maxHp: 150, mp: 60, maxMp: 60, level: 2, xpReward: 75, goldReward: 35, image: 'skeleton' },
-    3: { name: 'Dark Mage', hp: 120, maxHp: 120, mp: 150, maxMp: 150, level: 3, xpReward: 100, goldReward: 45, image: 'mage' },
-    4: { name: 'Orc Berserker', hp: 250, maxHp: 250, mp: 40, maxMp: 40, level: 4, xpReward: 125, goldReward: 55, image: 'orc' },
-    5: { name: 'Shadow Assassin', hp: 180, maxHp: 180, mp: 100, maxMp: 100, level: 5, xpReward: 150, goldReward: 65, image: 'assassin' },
-    6: { name: 'Fire Elemental', hp: 200, maxHp: 200, mp: 200, maxMp: 200, level: 6, xpReward: 175, goldReward: 75, image: 'elemental' },
-    7: { name: 'Ice Golem', hp: 350, maxHp: 350, mp: 80, maxMp: 80, level: 7, xpReward: 200, goldReward: 85, image: 'golem' },
-    8: { name: 'Dragon Knight', hp: 400, maxHp: 400, mp: 150, maxMp: 150, level: 8, xpReward: 225, goldReward: 95, image: 'dragonknight' },
-    9: { name: 'Demon Lord', hp: 500, maxHp: 500, mp: 250, maxMp: 250, level: 9, xpReward: 250, goldReward: 110, image: 'demon' },
-    10: { name: 'Castle Master', hp: 750, maxHp: 750, mp: 300, maxMp: 300, level: 10, xpReward: 300, goldReward: 150, image: 'master' }
+    1:  { name: 'Castle Guard',     hp: 100, maxHp: 100, mp: 50,  maxMp: 50,  level: 1,  xpReward: 50,  goldReward: 25,  image: 'guard',        element: 'Physical', elementIcon: '⚔️', elementResistances: { fire: 100, water: 100, wind: 130, ice: 100, earth: 100, energy: 150, light: 100, darkness: 100 } },
+    2:  { name: 'Skeleton Warrior', hp: 150, maxHp: 150, mp: 60,  maxMp: 60,  level: 2,  xpReward: 75,  goldReward: 35,  image: 'skeleton',     element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 200, water: 100, wind: 100, ice: 50,  earth: 100, energy: 100, light: 200, darkness: 0   } },
+    3:  { name: 'Dark Mage',        hp: 120, maxHp: 120, mp: 150, maxMp: 150, level: 3,  xpReward: 100, goldReward: 45,  image: 'mage',         element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 130, water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 200, darkness: 0   } },
+    4:  { name: 'Orc Berserker',    hp: 250, maxHp: 250, mp: 40,  maxMp: 40,  level: 4,  xpReward: 125, goldReward: 55,  image: 'orc',          element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 50,  water: 150, wind: 100, ice: 130, earth: 100, energy: 100, light: 100, darkness: 100 } },
+    5:  { name: 'Shadow Assassin',  hp: 180, maxHp: 180, mp: 100, maxMp: 100, level: 5,  xpReward: 150, goldReward: 65,  image: 'assassin',     element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 100, water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 180, darkness: 0   } },
+    6:  { name: 'Fire Elemental',   hp: 200, maxHp: 200, mp: 200, maxMp: 200, level: 6,  xpReward: 175, goldReward: 75,  image: 'elemental',    element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 0,   water: 200, wind: 100, ice: 180, earth: 100, energy: 100, light: 100, darkness: 100 } },
+    7:  { name: 'Ice Golem',        hp: 350, maxHp: 350, mp: 80,  maxMp: 80,  level: 7,  xpReward: 200, goldReward: 85,  image: 'golem',        element: 'Ice',      elementIcon: '❄️', elementResistances: { fire: 200, water: 100, wind: 100, ice: 0,   earth: 100, energy: 150, light: 100, darkness: 100 } },
+    8:  { name: 'Dragon Knight',    hp: 400, maxHp: 400, mp: 150, maxMp: 150, level: 8,  xpReward: 225, goldReward: 95,  image: 'dragonknight', element: 'Fire',     elementIcon: '🔥', elementResistances: { fire: 25,  water: 150, wind: 100, ice: 150, earth: 100, energy: 100, light: 100, darkness: 130 } },
+    9:  { name: 'Demon Lord',       hp: 500, maxHp: 500, mp: 250, maxMp: 250, level: 9,  xpReward: 250, goldReward: 110, image: 'demon',        element: 'Darkness', elementIcon: '🌑', elementResistances: { fire: 50,  water: 100, wind: 100, ice: 100, earth: 100, energy: 100, light: 200, darkness: 0   } },
+    10: { name: 'Castle Master',    hp: 750, maxHp: 750, mp: 300, maxMp: 300, level: 10, xpReward: 300, goldReward: 150, image: 'master',       element: 'Energy',   elementIcon: '⚡', elementResistances: { fire: 100, water: 130, wind: 130, ice: 130, earth: 130, energy: 0,   light: 150, darkness: 150 } },
   }
 
   const handleBattle = (floor) => {

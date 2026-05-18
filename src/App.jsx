@@ -6,6 +6,7 @@ import BattleScreen from './components/BattleScreen'
 import CastleScreen from './components/CastleScreen'
 import ShopScreen from './components/ShopScreen'
 import CharacterPage from './components/CharacterPage'
+import PetShopScreen from './components/PetShopScreen'
 import { GameProvider } from './context/GameContext'
 
 function App() {
@@ -88,6 +89,16 @@ function App() {
           element={
             isAuthenticated ? (
               <CharacterPage />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/pet-shop" 
+          element={
+            isAuthenticated ? (
+              <PetShopScreen />
             ) : (
               <Navigate to="/login" replace />
             )

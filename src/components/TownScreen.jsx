@@ -38,7 +38,10 @@ const TownScreen = ({ onLogout }) => {
         level: player.level + 20,
         xpReward: 200,
         goldReward: 100,
-        image: 'berserker'
+        image: 'berserker',
+        element: 'Fire',
+        elementIcon: '🔥',
+        elementResistances: { fire: 50, water: 130, wind: 100, ice: 150, earth: 100, energy: 100, light: 130, darkness: 100 },
       },
       {
         name: 'Goblin Warrior',
@@ -49,7 +52,10 @@ const TownScreen = ({ onLogout }) => {
         level: player.level + 5,
         xpReward: 80,
         goldReward: 40,
-        image: 'goblin'
+        image: 'goblin',
+        element: 'Earth',
+        elementIcon: '🌍',
+        elementResistances: { fire: 150, water: 100, wind: 120, ice: 100, earth: 50, energy: 100, light: 100, darkness: 100 },
       },
       {
         name: 'Dark Knight',
@@ -60,7 +66,10 @@ const TownScreen = ({ onLogout }) => {
         level: player.level + 10,
         xpReward: 150,
         goldReward: 75,
-        image: 'knight'
+        image: 'knight',
+        element: 'Darkness',
+        elementIcon: '🌑',
+        elementResistances: { fire: 100, water: 100, wind: 100, ice: 130, earth: 100, energy: 100, light: 200, darkness: 0 },
       }
     ]
     const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)]
@@ -74,6 +83,10 @@ const TownScreen = ({ onLogout }) => {
 
   const handleShopClick = () => {
     navigate('/shop')
+  }
+
+  const handlePetShopClick = () => {
+    navigate('/pet-shop')
   }
 
   const hpPercentage = (player.hp / player.maxHp) * 100
@@ -145,16 +158,23 @@ const TownScreen = ({ onLogout }) => {
 
         {/* Town Scene */}
         <div className="absolute bottom-24 sm:bottom-32 left-0 right-0 flex justify-center items-end gap-2 sm:gap-4 flex-wrap px-2">
-          {/* Houses */}
-          <div className="relative">
+          {/* Pet Shop (furthest left brown building) */}
+          <button
+            onClick={handlePetShopClick}
+            className="relative transform transition hover:scale-110 cursor-pointer"
+          >
             <div className="w-20 h-28 sm:w-24 sm:h-32 bg-amber-800 border-4 border-amber-900 relative">
               <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-700 to-gray-600"></div>
               <div className="absolute top-2 left-2 w-4 h-4 bg-amber-200 rounded"></div>
               <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-8 bg-amber-950 rounded-t"></div>
               <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-red-600 border border-black"></div>
+              {/* Pet Shop sign */}
+              <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-14 h-5 bg-yellow-300 border-2 border-amber-900 rounded flex items-center justify-center">
+                <span className="text-xs font-bold text-amber-900 leading-none">PETS</span>
+              </div>
             </div>
-            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 text-yellow-300 text-xl sm:text-2xl">!</div>
-          </div>
+            <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 text-2xl sm:text-3xl">🐾</div>
+          </button>
 
           {/* Fountain */}
           <div className="relative">

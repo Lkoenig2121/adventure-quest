@@ -2,6 +2,36 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 
 const GameContext = createContext()
 
+// Guardian starter equipment — equipped by default for all players
+const GUARDIAN_BLADE = {
+  id: 'guardianBlade',
+  name: 'Guardian Blade',
+  slot: 'weapon',
+  icon: '🗡️',
+  elementBonuses: { light: 12, energy: 8, fire: 5 },
+}
+const GUARDIAN_PLATE = {
+  id: 'guardianPlate',
+  name: 'Guardian Plate',
+  slot: 'armor',
+  icon: '🛡️',
+  elementBonuses: { fire: 10, ice: 10, light: 8 },
+}
+const GUARDIAN_HELM = {
+  id: 'guardianHelm',
+  name: 'Guardian Helm',
+  slot: 'helmet',
+  icon: '🪖',
+  elementBonuses: { wind: 8, energy: 7, light: 5 },
+}
+const GUARDIAN_GREAVES = {
+  id: 'guardianGreaves',
+  name: 'Guardian Greaves',
+  slot: 'boots',
+  icon: '👢',
+  elementBonuses: { earth: 6, light: 5, water: 4 },
+}
+
 export const useGame = () => {
   const context = useContext(GameContext)
   if (!context) {
@@ -12,10 +42,31 @@ export const useGame = () => {
 
 export const GameProvider = ({ children }) => {
   const [player, setPlayer] = useState(() => {
+    const defaultEquipped = {
+      weapon: GUARDIAN_BLADE,
+      helmet: GUARDIAN_HELM,
+      armor: GUARDIAN_PLATE,
+      boots: GUARDIAN_GREAVES,
+    }
+
     const saved = localStorage.getItem('playerData')
     if (saved) {
-      return JSON.parse(saved)
+      const parsed = JSON.parse(saved)
+      // Migrate: if weapon slot is empty, give the full Guardian set
+      if (!parsed.equipped?.weapon) {
+        return {
+          ...parsed,
+          equipped: {
+            weapon:  parsed.equipped?.weapon  || GUARDIAN_BLADE,
+            helmet:  parsed.equipped?.helmet  || GUARDIAN_HELM,
+            armor:   parsed.equipped?.armor   || GUARDIAN_PLATE,
+            boots:   parsed.equipped?.boots   || GUARDIAN_GREAVES,
+          },
+        }
+      }
+      return parsed
     }
+
     return {
       name: 'Yankees12100',
       level: 1,
@@ -30,12 +81,9 @@ export const GameProvider = ({ children }) => {
       healthPotions: 5,
       manaPotions: 5,
       inventory: [],
-      equipped: {
-        weapon: null,
-        helmet: null,
-        armor: null,
-        boots: null,
-      },
+      equipped: defaultEquipped,
+      pets: [],
+      activePetId: null,
     }
   })
 
@@ -288,6 +336,26 @@ export const GameProvider = ({ children }) => {
   // Helper function to calculate Element Modifiers with equipment
   // In Adventure Quest, 100% = normal damage, lower = less damage
   // Stacking equipment for one element REDUCES that element's effectiveness
+  const purchasePet = useCallback((petData, price) => {
+    setPlayer(prev => {
+      if (prev.gold < price) return prev
+      const pets = prev.pets || []
+      if (pets.find(p => p.id === petData.id)) return prev // already owned
+      return {
+        ...prev,
+        gold: prev.gold - price,
+        pets: [...pets, petData],
+      }
+    })
+  }, [])
+
+  const setActivePet = useCallback((petId) => {
+    setPlayer(prev => ({
+      ...prev,
+      activePetId: petId,
+    }))
+  }, [])
+
   const getElementModifiers = useCallback(() => {
     const baseModifier = 100 // 100% = normal damage
     const equipped = player.equipped || { weapon: null, helmet: null, armor: null, boots: null }
@@ -340,7 +408,9 @@ export const GameProvider = ({ children }) => {
     equipItem,
     unequipItem,
     getElementModifiers,
-  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers])
+    purchasePet,
+    setActivePet,
+  }), [player, enemy, inBattle, battleRewards, battleSource, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet])
 
   return (
     <GameContext.Provider value={value}>
