@@ -21,7 +21,6 @@ const CastleScreen = () => {
   const [selectedFloor, setSelectedFloor] = useState(1)
 
   const handleBattle = (floor) => {
-    resetPlayerStats()
     startBattle(FLOOR_ENEMIES[floor], 'castle', floor)
     navigate('/battle')
   }

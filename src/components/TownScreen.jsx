@@ -24,9 +24,6 @@ const TownScreen = ({ onLogout }) => {
   }
 
   const handleBattleClick = () => {
-    // Reset player stats before battle
-    resetPlayerStats()
-    
     // Generate a random enemy
     const enemies = [
       {
