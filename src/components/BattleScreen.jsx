@@ -58,12 +58,14 @@ const BattleScreen = () => {
     setAnimating(true)
     const baseDamage = 25
     const randomVariation = Math.floor(Math.random() * 50) + 1
-    const damage = baseDamage + randomVariation
-    
+    const weaponMultiplier = player.equipped?.weapon?.damageMultiplier || 1
+    const damage = Math.round((baseDamage + randomVariation) * weaponMultiplier)
+
     const weaponEl = getWeaponElement()
     const { finalDamage, label } = applyResistance(damage, weaponEl.key)
     damageEnemy(finalDamage)
-    addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${label}`)
+    const multiplierNote = weaponMultiplier > 1 ? ` [×${weaponMultiplier} weapon]` : ''
+    addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}`)
     triggerPetEffect()
     
     setTimeout(() => {
@@ -995,6 +997,7 @@ const BattleScreen = () => {
                   <div className="text-xl font-bold">x{player.manaPotions || 0}</div>
                 </div>
               </button>
+
             </div>
           )}
           

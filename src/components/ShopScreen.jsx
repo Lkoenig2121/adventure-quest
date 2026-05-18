@@ -27,6 +27,17 @@ const ShopScreen = () => {
     },
     // Weapons
     {
+      id: 'orcBombs',
+      name: 'Orc Bombs',
+      description: 'Weapon: Deals DOUBLE damage with 🔥 Fire element. Crafted by Orcish engineers — devastating against fire-weak enemies.',
+      price: 500,
+      icon: '💣',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { fire: 20 },
+      damageMultiplier: 2,
+    },
+    {
       id: 'fireSword',
       name: 'Fire Sword',
       description: 'Weapon: +15% Fire, +5% Energy',
@@ -191,6 +202,7 @@ const ShopScreen = () => {
           slot: item.slot,
           elementBonuses: item.elementBonuses,
           icon: item.icon,
+          ...(item.damageMultiplier ? { damageMultiplier: item.damageMultiplier } : {}),
         })
       } else {
         purchaseItem(item.type, item.price)
@@ -291,7 +303,7 @@ const ShopScreen = () => {
               <div className="text-3xl font-bold text-blue-700 mt-2">{player.manaPotions || 0}</div>
             </div>
           </div>
-          <div className="text-center">
+          <div className="mt-4 text-center">
             <div className="text-blue-900 font-bold mb-2">Equipment Items: {(player.inventory || []).length}</div>
             <div className="text-sm text-blue-700">Visit Character Page to equip items</div>
           </div>
