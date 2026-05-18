@@ -514,50 +514,39 @@ const TownScreen = ({ onLogout }) => {
                       <div className="mb-4 pb-3 border-b-2 border-amber-700">
                         <h5 className="font-bold mb-2 text-amber-800">Equipment</h5>
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="flex items-center gap-2">
-                            <span>🛡️</span>
-                            <div className="flex-1">
-                              <div className="text-xs text-gray-600">Helmet:</div>
-                              <div className="font-semibold">None</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span>⚔️</span>
-                            <div className="flex-1">
-                              <div className="text-xs text-gray-600">Weapon:</div>
-                              <div className="font-semibold">Basic Sword</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span>🛡️</span>
-                            <div className="flex-1">
-                              <div className="text-xs text-gray-600">Shield:</div>
-                              <div className="font-semibold">None</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span>💍</span>
-                            <div className="flex-1">
-                              <div className="text-xs text-gray-600">Ring:</div>
-                              <div className="font-semibold">None</div>
-                            </div>
-                          </div>
+                          {[
+                            { slot: 'weapon', defaultIcon: '⚔️', label: 'Weapon',  fallback: 'None' },
+                            { slot: 'helmet', defaultIcon: '🪖', label: 'Helmet',  fallback: 'None' },
+                            { slot: 'armor',  defaultIcon: '🛡️', label: 'Armor',   fallback: 'None' },
+                            { slot: 'boots',  defaultIcon: '👢', label: 'Boots',   fallback: 'None' },
+                          ].map(({ slot, defaultIcon, label, fallback }) => {
+                            const item = (player.equipped || {})[slot]
+                            return (
+                              <div key={slot} className="flex items-center gap-2">
+                                <span>{item ? item.icon : defaultIcon}</span>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-xs text-gray-600">{label}:</div>
+                                  <div className="font-semibold truncate">{item ? item.name : fallback}</div>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       </div>
 
-                      {/* Inventory/Consumables */}
+                      {/* Consumables */}
                       <div>
                         <h5 className="font-bold mb-2 text-amber-800">Consumables</h5>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           <div className="flex items-center gap-2">
                             <span className="text-red-600">🧪</span>
-                            <span>Red Potion:</span>
-                            <span className="font-bold text-red-700">x 0</span>
+                            <span>HP Potion:</span>
+                            <span className="font-bold text-red-700">x{player.healthPotions || 0}</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="text-blue-600">🧪</span>
-                            <span>Blue Potion:</span>
-                            <span className="font-bold text-blue-700">x 0</span>
+                            <span className="text-blue-600">💧</span>
+                            <span>MP Potion:</span>
+                            <span className="font-bold text-blue-700">x{player.manaPotions || 0}</span>
                           </div>
                         </div>
                       </div>
