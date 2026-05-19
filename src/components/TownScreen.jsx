@@ -10,8 +10,62 @@ const TownScreen = ({ onLogout }) => {
   const [showTwillyMessage, setShowTwillyMessage] = useState(false)
   const [isHealing, setIsHealing] = useState(false)
   const [showStatsTooltip, setShowStatsTooltip] = useState(false)
+  const [showTravelMap, setShowTravelMap] = useState(false)
   const portraitRef = useRef(null)
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
+
+  const MAP_LOCATIONS = [
+    { name: 'Citadel',       x: 41, y:  8, icon: '🏰', bold: false },
+    { name: 'Ruins',         x: 52, y:  5, icon: '💀', bold: false },
+    { name: 'Bludrut Keep',  x: 63, y:  7, icon: '🏯', bold: false },
+    { name: 'Vasalkar Lair', x: 88, y:  5, icon: '🐲', bold: false },
+    { name: 'Marsh',         x: 46, y: 17, icon: '🔴', bold: false },
+    { name: 'Guru Forest',   x: 60, y: 17, icon: '🔴', bold: false },
+    { name: 'Death',         x: 17, y: 22, icon: '💀', bold: false },
+    { name: 'Club House',    x: 37, y: 26, icon: '🦅', bold: false },
+    { name: 'Cemetery',      x: 52, y: 31, icon: '💀', bold: false },
+    { name: 'Lolosia',       x: 79, y: 29, icon: '☠️', bold: false },
+    { name: 'Crash Site',    x: 19, y: 30, icon: '🏚️', bold: false },
+    { name: 'Noobshire',     x: 32, y: 36, icon: '🔴', bold: false },
+    { name: 'Cellar',        x: 62, y: 37, icon: '🔴', bold: false },
+    { name: 'Bridge',        x:  7, y: 39, icon: '🔴', bold: false },
+    { name: 'Farm',          x: 41, y: 43, icon: '🐓', bold: false },
+    { name: 'Battleon',      x: 51, y: 45, icon: '🏰', bold: true  },
+    { name: 'Shallow',       x: 70, y: 42, icon: '🔴', bold: false },
+    { name: 'Swordhaven',    x: 13, y: 47, icon: '🏰', bold: true  },
+    { name: 'Boxes',         x:  4, y: 53, icon: '🔴', bold: false },
+    { name: 'Sewer',         x: 21, y: 52, icon: '🔴', bold: false },
+    { name: 'River',         x: 63, y: 49, icon: '🔴', bold: false },
+    { name: 'Willow Creek',  x: 29, y: 56, icon: '🔴', bold: false },
+    { name: 'Forest',        x: 43, y: 53, icon: '🌲', bold: false },
+    { name: 'Orc Town',      x: 68, y: 59, icon: '🔴', bold: false },
+  ]
+
+  // Dotted travel paths between locations [fromIndex, toIndex] using x/y coords
+  const MAP_PATHS = [
+    [[13,47],[41,43]],  // Swordhaven → Farm
+    [[41,43],[51,45]],  // Farm → Battleon
+    [[51,45],[62,37]],  // Battleon → Cellar
+    [[51,45],[52,31]],  // Battleon → Cemetery
+    [[52,31],[37,26]],  // Cemetery → Club House
+    [[37,26],[32,36]],  // Club House → Noobshire
+    [[32,36],[21,52]],  // Noobshire → Sewer
+    [[21,52],[13,47]],  // Sewer → Swordhaven
+    [[13,47],[7,39]],   // Swordhaven → Bridge
+    [[7,39],[4,53]],    // Bridge → Boxes
+    [[51,45],[43,53]],  // Battleon → Forest
+    [[43,53],[29,56]],  // Forest → Willow Creek
+    [[51,45],[63,49]],  // Battleon → River
+    [[63,49],[70,42]],  // River → Shallow
+    [[70,42],[68,59]],  // Shallow → Orc Town
+    [[52,31],[46,17]],  // Cemetery → Marsh
+    [[46,17],[41,8]],   // Marsh → Citadel
+    [[46,17],[60,17]],  // Marsh → Guru Forest
+    [[60,17],[52,5]],   // Guru Forest → Ruins
+    [[52,5],[63,7]],    // Ruins → Bludrut Keep
+    [[17,22],[19,30]],  // Death → Crash Site
+    [[19,30],[13,47]],  // Crash Site → Swordhaven
+  ]
 
   const handleTwillyClick = () => {
     fullHeal()
@@ -135,7 +189,10 @@ const TownScreen = ({ onLogout }) => {
               <button className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded border-2 border-red-800 text-sm">
                 TODAY'S EVENT
               </button>
-              <button className="w-full bg-amber-800 hover:bg-amber-900 text-yellow-200 font-bold py-2 px-4 rounded border-2 border-amber-700 text-sm">
+              <button
+                onClick={() => setShowTravelMap(true)}
+                className="w-full bg-amber-800 hover:bg-amber-900 text-yellow-200 font-bold py-2 px-4 rounded border-2 border-amber-700 text-sm"
+              >
                 Travel Map
               </button>
             </div>
@@ -649,6 +706,116 @@ const TownScreen = ({ onLogout }) => {
           Click the castle or shop to enter, or use the navigation buttons!
         </div>
       </div>
+
+      {/* Travel Map Modal */}
+      {showTravelMap && createPortal(
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setShowTravelMap(false)}
+        >
+          <div
+            className="relative animate-fade-in"
+            style={{ width: '90vw', height: '90vh' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Parchment map background */}
+            <div
+              className="w-full h-full rounded-xl border-8 border-amber-900 shadow-2xl overflow-hidden relative"
+              style={{
+                background: 'radial-gradient(ellipse at center, #f5e6c8 0%, #e8d5a3 40%, #d4b87a 100%)',
+                backgroundImage: `radial-gradient(ellipse at center, #f5e6c8 0%, #e8d5a3 40%, #d4b87a 100%),
+                  url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E")`,
+              }}
+            >
+              {/* Title */}
+              <div className="absolute top-3 left-4 z-10">
+                <div className="text-amber-800 text-xs font-semibold opacity-70">Beautifully wrong map of</div>
+                <div className="font-bold leading-none" style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: 'clamp(1.8rem, 4vw, 3.5rem)',
+                  color: '#7c4f1a',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+                }}>
+                  LORE
+                </div>
+              </div>
+
+              {/* Italic flavour text */}
+              <div className="absolute z-10" style={{ right: '10%', top: '18%' }}>
+                <div className="text-blue-700 italic text-xs opacity-80 text-center leading-tight">
+                  The great, um,<br/>Giant Puddle...?
+                </div>
+              </div>
+
+              {/* SVG paths */}
+              <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
+                {MAP_PATHS.map(([[x1,y1],[x2,y2]], i) => (
+                  <line
+                    key={i}
+                    x1={`${x1}%`} y1={`${y1}%`}
+                    x2={`${x2}%`} y2={`${y2}%`}
+                    stroke="#a07840"
+                    strokeWidth="1.5"
+                    strokeDasharray="5,4"
+                    opacity="0.6"
+                  />
+                ))}
+              </svg>
+
+              {/* Locations */}
+              {MAP_LOCATIONS.map(loc => (
+                <div
+                  key={loc.name}
+                  className="absolute flex flex-col items-center"
+                  style={{
+                    left: `${loc.x}%`,
+                    top: `${loc.y}%`,
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 2,
+                  }}
+                >
+                  <div style={{ fontSize: loc.bold ? 'clamp(1.4rem,2.5vw,2rem)' : 'clamp(0.9rem,1.8vw,1.4rem)' }}>
+                    {loc.icon}
+                  </div>
+                  <div
+                    className="text-center mt-0.5 leading-tight"
+                    style={{
+                      fontSize: 'clamp(0.5rem, 1vw, 0.75rem)',
+                      fontFamily: 'Georgia, serif',
+                      fontWeight: loc.bold ? 'bold' : 'normal',
+                      color: loc.bold ? '#4a2800' : '#6b4420',
+                      textShadow: '0 0 3px rgba(245,230,200,0.9)',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {loc.name}
+                  </div>
+                </div>
+              ))}
+
+              {/* Compass rose */}
+              <div className="absolute z-10 flex flex-col items-center" style={{ right: '5%', bottom: '8%' }}>
+                <div className="text-4xl">🧭</div>
+                <div className="grid grid-cols-3 text-xs font-bold text-amber-800 text-center" style={{ fontSize: '0.6rem', lineHeight: 1 }}>
+                  <div></div><div>N</div><div></div>
+                  <div>W</div><div className="text-base">✦</div><div>E</div>
+                  <div></div><div>S</div><div></div>
+                </div>
+              </div>
+
+              {/* Close button */}
+              <button
+                onClick={() => setShowTravelMap(false)}
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-700 hover:bg-red-800 text-white font-bold px-10 py-2 rounded-lg border-4 border-red-900 shadow-lg z-20 text-lg"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }
