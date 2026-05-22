@@ -21,8 +21,21 @@ const BattleScreen = () => {
   const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, battleFloor, startBattle, resetPlayerStats, useHealthPotion, useManaPotion, equipItem, unequipItem, getElementModifiers, setActivePet } = useGame()
   const [selectedAction, setSelectedAction] = useState('attack')
   const [selectedSpell, setSelectedSpell] = useState(null)
-  const [battleLog, setBattleLog] = useState([])
-  const [playerTurn, setPlayerTurn] = useState(true)
+
+  // Luck-based initiative — computed once at mount so log and turn are always in sync
+  const [{ firstTurn: _firstTurn, initLog: _initLog }] = useState(() => {
+    const playerLuck = 25 + Math.floor((player?.level || 1) * 5) + (player?.bonusStats?.luck || 0) * 10
+    const enemySpeed = enemy?.speed || 50
+    const playerRoll = Math.random() * playerLuck
+    const enemyRoll  = Math.random() * enemySpeed
+    const firstTurn  = playerRoll >= enemyRoll
+    const initLog    = firstTurn
+      ? `⚡ ${player?.name || 'You'} wins the initiative and attacks first! (LCK ${playerLuck} vs SPD ${enemySpeed})`
+      : `⚡ ${enemy?.name || 'Enemy'} is faster and strikes first! (SPD ${enemySpeed} vs LCK ${playerLuck})`
+    return { firstTurn, initLog }
+  })
+  const [playerTurn, setPlayerTurn] = useState(_firstTurn)
+  const [battleLog, setBattleLog] = useState([_initLog])
   const [animating, setAnimating] = useState(false)
   const [showVictory, setShowVictory] = useState(false)
   const [showStatsTooltip, setShowStatsTooltip] = useState(false)
@@ -57,16 +70,25 @@ const BattleScreen = () => {
     }
     
     setAnimating(true)
-    const baseDamage = 25
-    const randomVariation = Math.floor(Math.random() * 50) + 1
+    const bonusStats = player.bonusStats || {}
+    const strBonus    = (bonusStats.strength  || 0) * 2   // +2 dmg per STR point
+    const dexBonus    = (bonusStats.dexterity || 0) * 1   // +1 to random range per DEX point
+    const luckPoints  = bonusStats.luck || 0
+    const critChance  = luckPoints * 0.02                  // 2% crit chance per LCK point
+    const isCrit      = Math.random() < critChance
+    const critMult    = isCrit ? 1.5 : 1
+
+    const baseDamage = 25 + strBonus
+    const randomVariation = Math.floor(Math.random() * (50 + dexBonus)) + 1
     const weaponMultiplier = player.equipped?.weapon?.damageMultiplier || 1
-    const damage = Math.round((baseDamage + randomVariation) * weaponMultiplier)
+    const damage = Math.round((baseDamage + randomVariation) * weaponMultiplier * critMult)
 
     const weaponEl = getWeaponElement()
     const { finalDamage, label } = applyResistance(damage, weaponEl.key)
     damageEnemy(finalDamage)
     const multiplierNote = weaponMultiplier > 1 ? ` [×${weaponMultiplier} weapon]` : ''
-    addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}`)
+    const critNote = isCrit ? ' ⚡ CRITICAL HIT!' : ''
+    addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}${critNote}`)
     triggerPetEffect()
     
     setTimeout(() => {
@@ -76,28 +98,38 @@ const BattleScreen = () => {
   }, [playerTurn, animating, enemy, player, damageEnemy, triggerPetEffect, addLog])
 
 
-  useEffect(() => {
-    if (!enemy && !showVictory) {
-      navigate(battleSource === 'castle' ? '/castle' : '/town')
-      return
-    }
-  }, [enemy, navigate, showVictory, battleSource])
+  const sourceNav = battleSource === 'castle' ? '/castle' : battleSource === 'statTrainer' ? '/stat-trainer' : '/town'
 
   useEffect(() => {
-    if (enemy && enemy.hp <= 0 && !showVictory) {
-      console.log('🎉 Enemy defeated! Showing victory screen...')
+    if (!enemy && !showVictory) {
+      navigate(sourceNav)
+      return
+    }
+  }, [enemy, navigate, showVictory, sourceNav])
+
+  useEffect(() => {
+    if (!enemy || showVictory) return
+
+    const trainerSurrenders = battleSource === 'statTrainer' && enemy.hp > 0 && enemy.hp <= 250
+    const normalDefeat = enemy.hp <= 0
+
+    if (trainerSurrenders || normalDefeat) {
+      if (trainerSurrenders) {
+        addLog('✨ The Celestial Trainer raises a glowing hand — "Enough, champion. You have proven your worth. I yield my wisdom to you!"')
+      } else {
+        console.log('🎉 Enemy defeated! Showing victory screen...')
+      }
       setTimeout(() => {
-        console.log('🎉 Setting showVictory and ending battle')
         setShowVictory(true)
         endBattle(true)
       }, 1500)
-    } else if (player.hp <= 0 && !showVictory) {
+    } else if (player.hp <= 0) {
       setTimeout(() => {
         endBattle(false)
-        navigate(battleSource === 'castle' ? '/castle' : '/town')
+        navigate(sourceNav)
       }, 1500)
     }
-  }, [enemy?.hp, player.hp, endBattle, navigate, showVictory])
+  }, [enemy?.hp, player.hp, endBattle, navigate, showVictory, battleSource, addLog])
 
 
   useEffect(() => {
@@ -127,8 +159,9 @@ const BattleScreen = () => {
     setAnimating(true)
     useMana(spellCost)
 
+    const intBonus = (player.bonusStats?.intellect || 0) * 3  // +3 spell dmg per INT point
     if (spell.type === 'attack') {
-      const rawDamage = spell.damage || 50
+      const rawDamage = (spell.damage || 50) + intBonus
       const { finalDamage, label } = applyResistance(rawDamage, spell.element.toLowerCase())
       damageEnemy(finalDamage)
       addLog(`${player.name} casts ${spell.name} for ${finalDamage} ${spell.elementIcon} ${spell.element} damage!${label}`)
@@ -148,13 +181,13 @@ const BattleScreen = () => {
 
   const handleFlee = () => {
     endBattle(false)
-    navigate(battleSource === 'castle' ? '/castle' : '/town')
+    navigate(battleSource === 'castle' ? '/castle' : battleSource === 'statTrainer' ? '/stat-trainer' : '/town')
   }
 
   const handleVictoryContinue = () => {
     clearBattleRewards()
     setShowVictory(false)
-    navigate(battleSource === 'castle' ? '/castle' : '/town')
+    navigate(battleSource === 'castle' ? '/castle' : battleSource === 'statTrainer' ? '/stat-trainer' : '/town')
   }
 
   const handleNextBattle = () => {
@@ -180,18 +213,45 @@ const BattleScreen = () => {
     if (!battleRewards) {
       console.log('⏳ Waiting for battle rewards...')
       return (
-        <div className="w-full h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black relative overflow-hidden flex items-center justify-center">
+        <div
+          className="w-full h-screen relative overflow-hidden flex items-center justify-center"
+          style={{ background: battleSource === 'statTrainer' ? 'linear-gradient(180deg,#e0f2fe,#fefce8)' : 'linear-gradient(180deg,#581c87,#312e81,#000)' }}
+        >
           <div className="text-white text-2xl">Loading rewards...</div>
         </div>
       )
     }
+    const isHeavenVictory = battleSource === 'statTrainer'
     console.log('✅ Showing victory screen with rewards:', battleRewards)
     return (
-      <div className="w-full h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-black relative overflow-hidden flex items-center justify-center">
+      <div
+        className="w-full h-screen relative overflow-hidden flex items-center justify-center"
+        style={{ background: isHeavenVictory ? 'linear-gradient(180deg,#e0f2fe 0%,#fef9ee 50%,#fffbeb 100%)' : 'linear-gradient(180deg,#581c87,#312e81,#000)' }}
+      >
         {/* Victory Background Effects */}
         <div className="absolute inset-0">
-          <div className="absolute top-20 left-20 w-64 h-64 bg-yellow-400 rounded-full opacity-20 blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500 rounded-full opacity-20 blur-3xl animate-pulse delay-1000"></div>
+          {isHeavenVictory ? (
+            <>
+              {[15, 35, 55, 72, 88].map((l, i) => (
+                <div key={i} style={{
+                  position:'absolute', top:0, left:`${l}%`, width:70, height:'100%',
+                  background:'linear-gradient(180deg,rgba(255,255,255,0.55) 0%,transparent 100%)',
+                  transform:`rotate(${(i-2)*5}deg)`, transformOrigin:'top center', filter:'blur(20px)',
+                }} />
+              ))}
+              <div style={{
+                position:'absolute', top:-60, left:'50%', transform:'translateX(-50%)',
+                width:600, height:300, borderRadius:'50%',
+                background:'radial-gradient(ellipse,rgba(253,224,71,0.45) 0%,transparent 70%)',
+                filter:'blur(24px)',
+              }} />
+            </>
+          ) : (
+            <>
+              <div className="absolute top-20 left-20 w-64 h-64 bg-yellow-400 rounded-full opacity-20 blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500 rounded-full opacity-20 blur-3xl animate-pulse delay-1000"></div>
+            </>
+          )}
         </div>
 
         {/* Victory Banner */}
@@ -199,7 +259,9 @@ const BattleScreen = () => {
           {/* Victory Text */}
           <div className="text-center mb-8">
             <h1 className="text-8xl font-bold mb-4" style={{
-              background: 'linear-gradient(to bottom, #60a5fa, #a78bfa, #f472b6)',
+              background: isHeavenVictory
+                ? 'linear-gradient(to bottom, #fbbf24, #f59e0b, #d97706)'
+                : 'linear-gradient(to bottom, #60a5fa, #a78bfa, #f472b6)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               textShadow: '0 0 30px rgba(147, 51, 234, 0.5)',
@@ -210,39 +272,70 @@ const BattleScreen = () => {
           </div>
 
           {/* Battle Rewards Scroll */}
-          <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-8 border-amber-800 rounded-lg shadow-2xl p-8 min-w-96 max-w-lg relative">
+          <div
+            className="rounded-2xl shadow-2xl p-8 min-w-96 max-w-lg relative border-4"
+            style={isHeavenVictory
+              ? { background: 'rgba(255,255,255,0.88)', borderColor: '#fbbf24', boxShadow: '0 8px 40px rgba(251,191,36,0.4)', backdropFilter: 'blur(8px)' }
+              : { background: 'linear-gradient(135deg,#fef3c7,#fffbeb)', borderColor: '#92400e' }
+            }
+          >
             {/* Scroll decorative top */}
-            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-8 bg-amber-700 rounded-full border-4 border-amber-800"></div>
-            
+            <div
+              className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-24 h-8 rounded-full border-4"
+              style={isHeavenVictory
+                ? { background: '#fbbf24', borderColor: '#d97706', boxShadow: '0 0 12px rgba(251,191,36,0.7)' }
+                : { background: '#b45309', borderColor: '#92400e' }
+              }
+            />
+
             <div className="text-center space-y-4">
-              <h2 className="text-3xl font-bold text-amber-900 mb-6" style={{
+              <h2 className="text-3xl font-bold mb-6" style={{
                 fontFamily: 'Georgia, serif',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+                color: isHeavenVictory ? '#78350f' : '#78350f',
+                textShadow: isHeavenVictory ? '0 0 12px rgba(251,191,36,0.6)' : '2px 2px 4px rgba(0,0,0,0.3)',
               }}>
-                Battle Rewards
+                {isHeavenVictory ? '✨ Divine Training ✨' : 'Battle Rewards'}
               </h2>
               
-              {/* XP Reward */}
-              <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 border-4 border-blue-400">
-                <div className="text-amber-900 font-semibold text-lg mb-1">Experience Points</div>
-                <div className="text-3xl font-bold text-blue-700">+ {battleRewards.xp} XP</div>
-              </div>
-
-              {/* Gold Reward */}
-              <div className="bg-gradient-to-r from-yellow-100 to-amber-100 rounded-lg p-4 border-4 border-yellow-400">
-                <div className="text-amber-900 font-semibold text-lg mb-1">Gold</div>
-                <div className="text-3xl font-bold text-yellow-700">+ {battleRewards.gold} GOLD</div>
-              </div>
-
-              {/* Level Up Message */}
-              {battleRewards.leveledUp && (
-                <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-4 border-green-400 animate-pulse">
-                  <div className="text-amber-900 font-semibold text-lg mb-1">🎉 Level Up! 🎉</div>
-                  <div className="text-2xl font-bold text-green-700">You are now Level {battleRewards.newLevel}!</div>
+              {/* Stat Trainer special rewards */}
+              {battleRewards.statTrainer ? (
+                <div className="bg-gradient-to-r from-purple-100 to-violet-100 rounded-lg p-4 border-4 border-purple-500 animate-pulse">
+                  <div className="text-purple-900 font-bold text-lg mb-1">✨ Training Complete! ✨</div>
+                  <div className="text-2xl font-bold text-purple-700">
+                    {battleRewards.pointsUnlocked > 0
+                      ? `${battleRewards.pointsUnlocked} Attribute Point${battleRewards.pointsUnlocked !== 1 ? 's' : ''} Unlocked!`
+                      : 'You defeated the Trainer!'}
+                  </div>
+                  {battleRewards.pointsUnlocked > 0 && (
+                    <div className="text-purple-600 text-sm mt-1">Return to the Trainer to allocate your points.</div>
+                  )}
                 </div>
+              ) : (
+                <>
+                  {/* XP Reward */}
+                  <div className="bg-gradient-to-r from-blue-100 to-purple-100 rounded-lg p-4 border-4 border-blue-400">
+                    <div className="text-amber-900 font-semibold text-lg mb-1">Experience Points</div>
+                    <div className="text-3xl font-bold text-blue-700">+ {battleRewards.xp} XP</div>
+                  </div>
+
+                  {/* Gold Reward */}
+                  <div className="bg-gradient-to-r from-yellow-100 to-amber-100 rounded-lg p-4 border-4 border-yellow-400">
+                    <div className="text-amber-900 font-semibold text-lg mb-1">Gold</div>
+                    <div className="text-3xl font-bold text-yellow-700">+ {battleRewards.gold} GOLD</div>
+                  </div>
+
+                  {/* Level Up Message */}
+                  {battleRewards.leveledUp && (
+                    <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-4 border-green-400 animate-pulse">
+                      <div className="text-amber-900 font-semibold text-lg mb-1">🎉 Level Up! 🎉</div>
+                      <div className="text-2xl font-bold text-green-700">You are now Level {battleRewards.newLevel}!</div>
+                      <div className="text-green-600 text-sm mt-1">⚡ 5 Attribute Points are waiting at the Portal!</div>
+                    </div>
+                  )}
+                </>
               )}
 
-              {/* Castle: Next Battle + Return | Town: Next */}
+              {/* Castle: Next Battle + Return | StatTrainer: Return to Trainer | Town: Next */}
               {battleSource === 'castle' && battleFloor && FLOOR_ENEMIES[battleFloor + 1] ? (
                 <div className="flex flex-col gap-3 mt-6">
                   <div className="text-center text-amber-700 text-sm font-semibold">
@@ -273,6 +366,13 @@ const BattleScreen = () => {
                     Return to Castle
                   </button>
                 </div>
+              ) : battleSource === 'statTrainer' ? (
+                <button
+                  onClick={handleVictoryContinue}
+                  className="w-full mt-6 bg-gradient-to-r from-purple-600 to-violet-700 hover:from-purple-700 hover:to-violet-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-purple-800 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
+                >
+                  ✨ Return to Trainer
+                </button>
               ) : (
                 <button
                   onClick={handleVictoryContinue}
@@ -352,24 +452,100 @@ const BattleScreen = () => {
 
   const spellIcons = ['⭐', '⬜', '🔴', '🟢', '🟡', '⚫']
 
+  const isHeavenlyBattle = battleSource === 'statTrainer'
+
   return (
-    <div className="w-full h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-green-300 relative overflow-hidden" style={{ pointerEvents: 'auto' }}>
-      {/* Sky Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-blue-400 to-blue-300">
-        <div className="absolute top-10 left-20 w-32 h-16 bg-white opacity-60 rounded-full blur-sm"></div>
-        <div className="absolute top-20 right-32 w-40 h-20 bg-white opacity-60 rounded-full blur-sm"></div>
-      </div>
-
-      {/* Ground */}
-      <div className="absolute bottom-0 w-full h-40 bg-gradient-to-b from-green-400 to-green-500">
-        <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-b from-amber-700 to-amber-800 opacity-60"></div>
-      </div>
-
-      {/* Trees */}
-      <div className="absolute bottom-40 right-10">
-        <div className="w-16 h-32 bg-green-700 border-2 border-green-800 rounded-t-full"></div>
-        <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-green-600 rounded-full border-2 border-green-700"></div>
-      </div>
+    <div
+      className="w-full h-screen relative overflow-hidden"
+      style={{
+        background: isHeavenlyBattle
+          ? 'linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 35%, #fef9ee 70%, #fffbeb 100%)'
+          : undefined,
+        pointerEvents: 'auto',
+      }}
+    >
+      {isHeavenlyBattle ? (
+        /* ——— Heavenly battle background ——— */
+        <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+          {/* Divine light rays */}
+          {[12, 30, 50, 68, 86].map((left, i) => (
+            <div key={i} style={{
+              position: 'absolute', top: 0, left: `${left}%`,
+              width: 80, height: '80%',
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, transparent 100%)',
+              transform: `rotate(${(i - 2) * 5}deg)`,
+              transformOrigin: 'top center',
+              filter: 'blur(22px)',
+            }} />
+          ))}
+          {/* Golden halo at top */}
+          <div style={{
+            position: 'absolute', top: -80, left: '50%', transform: 'translateX(-50%)',
+            width: 700, height: 320, borderRadius: '50%',
+            background: 'radial-gradient(ellipse, rgba(253,224,71,0.4) 0%, rgba(250,204,21,0.2) 50%, transparent 75%)',
+            filter: 'blur(24px)',
+          }} />
+          {/* Fluffy heavenly clouds */}
+          {[
+            { top: '8%', left: '5%', w: 160, h: 60 },
+            { top: '14%', left: '20%', w: 220, h: 70 },
+            { top: '6%', right: '8%', w: 180, h: 65 },
+            { top: '20%', right: '25%', w: 140, h: 50 },
+          ].map((c, i) => (
+            <div key={i} style={{
+              position: 'absolute', ...c,
+              borderRadius: 999,
+              background: 'rgba(255,255,255,0.85)',
+              filter: 'blur(8px)',
+              boxShadow: '0 4px 20px rgba(255,255,255,0.6)',
+            }} />
+          ))}
+          {/* Floating golden sparkles */}
+          {[8, 22, 40, 57, 73, 90].map((left, i) => (
+            <div key={`sp${i}`} style={{
+              position: 'absolute',
+              top: `${10 + (i * 14) % 55}%`,
+              left: `${left}%`,
+              width: 7, height: 7,
+              borderRadius: '50%',
+              background: '#fde68a',
+              boxShadow: '0 0 10px 4px rgba(253,224,71,0.8)',
+              animation: `portal-pulse ${1.4 + i * 0.35}s ease-in-out infinite`,
+            }} />
+          ))}
+          {/* Heavenly marble floor glow */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 160,
+            background: 'linear-gradient(180deg, transparent, rgba(255,251,235,0.8) 60%, rgba(253,230,138,0.4) 100%)',
+          }} />
+          {/* Marble floor columns (decorative) */}
+          {[10, 85].map((left, i) => (
+            <div key={`col${i}`} style={{
+              position: 'absolute', bottom: 0, left: `${left}%`,
+              width: 28, height: 180,
+              background: 'linear-gradient(90deg, rgba(255,255,255,0.9), rgba(253,224,71,0.3), rgba(255,255,255,0.9))',
+              borderRadius: '4px 4px 0 0',
+              border: '1px solid rgba(253,224,71,0.5)',
+              boxShadow: '0 0 16px rgba(253,224,71,0.3)',
+            }} />
+          ))}
+        </div>
+      ) : (
+        /* ——— Normal battle background ——— */
+        <>
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-400 to-blue-300">
+            <div className="absolute top-10 left-20 w-32 h-16 bg-white opacity-60 rounded-full blur-sm"></div>
+            <div className="absolute top-20 right-32 w-40 h-20 bg-white opacity-60 rounded-full blur-sm"></div>
+          </div>
+          <div className="absolute bottom-0 w-full h-40 bg-gradient-to-b from-green-400 to-green-500">
+            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-b from-amber-700 to-amber-800 opacity-60"></div>
+          </div>
+          <div className="absolute bottom-40 right-10">
+            <div className="w-16 h-32 bg-green-700 border-2 border-green-800 rounded-t-full"></div>
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 w-20 h-20 bg-green-600 rounded-full border-2 border-green-700"></div>
+          </div>
+        </>
+      )}
 
       {/* Battle Content */}
       <div className="relative z-10 w-full h-full flex items-center justify-center gap-20">
@@ -482,30 +658,19 @@ const BattleScreen = () => {
                     <div className="mb-3 pb-3 border-b-2 border-amber-700">
                       <h5 className="font-bold mb-1 text-amber-800">Attributes</h5>
                       <div className="grid grid-cols-3 gap-1">
-                        <div className="flex justify-between">
-                          <span>STR:</span>
-                          <span className="font-bold text-red-700">{Math.floor(player.level * 10) + 50}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>DEX:</span>
-                          <span className="font-bold text-purple-700">{Math.floor(player.level * 7) + 35}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>INT:</span>
-                          <span className="font-bold text-blue-700">{Math.floor(player.level * 8) + 40}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>END:</span>
-                          <span className="font-bold text-orange-700">{Math.floor(player.level * 9) + 45}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>CHA:</span>
-                          <span className="font-bold text-pink-700">{Math.floor(player.level * 6) + 30}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>LCK:</span>
-                          <span className="font-bold text-yellow-700">{Math.floor(player.level * 5) + 25}</span>
-                        </div>
+                        {[
+                          { label: 'STR', base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0) * 10, color: 'text-red-700'    },
+                          { label: 'DEX', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0) * 10, color: 'text-purple-700' },
+                          { label: 'INT', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0) * 10, color: 'text-blue-700'   },
+                          { label: 'END', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0) * 10, color: 'text-orange-700' },
+                          { label: 'CHA', base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0) * 10, color: 'text-pink-700'   },
+                          { label: 'LCK', base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0) * 10, color: 'text-yellow-700' },
+                        ].map(({ label, base, bonus, color }) => (
+                          <div key={label} className="flex justify-between">
+                            <span>{label}:</span>
+                            <span className={`font-bold ${color}`}>{base + bonus}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
@@ -623,8 +788,56 @@ const BattleScreen = () => {
 
         {/* Enemy Character */}
         <div className={`flex flex-col items-center ${animating && !playerTurn ? 'animate-bounce' : ''}`}>
-          <div className="text-8xl mb-4">👹</div>
-          <div className="bg-gradient-to-br from-purple-800 to-purple-900 border-4 border-purple-700 rounded-lg px-4 py-2 shadow-2xl">
+          {/* Enemy sprite — holy warrior for stat trainer, monster otherwise */}
+          {isHeavenlyBattle ? (
+            <div className="mb-4 flex flex-col items-center" style={{ position: 'relative' }}>
+              {/* Halo */}
+              <div style={{
+                width: 64, height: 18, borderRadius: '50%',
+                border: '5px solid #fbbf24',
+                boxShadow: '0 0 16px rgba(251,191,36,0.9), inset 0 0 8px rgba(255,255,255,0.4)',
+                marginBottom: -10, zIndex: 2, position: 'relative',
+              }} />
+              {/* Angel body */}
+              <div style={{
+                width: 96, height: 96, borderRadius: '50%', fontSize: 58,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'radial-gradient(circle, #fef3c7 0%, #fde68a 55%, #fbbf24 100%)',
+                border: '4px solid #d97706',
+                boxShadow: '0 0 32px rgba(251,191,36,0.7), 0 0 8px rgba(255,255,255,0.5)',
+              }}>
+                🧝‍♂️
+              </div>
+              {/* Wing flourishes */}
+              <div style={{
+                position: 'absolute', bottom: 4, left: -28,
+                fontSize: 28, opacity: 0.85,
+                transform: 'scaleX(-1) rotate(-15deg)',
+                filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.8))',
+              }}>🪶</div>
+              <div style={{
+                position: 'absolute', bottom: 4, right: -28,
+                fontSize: 28, opacity: 0.85,
+                transform: 'rotate(15deg)',
+                filter: 'drop-shadow(0 0 6px rgba(251,191,36,0.8))',
+              }}>🪶</div>
+              {/* Divine glow beneath */}
+              <div style={{
+                position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
+                width: 80, height: 16, borderRadius: '50%',
+                background: 'rgba(253,224,71,0.5)', filter: 'blur(6px)',
+              }} />
+            </div>
+          ) : (
+            <div className="text-8xl mb-4">{enemy.icon || '👹'}</div>
+          )}
+          <div
+            className="border-4 rounded-lg px-4 py-2 shadow-2xl"
+            style={isHeavenlyBattle
+              ? { background: 'linear-gradient(135deg, rgba(255,255,255,0.85), rgba(255,251,235,0.9))', borderColor: '#fbbf24', backdropFilter: 'blur(4px)' }
+              : { background: 'linear-gradient(135deg, #5b21b6, #4c1d95)', borderColor: '#7c3aed' }
+            }
+          >
 
             {/* Hoverable enemy name */}
             <div
@@ -632,8 +845,14 @@ const BattleScreen = () => {
               onMouseEnter={() => setShowEnemyTooltip(true)}
               onMouseLeave={() => setShowEnemyTooltip(false)}
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full border-2 border-purple-300 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
-                👹
+              <div
+                className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-lg group-hover:scale-110 transition-transform"
+                style={isHeavenlyBattle
+                  ? { background: 'linear-gradient(135deg,#fde68a,#fbbf24)', borderColor: '#d97706' }
+                  : { background: 'linear-gradient(135deg,#7c3aed,#a855f7)', borderColor: '#c084fc' }
+                }
+              >
+                {isHeavenlyBattle ? '🧝‍♂️' : (enemy.icon || '👹')}
               </div>
               <h3 className="text-yellow-200 font-bold text-xl group-hover:text-yellow-100 transition-colors underline decoration-dotted underline-offset-2">
                 {enemy.name}
@@ -658,17 +877,22 @@ const BattleScreen = () => {
                 }}
               >
                 <div
-                  className="bg-gradient-to-br from-purple-100 to-purple-50 border-4 border-purple-800 rounded-lg shadow-2xl p-5"
-                  style={{ pointerEvents: 'auto' }}
+                  className="border-4 rounded-lg shadow-2xl p-5"
+                  style={isHeavenlyBattle
+                    ? { background: 'linear-gradient(135deg,rgba(255,255,255,0.95),rgba(255,251,235,0.95))', borderColor: '#fbbf24', pointerEvents: 'auto', backdropFilter: 'blur(6px)' }
+                    : { background: 'linear-gradient(135deg,#f3e8ff,#ede9fe)', borderColor: '#6d28d9', pointerEvents: 'auto' }
+                  }
                   onMouseEnter={() => setShowEnemyTooltip(true)}
                   onMouseLeave={() => setShowEnemyTooltip(false)}
                 >
-                  <div className="text-purple-900 text-sm">
+                  <div className="text-sm" style={{ color: isHeavenlyBattle ? '#78350f' : '#4c1d95' }}>
                     {/* Header */}
-                    <div className="text-center mb-3 pb-2 border-b-2 border-purple-700">
-                      <div className="text-3xl mb-1">👹</div>
-                      <span className="font-bold text-xl text-purple-900">{enemy.name}</span>
-                      <div className="text-purple-600 text-xs mt-1">— Monster Stats</div>
+                    <div className="text-center mb-3 pb-2 border-b-2" style={{ borderColor: isHeavenlyBattle ? '#fbbf24' : '#7c3aed' }}>
+                      <div className="text-3xl mb-1">{isHeavenlyBattle ? '🧝‍♂️' : (enemy.icon || '👹')}</div>
+                      <span className="font-bold text-xl" style={{ color: isHeavenlyBattle ? '#78350f' : '#4c1d95' }}>{enemy.name}</span>
+                      <div className="text-xs mt-1" style={{ color: isHeavenlyBattle ? '#b45309' : '#7c3aed' }}>
+                        {isHeavenlyBattle ? '— Holy Guardian' : '— Monster Stats'}
+                      </div>
                     </div>
 
                     {/* Level & Element */}
@@ -861,67 +1085,48 @@ const BattleScreen = () => {
 
       {/* Action Menu */}
       <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-gradient-to-br from-amber-800 to-amber-900 border-4 border-amber-700 rounded-lg shadow-2xl p-6">
+        <div
+          className="border-4 rounded-lg shadow-2xl p-6"
+          style={isHeavenlyBattle
+            ? { background: 'rgba(255,255,255,0.88)', borderColor: '#fbbf24', backdropFilter: 'blur(8px)', boxShadow: '0 8px 32px rgba(251,191,36,0.3)' }
+            : { background: 'linear-gradient(135deg,#92400e,#78350f)', borderColor: '#d97706' }
+          }
+        >
           <div className="grid grid-cols-5 gap-2 mb-4">
-            <button
-              onClick={() => {
-                console.log('🎯 Attack tab clicked')
-                setSelectedAction('attack')
-              }}
-              className={`px-4 py-3 font-bold rounded-lg border-2 transition ${
-                selectedAction === 'attack'
-                  ? 'bg-red-600 border-red-800 text-white'
-                  : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
-              }`}
-            >
-              Attack
-            </button>
-            <button
-              onClick={() => setSelectedAction('spells')}
-              className={`px-4 py-3 font-bold rounded-lg border-2 transition ${
-                selectedAction === 'spells'
-                  ? 'bg-red-600 border-red-800 text-white'
-                  : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
-              }`}
-            >
-              Spells
-            </button>
-            <button
-              onClick={() => setSelectedAction('items')}
-              className={`px-4 py-3 font-bold rounded-lg border-2 transition ${
-                selectedAction === 'items'
-                  ? 'bg-red-600 border-red-800 text-white'
-                  : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
-              }`}
-            >
-              Items
-            </button>
-            <button
-              onClick={() => setSelectedAction('pets')}
-              className={`px-4 py-3 font-bold rounded-lg border-2 transition ${
-                selectedAction === 'pets'
-                  ? 'bg-red-600 border-red-800 text-white'
-                  : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
-              }`}
-            >
-              🐾 Pets
-            </button>
-            <button
-              onClick={() => setSelectedAction('equipment')}
-              className={`px-4 py-3 font-bold rounded-lg border-2 transition ${
-                selectedAction === 'equipment'
-                  ? 'bg-red-600 border-red-800 text-white'
-                  : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
-              }`}
-            >
-              Equip
-            </button>
+            {[
+              { key: 'attack', label: 'Attack' },
+              { key: 'spells', label: 'Spells' },
+              { key: 'items',  label: 'Items'  },
+              { key: 'pets',   label: '🐾 Pets' },
+              { key: 'equipment', label: 'Equip' },
+            ].map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => {
+                  if (key === 'attack') console.log('🎯 Attack tab clicked')
+                  setSelectedAction(key)
+                }}
+                className="px-4 py-3 font-bold rounded-lg border-2 transition"
+                style={selectedAction === key
+                  ? { background: isHeavenlyBattle ? '#fbbf24' : '#dc2626', borderColor: isHeavenlyBattle ? '#d97706' : '#991b1b', color: isHeavenlyBattle ? '#78350f' : '#fff' }
+                  : isHeavenlyBattle
+                    ? { background: 'rgba(253,224,71,0.15)', borderColor: '#fde68a', color: '#92400e' }
+                    : { background: '#78350f', borderColor: '#d97706', color: '#fde68a' }
+                }
+              >
+                {label}
+              </button>
+            ))}
           </div>
           {/* Flee button below tabs */}
           <div className="mb-2">
             <button
               onClick={handleFlee}
-              className="w-full px-4 py-2 font-bold rounded-lg border-2 bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800 transition text-sm"
+              className="w-full px-4 py-2 font-bold rounded-lg border-2 transition text-sm"
+              style={isHeavenlyBattle
+                ? { background: 'rgba(253,224,71,0.15)', borderColor: '#fde68a', color: '#92400e' }
+                : { background: '#78350f', borderColor: '#d97706', color: '#fde68a' }
+              }
             >
               Flee
             </button>
@@ -967,8 +1172,14 @@ const BattleScreen = () => {
                 handleAttack()
               }}
               disabled={!playerTurn || animating}
-              style={{ pointerEvents: 'auto', zIndex: 1000 }}
-              className="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={isHeavenlyBattle
+                ? { pointerEvents: 'auto', zIndex: 1000, background: 'linear-gradient(135deg,#fbbf24,#d97706)', borderColor: '#b45309', color: '#fff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0,0,0,0.3)', boxShadow: '0 4px 16px rgba(251,191,36,0.5)' }
+                : { pointerEvents: 'auto', zIndex: 1000 }
+              }
+              className={isHeavenlyBattle
+                ? 'w-full font-bold py-4 px-6 rounded-lg border-2 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
+                : 'w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
+              }
             >
               Attack! {!playerTurn ? '(Not your turn)' : animating ? '(Animating)' : ''}
             </button>
@@ -1264,12 +1475,12 @@ const BattleScreen = () => {
           e.stopPropagation()
           console.log('🏠 Back clicked')
           endBattle(false)
-          navigate(battleSource === 'castle' ? '/castle' : '/town')
+          navigate(sourceNav)
         }}
         style={{ pointerEvents: 'auto', zIndex: 1000 }}
         className="absolute top-4 right-4 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded border-2 border-red-800 z-50"
       >
-        {battleSource === 'castle' ? 'Back to Castle' : 'Back to Town'}
+        {battleSource === 'castle' ? 'Back to Castle' : battleSource === 'statTrainer' ? 'Back to Trainer' : 'Back to Town'}
       </button>
     </div>
   )

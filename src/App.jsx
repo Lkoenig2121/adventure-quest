@@ -7,6 +7,7 @@ import CastleScreen from './components/CastleScreen'
 import ShopScreen from './components/ShopScreen'
 import CharacterPage from './components/CharacterPage'
 import PetShopScreen from './components/PetShopScreen'
+import StatTrainerScreen from './components/StatTrainerScreen'
 import { GameProvider } from './context/GameContext'
 
 function App() {
@@ -103,6 +104,16 @@ function App() {
               <Navigate to="/login" replace />
             )
           } 
+        />
+        <Route
+          path="/stat-trainer"
+          element={
+            isAuthenticated ? (
+              <StatTrainerScreen />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
         />
         <Route path="/" element={<Navigate to={isAuthenticated ? "/town" : "/login"} replace />} />
       </Routes>

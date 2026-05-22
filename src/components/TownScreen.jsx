@@ -78,51 +78,111 @@ const TownScreen = ({ onLogout }) => {
   }
 
   const handleBattleClick = () => {
-    // Generate a random enemy
-    const enemies = [
-      {
-        name: 'Berserker (+20)',
-        hp: 786,
-        maxHp: 786,
-        mp: 128,
-        maxMp: 128,
-        level: player.level + 20,
-        xpReward: 200,
-        goldReward: 100,
-        image: 'berserker',
-        element: 'Fire',
-        elementIcon: '🔥',
-        elementResistances: { fire: 50, water: 130, wind: 100, ice: 150, earth: 100, energy: 100, light: 130, darkness: 100 },
-      },
-      {
-        name: 'Goblin Warrior',
-        hp: 150,
-        maxHp: 150,
-        mp: 50,
-        maxMp: 50,
-        level: player.level + 5,
-        xpReward: 80,
-        goldReward: 40,
-        image: 'goblin',
-        element: 'Earth',
-        elementIcon: '🌍',
-        elementResistances: { fire: 150, water: 100, wind: 120, ice: 100, earth: 50, energy: 100, light: 100, darkness: 100 },
-      },
-      {
-        name: 'Dark Knight',
-        hp: 400,
-        maxHp: 400,
-        mp: 200,
-        maxMp: 200,
-        level: player.level + 10,
-        xpReward: 150,
-        goldReward: 75,
-        image: 'knight',
-        element: 'Darkness',
-        elementIcon: '🌑',
-        elementResistances: { fire: 100, water: 100, wind: 100, ice: 130, earth: 100, energy: 100, light: 200, darkness: 0 },
-      }
+    const lv = player.level
+    // Helper: scale HP, MP, XP, gold with player level
+    // tier: 1=easy, 2=medium, 3=hard, 4=dragon, 5=boss
+    const s = (base, scale) => Math.floor(base + lv * scale)
+
+    const raw = [
+      // ── Elemental Dragons ──────────────────────────────────────────────
+      { name:'Fire Dragon',      icon:'🔥🐉', element:'Fire',     elementIcon:'🔥', speed:45, lvOff:18,
+        hpB:300, hpS:70, mpB:80,  mpS:10, xpB:120, xpS:15, gB:60, gS:7,
+        elementResistances:{ fire:0, water:200, wind:100, ice:200, earth:100, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Ice Dragon',       icon:'❄️🐉', element:'Ice',      elementIcon:'❄️', speed:40, lvOff:16,
+        hpB:280, hpS:65, mpB:100, mpS:12, xpB:110, xpS:14, gB:55, gS:7,
+        elementResistances:{ fire:200, water:50, wind:100, ice:0, earth:100, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Water Dragon',     icon:'💧🐉', element:'Water',    elementIcon:'💧', speed:55, lvOff:17,
+        hpB:290, hpS:67, mpB:110, mpS:13, xpB:115, xpS:14, gB:58, gS:7,
+        elementResistances:{ fire:200, water:0, wind:100, ice:50, earth:100, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Wind Dragon',      icon:'🌪️🐉', element:'Wind',     elementIcon:'🌪️', speed:80, lvOff:15,
+        hpB:260, hpS:60, mpB:90,  mpS:11, xpB:105, xpS:13, gB:52, gS:6,
+        elementResistances:{ fire:100, water:100, wind:0, ice:100, earth:150, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Earth Dragon',     icon:'🌍🐉', element:'Earth',    elementIcon:'🌍', speed:30, lvOff:19,
+        hpB:380, hpS:80, mpB:70,  mpS:8,  xpB:130, xpS:16, gB:65, gS:8,
+        elementResistances:{ fire:100, water:100, wind:150, ice:100, earth:0, energy:100, light:100, darkness:100, physical:60 } },
+      { name:'Energy Dragon',    icon:'⚡🐉', element:'Energy',   elementIcon:'⚡', speed:65, lvOff:17,
+        hpB:300, hpS:68, mpB:140, mpS:15, xpB:118, xpS:14, gB:59, gS:7,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:0, light:50, darkness:150, physical:80 } },
+      { name:'Light Dragon',     icon:'✨🐉', element:'Light',    elementIcon:'✨', speed:60, lvOff:20,
+        hpB:320, hpS:72, mpB:110, mpS:13, xpB:130, xpS:15, gB:65, gS:8,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:50, light:0, darkness:200, physical:80 } },
+      { name:'Darkness Dragon',  icon:'🌑🐉', element:'Darkness', elementIcon:'🌑', speed:60, lvOff:20,
+        hpB:340, hpS:75, mpB:120, mpS:14, xpB:130, xpS:15, gB:65, gS:8,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:150, light:200, darkness:0, physical:80 } },
+      { name:'Void Wyrm',        icon:'🌌🐲', element:'Darkness', elementIcon:'🌑', speed:50, lvOff:25,
+        hpB:450, hpS:95, mpB:160, mpS:18, xpB:170, xpS:18, gB:85, gS:9,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:100, light:200, darkness:0, physical:90 } },
+      { name:'Zombie Dragon',    icon:'🧟🐲', element:'Darkness', elementIcon:'🌑', speed:35, lvOff:14,
+        hpB:270, hpS:62, mpB:50,  mpS:5,  xpB:100, xpS:12, gB:50, gS:6,
+        elementResistances:{ fire:150, water:100, wind:100, ice:100, earth:100, energy:100, light:200, darkness:0, physical:70 } },
+      { name:'Acid Dragon',      icon:'🟢🐉', element:'Earth',    elementIcon:'🌍', speed:50, lvOff:17,
+        hpB:295, hpS:66, mpB:80,  mpS:10, xpB:112, xpS:14, gB:56, gS:7,
+        elementResistances:{ fire:100, water:50, wind:100, ice:100, earth:0, energy:100, light:100, darkness:100, physical:80 } },
+      // ── Classic AQ Monsters ────────────────────────────────────────────
+      { name:'Berserker (+20)',   icon:'🪓', element:'Fire',     elementIcon:'🔥', speed:60, lvOff:20,
+        hpB:380, hpS:60, mpB:70,  mpS:8,  xpB:110, xpS:13, gB:55, gS:6,
+        elementResistances:{ fire:50, water:130, wind:100, ice:150, earth:100, energy:100, light:130, darkness:100, physical:100 } },
+      { name:'Goblin Warrior',   icon:'👺', element:'Earth',    elementIcon:'🌍', speed:55, lvOff:3,
+        hpB:60,  hpS:28, mpB:25,  mpS:4,  xpB:35,  xpS:6,  gB:18, gS:3,
+        elementResistances:{ fire:150, water:100, wind:120, ice:100, earth:50, energy:100, light:100, darkness:100, physical:100 } },
+      { name:'Dark Knight',      icon:'🛡️', element:'Darkness', elementIcon:'🌑', speed:50, lvOff:10,
+        hpB:180, hpS:40, mpB:100, mpS:12, xpB:80,  xpS:10, gB:40, gS:5,
+        elementResistances:{ fire:100, water:100, wind:100, ice:130, earth:100, energy:100, light:200, darkness:0, physical:100 } },
+      { name:'Undead Soldier',   icon:'💀', element:'Darkness', elementIcon:'🌑', speed:35, lvOff:7,
+        hpB:120, hpS:32, mpB:30,  mpS:4,  xpB:55,  xpS:7,  gB:28, gS:4,
+        elementResistances:{ fire:150, water:100, wind:100, ice:100, earth:100, energy:100, light:200, darkness:0, physical:80 } },
+      { name:'Werewolf',         icon:'🐺', element:'Wind',     elementIcon:'🌪️', speed:75, lvOff:9,
+        hpB:150, hpS:36, mpB:40,  mpS:5,  xpB:70,  xpS:8,  gB:35, gS:4,
+        elementResistances:{ fire:100, water:100, wind:50, ice:130, earth:100, energy:100, light:150, darkness:100, physical:80 } },
+      { name:'Vampire',          icon:'🧛', element:'Darkness', elementIcon:'🌑', speed:70, lvOff:12,
+        hpB:190, hpS:42, mpB:90,  mpS:11, xpB:88,  xpS:10, gB:44, gS:5,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:100, light:200, darkness:0, physical:80 } },
+      { name:'Stone Golem',      icon:'🗿', element:'Earth',    elementIcon:'🌍', speed:25, lvOff:13,
+        hpB:250, hpS:48, mpB:20,  mpS:2,  xpB:92,  xpS:11, gB:46, gS:5,
+        elementResistances:{ fire:100, water:130, wind:100, ice:100, earth:0, energy:100, light:100, darkness:100, physical:50 } },
+      { name:'Sea Serpent',      icon:'🐍', element:'Water',    elementIcon:'💧', speed:60, lvOff:12,
+        hpB:210, hpS:44, mpB:60,  mpS:7,  xpB:85,  xpS:10, gB:42, gS:5,
+        elementResistances:{ fire:150, water:0, wind:100, ice:50, earth:100, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Thunder Phoenix',  icon:'🦅', element:'Energy',   elementIcon:'⚡', speed:85, lvOff:15,
+        hpB:270, hpS:52, mpB:110, mpS:13, xpB:100, xpS:12, gB:50, gS:6,
+        elementResistances:{ fire:100, water:150, wind:50, ice:150, earth:100, energy:0, light:50, darkness:150, physical:80 } },
+      { name:'Frost Troll',      icon:'🧌', element:'Ice',      elementIcon:'❄️', speed:40, lvOff:8,
+        hpB:140, hpS:34, mpB:30,  mpS:4,  xpB:60,  xpS:7,  gB:30, gS:4,
+        elementResistances:{ fire:200, water:100, wind:100, ice:0, earth:100, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Magma Elemental',  icon:'🌋', element:'Fire',     elementIcon:'🔥', speed:45, lvOff:13,
+        hpB:220, hpS:46, mpB:50,  mpS:6,  xpB:90,  xpS:11, gB:45, gS:5,
+        elementResistances:{ fire:0, water:300, wind:100, ice:250, earth:80, energy:100, light:100, darkness:100, physical:80 } },
+      { name:'Shadow Stalker',   icon:'🌚', element:'Darkness', elementIcon:'🌑', speed:90, lvOff:10,
+        hpB:160, hpS:38, mpB:75,  mpS:9,  xpB:75,  xpS:9,  gB:38, gS:4,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:100, light:250, darkness:0, physical:90 } },
+      { name:'Celestial Unicorn',icon:'🦄', element:'Light',    elementIcon:'✨', speed:70, lvOff:11,
+        hpB:200, hpS:42, mpB:150, mpS:17, xpB:80,  xpS:9,  gB:40, gS:5,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:50, light:0, darkness:250, physical:80 } },
+      { name:'Orc Warlord',      icon:'🪖', element:'Fire',     elementIcon:'🔥', speed:50, lvOff:14,
+        hpB:260, hpS:50, mpB:50,  mpS:6,  xpB:95,  xpS:11, gB:48, gS:5,
+        elementResistances:{ fire:50, water:100, wind:100, ice:100, earth:50, energy:100, light:100, darkness:100, physical:60 } },
+      { name:'Grenwog',          icon:'🐸', element:'Earth',    elementIcon:'🌍', speed:60, lvOff:6,
+        hpB:110, hpS:30, mpB:40,  mpS:5,  xpB:50,  xpS:6,  gB:25, gS:3,
+        elementResistances:{ fire:100, water:50, wind:100, ice:130, earth:0, energy:100, light:100, darkness:100, physical:100 } },
+      { name:'Zorbak the Moglin',icon:'😈', element:'Darkness', elementIcon:'🌑', speed:65, lvOff:9,
+        hpB:150, hpS:35, mpB:140, mpS:16, xpB:68,  xpS:8,  gB:34, gS:4,
+        elementResistances:{ fire:100, water:100, wind:100, ice:100, earth:100, energy:100, light:200, darkness:0, physical:80 } },
+      { name:'Drakel Warrior',   icon:'🦖', element:'Energy',   elementIcon:'⚡', speed:55, lvOff:12,
+        hpB:200, hpS:43, mpB:60,  mpS:7,  xpB:82,  xpS:10, gB:41, gS:5,
+        elementResistances:{ fire:80, water:80, wind:80, ice:80, earth:80, energy:0, light:100, darkness:100, physical:80 } },
+      { name:'Fungal Shambler',  icon:'🍄', element:'Earth',    elementIcon:'🌍', speed:20, lvOff:4,
+        hpB:80,  hpS:26, mpB:15,  mpS:2,  xpB:38,  xpS:5,  gB:19, gS:3,
+        elementResistances:{ fire:200, water:50, wind:100, ice:100, earth:0, energy:100, light:100, darkness:100, physical:100 } },
+      { name:'Skeletal Archer',  icon:'🏹', element:'Darkness', elementIcon:'🌑', speed:65, lvOff:5,
+        hpB:95,  hpS:29, mpB:25,  mpS:3,  xpB:44,  xpS:6,  gB:22, gS:3,
+        elementResistances:{ fire:130, water:100, wind:100, ice:100, earth:100, energy:100, light:200, darkness:0, physical:80 } },
     ]
+
+    const enemies = raw.map(({ hpB, hpS, mpB, mpS, xpB, xpS, gB, gS, lvOff, ...rest }) => {
+      const hp = s(hpB, hpS), mp = s(mpB, mpS)
+      return { ...rest, hp, maxHp: hp, mp, maxMp: mp, level: lv + lvOff,
+        xpReward: s(xpB, xpS), goldReward: s(gB, gS) }
+    })
     const randomEnemy = enemies[Math.floor(Math.random() * enemies.length)]
     startBattle(randomEnemy)
     navigate('/battle')
@@ -157,6 +217,104 @@ const TownScreen = ({ onLogout }) => {
         {/* Comet/Meteor */}
         <div className="absolute top-5 right-20 w-4 h-20 bg-gradient-to-b from-red-500 to-orange-400 rounded-full transform rotate-45 opacity-80"></div>
         <div className="absolute top-8 right-18 w-2 h-16 bg-yellow-300 rounded-full transform rotate-45 blur-sm"></div>
+
+        {/* Sky Portal — jagged starburst, right side of sky */}
+        <button
+          onClick={() => navigate('/stat-trainer')}
+          className="absolute group flex flex-col items-center gap-1"
+          title="Portal — visit the Stat Trainer"
+          style={{ top: '6%', right: '18%', zIndex: 20, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          {/* Ambient glow behind the portal */}
+          <div style={{
+            position: 'absolute',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: 110, height: 110,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(236,72,153,0.45) 0%, rgba(168,85,247,0.25) 50%, transparent 75%)',
+            filter: 'blur(6px)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* SVG portal — layered jagged starburst */}
+          <svg
+            width="90" height="90" viewBox="0 0 100 100"
+            style={{ display: 'block', filter: 'drop-shadow(0 0 8px rgba(236,72,153,0.9)) drop-shadow(0 0 16px rgba(168,85,247,0.7))' }}
+            overflow="visible"
+          >
+            <defs>
+              <radialGradient id="ptVortex" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#e879f9" />
+                <stop offset="35%" stopColor="#7c3aed" />
+                <stop offset="70%" stopColor="#2e1065" />
+                <stop offset="100%" stopColor="#0f0020" />
+              </radialGradient>
+              <radialGradient id="ptCore" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#f0abfc" />
+                <stop offset="60%" stopColor="#a855f7" />
+                <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+              </radialGradient>
+              {/* Jagged outer burst — 12 spikes, R=46 r=32 */}
+              <style>{`
+                .pt-outer { animation: spin 5s linear infinite; transform-origin: 50px 50px; }
+                .pt-mid   { animation: spin 3s linear infinite reverse; transform-origin: 50px 50px; }
+                .pt-core  { animation: spin 1.8s linear infinite; transform-origin: 50px 50px; }
+              `}</style>
+            </defs>
+
+            {/* Outer jagged ring — pinkish-purple */}
+            <polygon
+              className="pt-outer"
+              points="50,4 58.3,19.1 73,10.2 72.6,27.4 89.8,27 80.9,41.7 96,50 80.9,58.3 89.8,73 72.6,72.6 73,89.8 58.3,80.9 50,96 41.7,80.9 27,89.8 27.4,72.6 10.2,73 19.1,58.3 4,50 19.1,41.7 10.2,27 27.4,27.4 27,10.2 41.7,19.1"
+              fill="#be185d"
+              opacity="0.85"
+            />
+
+            {/* Middle jagged burst — brighter violet, counter-spin */}
+            <polygon
+              className="pt-mid"
+              points="50,16 55.2,30.7 67,20.6 64.1,35.9 79.4,33 69.3,44.8 84,50 69.3,55.2 79.4,67 64.1,64.1 67,79.4 55.2,69.3 50,84 44.8,69.3 33,79.4 35.9,64.1 20.6,67 30.7,55.2 16,50 30.7,44.8 20.6,33 35.9,35.9 33,20.6 44.8,30.7"
+              fill="#a855f7"
+              opacity="0.9"
+            />
+
+            {/* Dark vortex core */}
+            <circle cx="50" cy="50" r="24" fill="url(#ptVortex)" />
+
+            {/* Swirling inner light — co-spinning */}
+            <circle cx="50" cy="50" r="13" fill="url(#ptCore)" className="pt-core" opacity="0.9" />
+
+            {/* Bright centre pinpoint */}
+            <circle cx="50" cy="50" r="4" fill="#f5d0fe" opacity="0.95" />
+          </svg>
+
+          {/* Notification badge when pending stat points */}
+          {(player.pendingStatPoints || 0) > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: -6, right: -6,
+              width: 22, height: 22,
+              borderRadius: '50%',
+              background: '#f59e0b',
+              border: '2px solid white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 'bold', color: '#1a1a1a',
+              zIndex: 10,
+              boxShadow: '0 0 6px rgba(245,158,11,0.8)',
+            }}>
+              !
+            </div>
+          )}
+
+          {/* Label */}
+          <span
+            className="text-xs font-bold opacity-80 group-hover:opacity-100 transition-opacity"
+            style={{ color: '#f9a8d4', textShadow: '0 0 8px #ec4899, 0 1px 2px rgba(0,0,0,0.9)', letterSpacing: 1 }}
+          >
+            PORTAL
+          </span>
+        </button>
       </div>
 
       {/* Mountains */}
@@ -498,30 +656,19 @@ const TownScreen = ({ onLogout }) => {
                       <div className="mb-4 pb-3 border-b-2 border-amber-700">
                         <h5 className="font-bold mb-2 text-amber-800">Attributes</h5>
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          <div className="flex justify-between">
-                            <span>Strength:</span>
-                            <span className="font-bold text-red-700">{Math.floor(player.level * 10) + 50}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Dexterity:</span>
-                            <span className="font-bold text-purple-700">{Math.floor(player.level * 7) + 35}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Intellect:</span>
-                            <span className="font-bold text-blue-700">{Math.floor(player.level * 8) + 40}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Endurance:</span>
-                            <span className="font-bold text-orange-700">{Math.floor(player.level * 9) + 45}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Charisma:</span>
-                            <span className="font-bold text-pink-700">{Math.floor(player.level * 6) + 30}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span>Luck:</span>
-                            <span className="font-bold text-yellow-700">{Math.floor(player.level * 5) + 25}</span>
-                          </div>
+                          {[
+                            { label: 'Strength',  base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0) * 10, color: 'text-red-700'    },
+                            { label: 'Dexterity', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0) * 10, color: 'text-purple-700' },
+                            { label: 'Intellect', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0) * 10, color: 'text-blue-700'   },
+                            { label: 'Endurance', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0) * 10, color: 'text-orange-700' },
+                            { label: 'Charisma',  base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0) * 10, color: 'text-pink-700'   },
+                            { label: 'Luck',      base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0) * 10, color: 'text-yellow-700' },
+                          ].map(({ label, base, bonus, color }) => (
+                            <div key={label} className="flex justify-between">
+                              <span>{label}:</span>
+                              <span className={`font-bold ${color}`}>{base + bonus}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
 

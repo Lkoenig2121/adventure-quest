@@ -84,6 +84,9 @@ export const GameProvider = ({ children }) => {
       equipped: defaultEquipped,
       pets: [],
       activePetId: null,
+      pendingStatPoints: 0,
+      spendableStatPoints: 0,
+      bonusStats: { strength: 0, dexterity: 0, intellect: 0, endurance: 0, charisma: 0, luck: 0 },
     }
   })
 
@@ -119,55 +122,68 @@ export const GameProvider = ({ children }) => {
 
   const endBattle = useCallback((victory) => {
     if (victory && enemy) {
-      const xpGain = enemy.xpReward || 100
-      const goldGain = enemy.goldReward || 50
-      
-      setPlayer(prev => {
-        const newXp = prev.xp + xpGain
-        const newGold = prev.gold + goldGain
-        
-        // Level up check
-        const xpForNextLevel = prev.level * 1000
-        const willLevelUp = newXp >= xpForNextLevel
-        const newLevel = willLevelUp ? prev.level + 1 : prev.level
-        
-        // Store battle rewards for display
-        setBattleRewards({
-          xp: xpGain,
-          gold: goldGain,
-          leveledUp: willLevelUp,
-          newLevel: newLevel,
+      // Stat Trainer battle: convert pending points to spendable, no XP/gold
+      if (battleSource === 'statTrainer') {
+        setPlayer(prev => {
+          const pending = prev.pendingStatPoints || 0
+          setBattleRewards({ statTrainer: true, pointsUnlocked: pending, leveledUp: false, xp: 0, gold: 0, newLevel: null })
+          return {
+            ...prev,
+            spendableStatPoints: (prev.spendableStatPoints || 0) + pending,
+            pendingStatPoints: 0,
+          }
         })
-        
-        if (willLevelUp) {
+      } else {
+        const xpGain = enemy.xpReward || 100
+        const charismaBonus = Math.floor((player.bonusStats?.charisma || 0) * 5)
+        const goldGain = (enemy.goldReward || 50) + charismaBonus
+
+        setPlayer(prev => {
+          const newXp = prev.xp + xpGain
+          const newGold = prev.gold + goldGain
+
+          const xpForNextLevel = prev.level * 1000
+          const willLevelUp = newXp >= xpForNextLevel
+          const newLevel = willLevelUp ? prev.level + 1 : prev.level
+
+          setBattleRewards({
+            xp: xpGain,
+            gold: goldGain,
+            leveledUp: willLevelUp,
+            newLevel: newLevel,
+          })
+
+          if (willLevelUp) {
+            return {
+              ...prev,
+              xp: newXp,
+              gold: newGold,
+              level: newLevel,
+              maxHp: prev.maxHp + 50,
+              hp: prev.maxHp + 50,
+              maxMp: prev.maxMp + 30,
+              mp: prev.maxMp + 30,
+              healthPotions: (prev.healthPotions || 0) + 1,
+              manaPotions: (prev.manaPotions || 0) + 1,
+              pendingStatPoints: (prev.pendingStatPoints || 0) + 5,
+            }
+          }
+
           return {
             ...prev,
             xp: newXp,
             gold: newGold,
-            level: newLevel,
-            maxHp: prev.maxHp + 50,
-            hp: prev.maxHp + 50,
-            maxMp: prev.maxMp + 30,
-            mp: prev.maxMp + 30,
             healthPotions: (prev.healthPotions || 0) + 1,
             manaPotions: (prev.manaPotions || 0) + 1,
           }
-        }
-        
-        return {
-          ...prev,
-          xp: newXp,
-          gold: newGold,
-          healthPotions: (prev.healthPotions || 0) + 1,
-          manaPotions: (prev.manaPotions || 0) + 1,
-        }
-      })
+        })
+      }
     } else {
       setBattleRewards(null)
     }
     setEnemy(null)
     setInBattle(false)
-  }, [enemy])
+  }, [enemy, battleSource, player.bonusStats])
 
   const damagePlayer = useCallback((amount) => {
     setPlayer(prev => ({
@@ -358,6 +374,24 @@ export const GameProvider = ({ children }) => {
     }))
   }, [])
 
+  const allocateStatPoint = useCallback((stat) => {
+    setPlayer(prev => {
+      if ((prev.spendableStatPoints || 0) <= 0) return prev
+      const bonusStats = prev.bonusStats || { strength: 0, dexterity: 0, intellect: 0, endurance: 0, charisma: 0, luck: 0 }
+      const updates = {
+        ...prev,
+        spendableStatPoints: prev.spendableStatPoints - 1,
+        bonusStats: { ...bonusStats, [stat]: (bonusStats[stat] || 0) + 1 },
+      }
+      // Endurance: each point adds +10 max HP (and current HP)
+      if (stat === 'endurance') {
+        updates.maxHp = prev.maxHp + 10
+        updates.hp = Math.min(prev.hp + 10, prev.maxHp + 10)
+      }
+      return updates
+    })
+  }, [])
+
   const getElementModifiers = useCallback(() => {
     const baseModifier = 100 // 100% = normal damage
     const equipped = player.equipped || { weapon: null, helmet: null, armor: null, boots: null }
@@ -413,7 +447,8 @@ export const GameProvider = ({ children }) => {
     getElementModifiers,
     purchasePet,
     setActivePet,
-  }), [player, enemy, inBattle, battleRewards, battleSource, battleFloor, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet])
+    allocateStatPoint,
+  }), [player, enemy, inBattle, battleRewards, battleSource, battleFloor, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet, allocateStatPoint])
 
   return (
     <GameContext.Provider value={value}>
