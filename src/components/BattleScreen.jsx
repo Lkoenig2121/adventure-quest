@@ -37,6 +37,7 @@ const BattleScreen = () => {
   const [playerTurn, setPlayerTurn] = useState(_firstTurn)
   const [battleLog, setBattleLog] = useState([_initLog])
   const [animating, setAnimating] = useState(false)
+  const [showNecroPanel, setShowNecroPanel] = useState(false)
   const [showVictory, setShowVictory] = useState(false)
   const [showStatsTooltip, setShowStatsTooltip] = useState(false)
   const [showEnemyTooltip, setShowEnemyTooltip] = useState(false)
@@ -135,6 +136,7 @@ const BattleScreen = () => {
   useEffect(() => {
     // Enemy turn after player acts
     if (!playerTurn && enemy && enemy.hp > 0 && player.hp > 0) {
+      setShowNecroPanel(false)
       const timer = setTimeout(() => {
         const damage = Math.floor(Math.random() * 30) + 20
         damagePlayer(damage)
@@ -146,6 +148,92 @@ const BattleScreen = () => {
       return () => clearTimeout(timer)
     }
   }, [playerTurn, enemy, damagePlayer])
+
+  // ── Necromancer moves (available when Obsidian Cloak is equipped) ──────
+  const NECRO_MOVES = [
+    { key: 'attack',       name: 'Attack',         icon: '⚔️',  mpCost: 0,   row: 1, col: 2, desc: 'Basic strike'          },
+    { key: 'undeadGiant',  name: 'Undead Giant',   icon: '💀',  mpCost: 30,  row: 2, col: 1, desc: '3.5× damage'            },
+    { key: 'undeadMutant', name: 'Undead Mutant!', icon: '🧟',  mpCost: 125, row: 2, col: 3, desc: '8 rapid hits'           },
+    { key: 'necroHeal',    name: 'Necro Heal!',    icon: '💚',  mpCost: 0,   row: 3, col: 1, desc: 'Restore 80 HP'          },
+    { key: 'becomeALich',  name: 'Become a Lich!', icon: '💀',  mpCost: 150, row: 3, col: 2, desc: '5× Darkness strike'     },
+    { key: 'fear',         name: 'Fear!',          icon: '😱',  mpCost: 60,  row: 3, col: 3, desc: '1.5× + terrify'         },
+    { key: 'deathDog',     name: 'Death Dog!',     icon: '🐕',  mpCost: 80,  row: 4, col: 1, desc: '3× damage'              },
+    { key: 'skullSwarm',   name: 'Skull Swarm!',   icon: '🔮',  mpCost: 45,  row: 4, col: 2, desc: '2.5× damage'            },
+    { key: 'zombieHands',  name: 'Zombie Hands!',  icon: '🖐️',  mpCost: 30,  row: 4, col: 3, desc: '2× damage'              },
+  ]
+
+  const handleNecroMove = (move) => {
+    if (!playerTurn || animating || !enemy) return
+    if (player.mp < move.mpCost) {
+      addLog(`Not enough MP for ${move.name}! Need ${move.mpCost} MP.`)
+      return
+    }
+
+    setShowNecroPanel(false)
+    setAnimating(true)
+    if (move.mpCost > 0) useMana(move.mpCost)
+
+    const bonusStats = player.bonusStats || {}
+    const strBonus  = (bonusStats.strength  || 0) * 2
+    const dexBonus  = (bonusStats.dexterity || 0)
+    const calcBase  = () => 25 + strBonus + Math.floor(Math.random() * (50 + dexBonus)) + 1
+
+    // Use the equipped weapon's element (falls back to Physical)
+    const weaponEl = getWeaponElement()
+    const elKey    = weaponEl.key
+    const elLabel  = `${weaponEl.icon} ${weaponEl.name}`
+
+    // Undead Mutant: 8 hits × 0.5 s
+    if (move.key === 'undeadMutant') {
+      let hit = 0
+      const doHit = () => {
+        if (hit >= 8) {
+          triggerPetEffect()
+          setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 300)
+          return
+        }
+        const dmg = Math.round(calcBase() * 0.5)
+        const { finalDamage, label } = applyResistance(dmg, elKey)
+        damageEnemy(finalDamage)
+        addLog(`🧟 Undead Mutant hit ${hit + 1}/8 — ${finalDamage} ${elLabel} damage!${label}`)
+        hit++
+        setTimeout(doHit, 500)
+      }
+      doHit()
+      return
+    }
+
+    // Necro Heal (no damage)
+    if (move.key === 'necroHeal') {
+      healPlayer(80)
+      addLog(`💚 Necro Heal! ${player.name} absorbs dark energy and recovers 80 HP!`)
+      triggerPetEffect()
+      setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 500)
+      return
+    }
+
+    // All damaging moves
+    const multipliers = { attack: 1, undeadGiant: 3.5, fear: 1.5, zombieHands: 2, skullSwarm: 2.5, deathDog: 3, becomeALich: 5 }
+    const logPrefixes = {
+      attack:      () => `⚔️ ${player.name} attacks ${enemy.name}`,
+      undeadGiant: () => `💀 Undead Giant SMASHES ${enemy.name}`,
+      fear:        () => `😱 Fear! ${enemy.name} is terrified and takes`,
+      zombieHands: () => `🖐️ Zombie Hands drag ${enemy.name} down for`,
+      skullSwarm:  () => `🔮 Skull Swarm overwhelms ${enemy.name} for`,
+      deathDog:    () => `🐕 Death Dog mauls ${enemy.name} for`,
+      becomeALich: () => `💀 BECOME A LICH! Undead fury tears through ${enemy.name} for`,
+    }
+
+    const mult = multipliers[move.key] || 1
+    const raw  = Math.round(calcBase() * mult)
+    const { finalDamage, label } = applyResistance(raw, elKey)
+    const multNote = mult > 1 ? ` (×${mult})` : ''
+    damageEnemy(finalDamage)
+    addLog(`${(logPrefixes[move.key] || (() => `${player.name} hits ${enemy.name}`))()} ${finalDamage} ${elLabel} damage!${multNote}${label}`)
+
+    triggerPetEffect()
+    setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 500)
+  }
 
   const handleSpell = (spell) => {
     if (!playerTurn || animating || !enemy) return
@@ -1162,28 +1250,111 @@ const BattleScreen = () => {
             </div>
           )}
 
-          {/* Attack Button */}
-          {selectedAction === 'attack' && (
-            <button
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                console.log('🔥 Attack button clicked!', e)
-                handleAttack()
-              }}
-              disabled={!playerTurn || animating}
-              style={isHeavenlyBattle
-                ? { pointerEvents: 'auto', zIndex: 1000, background: 'linear-gradient(135deg,#fbbf24,#d97706)', borderColor: '#b45309', color: '#fff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0,0,0,0.3)', boxShadow: '0 4px 16px rgba(251,191,36,0.5)' }
-                : { pointerEvents: 'auto', zIndex: 1000 }
-              }
-              className={isHeavenlyBattle
-                ? 'w-full font-bold py-4 px-6 rounded-lg border-2 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
-                : 'w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-4 px-6 rounded-lg border-2 border-red-800 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
-              }
-            >
-              Attack! {!playerTurn ? '(Not your turn)' : animating ? '(Animating)' : ''}
-            </button>
-          )}
+          {/* Attack Button / Necromancer Panel */}
+          {selectedAction === 'attack' && (() => {
+            const hasObsidianCloak = player.equipped?.armor?.name === 'Obsidian Cloak'
+
+            // ── Necromancer special moves panel (shown after clicking Attack) ──
+            if (hasObsidianCloak && showNecroPanel) {
+              const gridPos = (row, col) => ({ gridRow: row, gridColumn: col })
+              return (
+                <div style={{ pointerEvents: 'auto' }}>
+                  {/* Header */}
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <span className="text-2xl">💀</span>
+                    <div className="text-center">
+                      <div className="font-bold text-lg" style={{ color: '#dc2626', fontFamily: 'Georgia, serif', textShadow: '0 0 8px rgba(220,38,38,0.6)' }}>
+                        Necromancer
+                      </div>
+                      <div className="text-xs" style={{ color: '#9ca3af' }}>Choose your move</div>
+                    </div>
+                    <span className="text-2xl">💀</span>
+                  </div>
+
+                  {/* 3-column grid of moves */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, minWidth: 300 }}>
+                    {NECRO_MOVES.map(move => {
+                      const canUse = playerTurn && !animating && player.mp >= move.mpCost
+                      const isBig  = move.key === 'attack'
+                      return (
+                        <button
+                          key={move.key}
+                          onClick={() => handleNecroMove(move)}
+                          disabled={!canUse}
+                          style={{
+                            ...gridPos(move.row, move.col),
+                            background: isBig
+                              ? 'linear-gradient(135deg,#b91c1c,#7f1d1d)'
+                              : 'linear-gradient(135deg,#1c1c2e,#2d1b4e)',
+                            border: `2px solid ${isBig ? '#ef4444' : '#6d28d9'}`,
+                            borderRadius: 10,
+                            padding: isBig ? '10px 6px' : '8px 4px',
+                            color: '#fff',
+                            cursor: canUse ? 'pointer' : 'not-allowed',
+                            opacity: canUse ? 1 : 0.4,
+                            boxShadow: canUse ? `0 0 8px ${isBig ? 'rgba(239,68,68,0.5)' : 'rgba(109,40,217,0.5)'}` : 'none',
+                            transition: 'all 0.15s',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 2,
+                          }}
+                        >
+                          <span style={{ fontSize: isBig ? 20 : 16 }}>{move.icon}</span>
+                          <span style={{ fontSize: isBig ? 12 : 10, fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>
+                            {move.name}
+                          </span>
+                          <span style={{ fontSize: 9, color: move.mpCost === 0 ? '#86efac' : '#c4b5fd' }}>
+                            {move.mpCost === 0 ? 'Free' : `${move.mpCost} MP`}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* Back + MP indicator */}
+                  <div className="flex items-center justify-between mt-2">
+                    <button
+                      onClick={() => setShowNecroPanel(false)}
+                      style={{ fontSize: 11, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}
+                    >
+                      ← Back
+                    </button>
+                    <span className="text-xs" style={{ color: '#9ca3af' }}>
+                      MP: <span style={{ color: '#818cf8', fontWeight: 'bold' }}>{player.mp}</span> / {player.maxMp}
+                    </span>
+                  </div>
+                </div>
+              )
+            }
+
+            // ── Attack button (opens Necromancer panel if cloak equipped, otherwise normal attack) ──
+            return (
+              <button
+                onClick={(e) => {
+                  e.preventDefault(); e.stopPropagation()
+                  if (hasObsidianCloak) {
+                    if (playerTurn && !animating) setShowNecroPanel(true)
+                  } else {
+                    handleAttack()
+                  }
+                }}
+                disabled={!playerTurn || animating}
+                style={isHeavenlyBattle
+                  ? { pointerEvents: 'auto', zIndex: 1000, background: 'linear-gradient(135deg,#fbbf24,#d97706)', borderColor: '#b45309', color: '#fff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0,0,0,0.3)', boxShadow: '0 4px 16px rgba(251,191,36,0.5)' }
+                  : hasObsidianCloak
+                    ? { pointerEvents: 'auto', zIndex: 1000, background: 'linear-gradient(135deg,#7f1d1d,#1c1c2e)', borderColor: '#ef4444', color: '#fff', boxShadow: '0 0 12px rgba(220,38,38,0.4)' }
+                    : { pointerEvents: 'auto', zIndex: 1000 }
+                }
+                className={isHeavenlyBattle
+                  ? 'w-full font-bold py-4 px-6 rounded-lg border-2 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'w-full font-bold py-4 px-6 rounded-lg border-2 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white'
+                }
+              >
+                {hasObsidianCloak ? '💀 Attack' : `Attack! ${!playerTurn ? '(Not your turn)' : animating ? '(Animating)' : ''}`}
+              </button>
+            )
+          })()}
 
           {/* Items */}
           {selectedAction === 'items' && (

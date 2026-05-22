@@ -120,6 +120,16 @@ const ShopScreen = () => {
     },
     // Armor
     {
+      id: 'obsidianCloak',
+      name: 'Obsidian Cloak',
+      description: 'Armor: Imbued with necromantic power. Unlocks special Necromancer moves in battle. +20% Darkness.',
+      price: 1000,
+      icon: '🖤',
+      type: 'equipment',
+      slot: 'armor',
+      elementBonuses: { darkness: 20 },
+    },
+    {
       id: 'fireArmor',
       name: 'Fire Armor',
       description: 'Armor: +12% Fire, +8% Energy',
