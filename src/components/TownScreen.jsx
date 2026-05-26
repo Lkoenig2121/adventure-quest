@@ -382,10 +382,10 @@ const TownScreen = ({ onLogout }) => {
           </span>
         </button>
 
-        {/* Top UI — above portal (z-30) */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between" style={{ zIndex: 30 }}>
+        {/* Top UI — above portal (z-30); container is pointer-events:none so gaps don't block portal */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between" style={{ zIndex: 30, pointerEvents: 'none' }}>
           {/* News Panel */}
-          <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-800 rounded-lg shadow-2xl w-96 flex flex-col max-h-96">
+          <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-800 rounded-lg shadow-2xl w-96 flex flex-col max-h-96" style={{ pointerEvents: 'auto' }}>
             <div className="bg-amber-900 text-yellow-200 font-bold text-lg px-4 py-2 border-b-2 border-amber-700 flex-shrink-0">
               BattleOn News!
             </div>
@@ -414,7 +414,7 @@ const TownScreen = ({ onLogout }) => {
           </div>
 
           {/* Shop Buttons */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3" style={{ pointerEvents: 'auto' }}>
             <button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold py-3 px-6 rounded-lg border-4 border-yellow-400 shadow-lg transform transition hover:scale-105">
               Elite Items!
             </button>
@@ -457,7 +457,8 @@ const TownScreen = ({ onLogout }) => {
           {/* Twilly - The Orange Healer */}
           <button
             onClick={handleTwillyClick}
-            className="relative transform transition hover:scale-110 cursor-pointer z-5 flex-shrink-0"
+            className="relative transform transition hover:scale-110 cursor-pointer flex-shrink-0"
+            style={{ zIndex: showTwillyMessage ? 50 : 5 }}
           >
             {/* Healing glow effect */}
             {isHealing && (
@@ -497,7 +498,7 @@ const TownScreen = ({ onLogout }) => {
 
             {/* Twilly's Speech Bubble */}
             {showTwillyMessage && (
-              <div className="absolute -top-28 sm:-top-32 left-1/2 transform -translate-x-1/2 animate-fade-in w-48 sm:w-auto" style={{ zIndex: 50 }}>
+              <div className="absolute -top-28 sm:-top-32 left-1/2 transform -translate-x-1/2 animate-fade-in w-48 sm:w-auto" style={{ zIndex: 100 }}>
                 <div className="bg-white border-4 border-yellow-400 rounded-lg shadow-2xl p-3 sm:p-4 min-w-40 sm:min-w-48 max-w-48 sm:max-w-64 relative">
                   {/* Speech bubble tail */}
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
