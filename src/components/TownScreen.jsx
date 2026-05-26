@@ -196,6 +196,10 @@ const TownScreen = ({ onLogout }) => {
     navigate('/shop')
   }
 
+  const handleSpellShopClick = () => {
+    navigate('/spell-shop')
+  }
+
   const handlePetShopClick = () => {
     navigate('/pet-shop')
   }
@@ -218,12 +222,12 @@ const TownScreen = ({ onLogout }) => {
         <div className="absolute top-5 right-20 w-4 h-20 bg-gradient-to-b from-red-500 to-orange-400 rounded-full transform rotate-45 opacity-80"></div>
         <div className="absolute top-8 right-18 w-2 h-16 bg-yellow-300 rounded-full transform rotate-45 blur-sm"></div>
 
-        {/* Sky Portal — jagged starburst, right side of sky */}
+        {/* Sky Portal placeholder position — actual button moved to town content layer */}
         <button
           onClick={() => navigate('/stat-trainer')}
           className="absolute group flex flex-col items-center gap-1"
           title="Portal — visit the Stat Trainer"
-          style={{ top: '6%', right: '18%', zIndex: 20, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+          style={{ top: '6%', right: '18%', zIndex: 1, background: 'none', border: 'none', padding: 0, cursor: 'default', pointerEvents: 'none' }}
         >
           {/* Ambient glow behind the portal */}
           <div style={{
@@ -324,9 +328,62 @@ const TownScreen = ({ onLogout }) => {
       </div>
 
       {/* Town Content */}
-      <div className="relative z-10 w-full h-full" style={{ overflow: 'visible' }}>
-        {/* Top UI */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between">
+      <div className="relative z-20 w-full h-full" style={{ overflow: 'visible' }}>
+
+        {/* Sky Portal — clickable layer (sits inside z-20 wrapper but below UI panels) */}
+        <button
+          onClick={() => navigate('/stat-trainer')}
+          className="absolute group flex flex-col items-center gap-1"
+          title="Portal — visit the Stat Trainer"
+          style={{ top: '6%', right: '18%', zIndex: 25, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+        >
+          <svg
+            width="90" height="90" viewBox="0 0 100 100"
+            style={{ display: 'block', filter: 'drop-shadow(0 0 8px rgba(236,72,153,0.9)) drop-shadow(0 0 16px rgba(168,85,247,0.7))' }}
+            overflow="visible"
+          >
+            <defs>
+              <radialGradient id="ptVortex2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#e879f9" />
+                <stop offset="35%" stopColor="#7c3aed" />
+                <stop offset="70%" stopColor="#2e1065" />
+                <stop offset="100%" stopColor="#0f0020" />
+              </radialGradient>
+              <radialGradient id="ptCore2" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#f0abfc" />
+                <stop offset="60%" stopColor="#a855f7" />
+                <stop offset="100%" stopColor="#7c3aed" stopOpacity="0" />
+              </radialGradient>
+              <style>{`
+                .pt-outer2 { animation: spin 5s linear infinite; transform-origin: 50px 50px; }
+                .pt-mid2   { animation: spin 3s linear infinite reverse; transform-origin: 50px 50px; }
+                .pt-core2  { animation: spin 1.8s linear infinite; transform-origin: 50px 50px; }
+              `}</style>
+            </defs>
+            <polygon className="pt-outer2" points="50,4 58.3,19.1 73,10.2 72.6,27.4 89.8,27 80.9,41.7 96,50 80.9,58.3 89.8,73 72.6,72.6 73,89.8 58.3,80.9 50,96 41.7,80.9 27,89.8 27.4,72.6 10.2,73 19.1,58.3 4,50 19.1,41.7 10.2,27 27.4,27.4 27,10.2 41.7,19.1" fill="#be185d" opacity="0.85" />
+            <polygon className="pt-mid2" points="50,16 55.2,30.7 67,20.6 64.1,35.9 79.4,33 69.3,44.8 84,50 69.3,55.2 79.4,67 64.1,64.1 67,79.4 55.2,69.3 50,84 44.8,69.3 33,79.4 35.9,64.1 20.6,67 30.7,55.2 16,50 30.7,44.8 20.6,33 35.9,35.9 33,20.6 44.8,30.7" fill="#a855f7" opacity="0.9" />
+            <circle cx="50" cy="50" r="24" fill="url(#ptVortex2)" />
+            <circle cx="50" cy="50" r="13" fill="url(#ptCore2)" className="pt-core2" opacity="0.9" />
+            <circle cx="50" cy="50" r="4" fill="#f5d0fe" opacity="0.95" />
+          </svg>
+          {(player.pendingStatPoints || 0) > 0 && (
+            <div style={{
+              position: 'absolute', top: -6, right: -6,
+              width: 22, height: 22, borderRadius: '50%',
+              background: '#f59e0b', border: '2px solid white',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11, fontWeight: 'bold', color: '#1a1a1a',
+              boxShadow: '0 0 6px rgba(245,158,11,0.8)',
+            }}>!</div>
+          )}
+          <span className="text-xs font-bold opacity-80 group-hover:opacity-100 transition-opacity"
+            style={{ color: '#f9a8d4', textShadow: '0 0 8px #ec4899, 0 1px 2px rgba(0,0,0,0.9)', letterSpacing: 1 }}>
+            PORTAL
+          </span>
+        </button>
+
+        {/* Top UI — above portal (z-30) */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between" style={{ zIndex: 30 }}>
           {/* News Panel */}
           <div className="bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-800 rounded-lg shadow-2xl w-96 flex flex-col max-h-96">
             <div className="bg-amber-900 text-yellow-200 font-bold text-lg px-4 py-2 border-b-2 border-amber-700 flex-shrink-0">
@@ -400,7 +457,7 @@ const TownScreen = ({ onLogout }) => {
           {/* Twilly - The Orange Healer */}
           <button
             onClick={handleTwillyClick}
-            className="relative transform transition hover:scale-110 cursor-pointer z-20 flex-shrink-0"
+            className="relative transform transition hover:scale-110 cursor-pointer z-5 flex-shrink-0"
           >
             {/* Healing glow effect */}
             {isHealing && (
@@ -440,7 +497,7 @@ const TownScreen = ({ onLogout }) => {
 
             {/* Twilly's Speech Bubble */}
             {showTwillyMessage && (
-              <div className="absolute -top-28 sm:-top-32 left-1/2 transform -translate-x-1/2 animate-fade-in z-30 w-48 sm:w-auto">
+              <div className="absolute -top-28 sm:-top-32 left-1/2 transform -translate-x-1/2 animate-fade-in w-48 sm:w-auto" style={{ zIndex: 50 }}>
                 <div className="bg-white border-4 border-yellow-400 rounded-lg shadow-2xl p-3 sm:p-4 min-w-40 sm:min-w-48 max-w-48 sm:max-w-64 relative">
                   {/* Speech bubble tail */}
                   <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-full">
@@ -455,15 +512,38 @@ const TownScreen = ({ onLogout }) => {
             )}
           </button>
 
-          {/* More Houses */}
-          <div className="relative">
-            <div className="w-24 h-32 bg-amber-800 border-4 border-amber-900 relative">
-              <div className="absolute top-0 left-0 right-0 h-8 bg-gradient-to-b from-gray-700 to-gray-600"></div>
-              <div className="absolute top-2 right-2 w-4 h-4 bg-amber-200 rounded"></div>
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 w-6 h-8 bg-amber-950 rounded-t"></div>
-              <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-red-600 border border-black"></div>
+          {/* Intellect Building / Spell Shop */}
+          <button
+            onClick={handleSpellShopClick}
+            className="relative transform transition hover:scale-110 cursor-pointer"
+          >
+            {/* Tower body */}
+            <div className="w-20 h-36 sm:w-24 sm:h-40 relative" style={{
+              background: 'linear-gradient(to bottom, #3b0764, #4c1d95)',
+              border: '4px solid #2e1065',
+            }}>
+              {/* Pointed roof */}
+              <div className="absolute -top-6 left-1/2 transform -translate-x-1/2" style={{
+                width: 0, height: 0,
+                borderLeft: '18px solid transparent',
+                borderRight: '18px solid transparent',
+                borderBottom: '24px solid #6d28d9',
+              }} />
+              {/* Arched windows */}
+              <div className="absolute top-4 left-2 w-5 h-7 rounded-t-full" style={{ background: '#a78bfa', border: '2px solid #6d28d9', boxShadow: '0 0 6px #a78bfa' }} />
+              <div className="absolute top-4 right-2 w-5 h-7 rounded-t-full" style={{ background: '#a78bfa', border: '2px solid #6d28d9', boxShadow: '0 0 6px #a78bfa' }} />
+              {/* Glowing orb in middle */}
+              <div className="absolute top-14 left-1/2 transform -translate-x-1/2 w-6 h-6 rounded-full" style={{ background: 'radial-gradient(circle, #e9d5ff, #7c3aed)', boxShadow: '0 0 10px #a78bfa', animation: 'pulse 2s infinite' }} />
+              {/* Door */}
+              <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-9 rounded-t-full" style={{ background: '#1e1b4b', border: '2px solid #4c1d95' }} />
+              {/* Sign */}
+              <div className="absolute bottom-10 left-1/2 transform -translate-x-1/2 w-16 h-5 flex items-center justify-center rounded" style={{ background: '#fde68a', border: '2px solid #92400e' }}>
+                <span className="text-xs font-bold" style={{ color: '#4c1d95', fontSize: 8 }}>SPELLS</span>
+              </div>
             </div>
-          </div>
+            {/* Floating spell icon */}
+            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-2xl" style={{ animation: 'bounce 1.5s infinite' }}>📚</div>
+          </button>
 
           {/* Castle (clickable to enter) */}
           <button
@@ -657,12 +737,12 @@ const TownScreen = ({ onLogout }) => {
                         <h5 className="font-bold mb-2 text-amber-800">Attributes</h5>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                           {[
-                            { label: 'Strength',  base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0) * 10, color: 'text-red-700'    },
-                            { label: 'Dexterity', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0) * 10, color: 'text-purple-700' },
-                            { label: 'Intellect', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0) * 10, color: 'text-blue-700'   },
-                            { label: 'Endurance', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0) * 10, color: 'text-orange-700' },
-                            { label: 'Charisma',  base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0) * 10, color: 'text-pink-700'   },
-                            { label: 'Luck',      base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0) * 10, color: 'text-yellow-700' },
+                            { label: 'Strength',  base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0), color: 'text-red-700'    },
+                            { label: 'Dexterity', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0), color: 'text-purple-700' },
+                            { label: 'Intellect', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0), color: 'text-blue-700'   },
+                            { label: 'Endurance', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0), color: 'text-orange-700' },
+                            { label: 'Charisma',  base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0), color: 'text-pink-700'   },
+                            { label: 'Luck',      base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0), color: 'text-yellow-700' },
                           ].map(({ label, base, bonus, color }) => (
                             <div key={label} className="flex justify-between">
                               <span>{label}:</span>
@@ -877,10 +957,10 @@ const TownScreen = ({ onLogout }) => {
             >
               {/* Title */}
               <div className="absolute top-3 left-4 z-10">
-                <div className="text-amber-800 text-xs font-semibold opacity-70">Beautifully wrong map of</div>
+                <div className="font-semibold opacity-70" style={{ fontSize: 'clamp(0.85rem,1.5vw,1.1rem)', color: '#92400e' }}>Beautifully wrong map of</div>
                 <div className="font-bold leading-none" style={{
                   fontFamily: 'Georgia, serif',
-                  fontSize: 'clamp(1.8rem, 4vw, 3.5rem)',
+                  fontSize: 'clamp(3.6rem, 8vw, 7rem)',
                   color: '#7c4f1a',
                   textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
                 }}>
@@ -890,7 +970,7 @@ const TownScreen = ({ onLogout }) => {
 
               {/* Italic flavour text */}
               <div className="absolute z-10" style={{ right: '10%', top: '18%' }}>
-                <div className="text-blue-700 italic text-xs opacity-80 text-center leading-tight">
+                <div className="italic opacity-80 text-center leading-tight" style={{ fontSize: 'clamp(0.8rem,1.4vw,1.1rem)', color: '#1d4ed8' }}>
                   The great, um,<br/>Giant Puddle...?
                 </div>
               </div>
@@ -903,9 +983,9 @@ const TownScreen = ({ onLogout }) => {
                     x1={`${x1}%`} y1={`${y1}%`}
                     x2={`${x2}%`} y2={`${y2}%`}
                     stroke="#a07840"
-                    strokeWidth="1.5"
-                    strokeDasharray="5,4"
-                    opacity="0.6"
+                    strokeWidth="2.5"
+                    strokeDasharray="6,5"
+                    opacity="0.7"
                   />
                 ))}
               </svg>
@@ -922,17 +1002,17 @@ const TownScreen = ({ onLogout }) => {
                     zIndex: 2,
                   }}
                 >
-                  <div style={{ fontSize: loc.bold ? 'clamp(1.4rem,2.5vw,2rem)' : 'clamp(0.9rem,1.8vw,1.4rem)' }}>
+                  <div style={{ fontSize: loc.bold ? 'clamp(2.8rem,5vw,4rem)' : 'clamp(1.8rem,3.6vw,2.8rem)' }}>
                     {loc.icon}
                   </div>
                   <div
-                    className="text-center mt-0.5 leading-tight"
+                    className="text-center mt-1 leading-tight"
                     style={{
-                      fontSize: 'clamp(0.5rem, 1vw, 0.75rem)',
+                      fontSize: 'clamp(0.75rem, 1.4vw, 1.1rem)',
                       fontFamily: 'Georgia, serif',
                       fontWeight: loc.bold ? 'bold' : 'normal',
                       color: loc.bold ? '#4a2800' : '#6b4420',
-                      textShadow: '0 0 3px rgba(245,230,200,0.9)',
+                      textShadow: '0 0 4px rgba(245,230,200,0.9)',
                       whiteSpace: 'nowrap',
                     }}
                   >
@@ -943,10 +1023,10 @@ const TownScreen = ({ onLogout }) => {
 
               {/* Compass rose */}
               <div className="absolute z-10 flex flex-col items-center" style={{ right: '5%', bottom: '8%' }}>
-                <div className="text-4xl">🧭</div>
-                <div className="grid grid-cols-3 text-xs font-bold text-amber-800 text-center" style={{ fontSize: '0.6rem', lineHeight: 1 }}>
+                <div style={{ fontSize: '4rem' }}>🧭</div>
+                <div className="grid grid-cols-3 font-bold text-amber-800 text-center" style={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
                   <div></div><div>N</div><div></div>
-                  <div>W</div><div className="text-base">✦</div><div>E</div>
+                  <div>W</div><div style={{ fontSize: '1.4rem' }}>✦</div><div>E</div>
                   <div></div><div>S</div><div></div>
                 </div>
               </div>
@@ -954,7 +1034,8 @@ const TownScreen = ({ onLogout }) => {
               {/* Close button */}
               <button
                 onClick={() => setShowTravelMap(false)}
-                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-700 hover:bg-red-800 text-white font-bold px-10 py-2 rounded-lg border-4 border-red-900 shadow-lg z-20 text-lg"
+                className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-700 hover:bg-red-800 text-white font-bold rounded-lg border-4 border-red-900 shadow-lg z-20"
+                style={{ fontSize: '1.5rem', padding: '10px 48px' }}
               >
                 Close
               </button>

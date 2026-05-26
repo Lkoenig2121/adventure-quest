@@ -41,7 +41,7 @@ const STAT_DEFS = [
 
 export default function StatTrainerScreen() {
   const navigate = useNavigate()
-  const { player, startBattle, allocateStatPoint } = useGame()
+  const { player, startBattle, allocateStatPoints } = useGame()
 
   const [pending, setPending] = useState({})
 
@@ -64,13 +64,15 @@ export default function StatTrainerScreen() {
 
   function decrement(key) {
     if (!pending[key]) return
-    setPending(p => ({ ...p, [key]: p[key] - 1 }))
+    setPending(p => ({ ...p, [key]: Math.max(0, (p[key] || 0) - 1) }))
   }
 
   function confirmAllocation() {
-    Object.entries(pending).forEach(([stat, count]) => {
-      for (let i = 0; i < count; i++) allocateStatPoint(stat)
-    })
+    const allocs = Object.fromEntries(
+      Object.entries(pending).filter(([, v]) => v > 0)
+    )
+    if (Object.keys(allocs).length === 0) return
+    allocateStatPoints(allocs)
     setPending({})
   }
 
@@ -83,7 +85,7 @@ export default function StatTrainerScreen() {
       charisma:  Math.floor(player.level * 7) + 30,
       luck:      Math.floor(player.level * 6) + 25,
     }
-    return (base[key] || 0) + (bonusStats[key] || 0) * 10
+    return (base[key] || 0) + (bonusStats[key] || 0)
   }
 
   return (
@@ -294,7 +296,7 @@ export default function StatTrainerScreen() {
                       </div>
                       <span className="font-bold text-sm" style={{ color: '#b45309' }}>
                         {currentVal}{addedNow > 0 && (
-                          <span style={{ color: '#16a34a' }}> +{addedNow * 10}</span>
+                          <span style={{ color: '#16a34a' }}> → {currentVal + addedNow}</span>
                         )}
                       </span>
                     </div>

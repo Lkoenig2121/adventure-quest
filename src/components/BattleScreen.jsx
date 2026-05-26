@@ -3,6 +3,7 @@ import { useGame } from '../context/GameContext'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { FLOOR_ENEMIES } from './CastleScreen'
+import { ALL_SPELLS } from '../data/spells'
 
 // Full pet definitions mirrored from PetShopScreen so BattleScreen can read effect data
 const PET_DEFS = {
@@ -24,7 +25,7 @@ const BattleScreen = () => {
 
   // Luck-based initiative — computed once at mount so log and turn are always in sync
   const [{ firstTurn: _firstTurn, initLog: _initLog }] = useState(() => {
-    const playerLuck = 25 + Math.floor((player?.level || 1) * 5) + (player?.bonusStats?.luck || 0) * 10
+    const playerLuck = 25 + Math.floor((player?.level || 1) * 5) + (player?.bonusStats?.luck || 0)
     const enemySpeed = enemy?.speed || 50
     const playerRoll = Math.random() * playerLuck
     const enemyRoll  = Math.random() * enemySpeed
@@ -39,6 +40,7 @@ const BattleScreen = () => {
   const [animating, setAnimating] = useState(false)
   const [showNecroPanel, setShowNecroPanel] = useState(false)
   const [showVictory, setShowVictory] = useState(false)
+  const [dragonStrike, setDragonStrike] = useState(null) // { element, icon, damage } | null
   const [showStatsTooltip, setShowStatsTooltip] = useState(false)
   const [showEnemyTooltip, setShowEnemyTooltip] = useState(false)
   const portraitRef = useRef(null)
@@ -91,7 +93,27 @@ const BattleScreen = () => {
     const critNote = isCrit ? ' ⚡ CRITICAL HIT!' : ''
     addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}${critNote}`)
     triggerPetEffect()
-    
+
+    // Guardian Blade 25% Dragon proc
+    const isGuardianBlade = player.equipped?.weapon?.name === 'Guardian Blade'
+    if (isGuardianBlade && Math.random() < 0.25) {
+      // Find the element the enemy is most vulnerable to (highest resistance value)
+      const resistances = enemy.elementResistances || {}
+      const ELEM_ICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
+      const sorted = Object.entries(resistances).sort(([,a],[,b]) => b - a)
+      const [weakEl, weakVal] = sorted[0] || ['physical', 100]
+      const weakIcon = ELEM_ICONS[weakEl] || '⚔️'
+      const dragonBase = 500
+      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(dragonBase, weakEl)
+
+      setTimeout(() => {
+        damageEnemy(dragonDmg)
+        addLog(`🐉 GUARDIAN DRAGON swoops down and strikes ${enemy.name} for ${dragonDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dragonLabel}`)
+        setDragonStrike({ element: weakEl, icon: weakIcon, damage: dragonDmg })
+        setTimeout(() => setDragonStrike(null), 1800)
+      }, 600)
+    }
+
     setTimeout(() => {
       setAnimating(false)
       setPlayerTurn(false)
@@ -138,7 +160,9 @@ const BattleScreen = () => {
     if (!playerTurn && enemy && enemy.hp > 0 && player.hp > 0) {
       setShowNecroPanel(false)
       const timer = setTimeout(() => {
-        const damage = Math.floor(Math.random() * 30) + 20
+        const minDmg = 10 + Math.floor(player.level * 4)
+        const maxDmg = 20 + Math.floor(player.level * 7)
+        const damage = Math.floor(Math.random() * (maxDmg - minDmg + 1)) + minDmg
         damagePlayer(damage)
         const eIcon = enemy.elementIcon || '⚔️'
         const eName = enemy.element || 'Physical'
@@ -392,7 +416,7 @@ const BattleScreen = () => {
                   <div className="text-2xl font-bold text-purple-700">
                     {battleRewards.pointsUnlocked > 0
                       ? `${battleRewards.pointsUnlocked} Attribute Point${battleRewards.pointsUnlocked !== 1 ? 's' : ''} Unlocked!`
-                      : 'You defeated the Trainer!'}
+                      : 'The Trainer has yielded!'}
                   </div>
                   {battleRewards.pointsUnlocked > 0 && (
                     <div className="text-purple-600 text-sm mt-1">Return to the Trainer to allocate your points.</div>
@@ -531,12 +555,7 @@ const BattleScreen = () => {
     return { ...(ELEMENT_MAP[top[0]] || { icon: '⚔️', name: 'Physical' }), key: top[0], bonus: top[1] }
   }
 
-  const spells = [
-    { name: 'Fireball', type: 'attack', damage: 60, cost: 25, icon: '🔥', elementIcon: '🔥', element: 'Fire' },
-    { name: 'Ice Bolt', type: 'attack', damage: 55, cost: 20, icon: '❄️', elementIcon: '❄️', element: 'Ice' },
-    { name: 'Lightning', type: 'attack', damage: 70, cost: 30, icon: '⚡', elementIcon: '⚡', element: 'Energy' },
-    { name: 'Heal', type: 'heal', heal: 60, cost: 20, icon: '💚', elementIcon: '💚', element: 'Light' },
-  ]
+  const spells = ALL_SPELLS.filter(s => (player.purchasedSpells || []).includes(s.id))
 
   const spellIcons = ['⭐', '⬜', '🔴', '🟢', '🟡', '⚫']
 
@@ -552,6 +571,49 @@ const BattleScreen = () => {
         pointerEvents: 'auto',
       }}
     >
+      {/* ── Guardian Dragon Strike Overlay ─────────────────────── */}
+      {dragonStrike && (
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 9999,
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+          animation: 'fadeInOut 1.8s ease forwards',
+        }}>
+          {/* Dark flash */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at center, rgba(30,10,60,0.85) 0%, rgba(0,0,0,0.5) 100%)',
+          }} />
+          {/* Dragon swooping in */}
+          <div style={{
+            position: 'relative', zIndex: 1, textAlign: 'center',
+            animation: 'dragonSwoop 1.8s ease forwards',
+          }}>
+            <div style={{ fontSize: 90, lineHeight: 1, filter: 'drop-shadow(0 0 24px gold)' }}>🐉</div>
+            <div style={{
+              marginTop: 12,
+              fontSize: 22,
+              fontWeight: 'bold',
+              color: '#ffd700',
+              fontFamily: 'Georgia,serif',
+              textShadow: '0 0 16px #ffd700, 0 2px 4px rgba(0,0,0,0.9)',
+            }}>
+              GUARDIAN DRAGON!
+            </div>
+            <div style={{
+              marginTop: 8,
+              fontSize: 32,
+              fontWeight: 'bold',
+              color: '#fff',
+              textShadow: `0 0 20px ${dragonStrike.icon === '🔥' ? '#ef4444' : dragonStrike.icon === '❄️' ? '#60a5fa' : '#ffd700'}, 0 2px 4px rgba(0,0,0,0.9)`,
+            }}>
+              {dragonStrike.icon} -{dragonStrike.damage}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isHeavenlyBattle ? (
         /* ——— Heavenly battle background ——— */
         <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
@@ -747,12 +809,12 @@ const BattleScreen = () => {
                       <h5 className="font-bold mb-1 text-amber-800">Attributes</h5>
                       <div className="grid grid-cols-3 gap-1">
                         {[
-                          { label: 'STR', base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0) * 10, color: 'text-red-700'    },
-                          { label: 'DEX', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0) * 10, color: 'text-purple-700' },
-                          { label: 'INT', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0) * 10, color: 'text-blue-700'   },
-                          { label: 'END', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0) * 10, color: 'text-orange-700' },
-                          { label: 'CHA', base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0) * 10, color: 'text-pink-700'   },
-                          { label: 'LCK', base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0) * 10, color: 'text-yellow-700' },
+                          { label: 'STR', base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0), color: 'text-red-700'    },
+                          { label: 'DEX', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0), color: 'text-purple-700' },
+                          { label: 'INT', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0), color: 'text-blue-700'   },
+                          { label: 'END', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0), color: 'text-orange-700' },
+                          { label: 'CHA', base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0), color: 'text-pink-700'   },
+                          { label: 'LCK', base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0), color: 'text-yellow-700' },
                         ].map(({ label, base, bonus, color }) => (
                           <div key={label} className="flex justify-between">
                             <span>{label}:</span>
@@ -1235,18 +1297,26 @@ const BattleScreen = () => {
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                {spells.map((spell) => (
-                  <button
-                    key={spell.name}
-                    onClick={() => handleSpell(spell)}
-                    disabled={!playerTurn || player.mp < spell.cost || animating}
-                    className="px-4 py-2 bg-amber-900 border-2 border-amber-700 text-yellow-200 font-bold rounded hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    {spell.icon} {spell.name} ({spell.cost} MP)
-                  </button>
-                ))}
-              </div>
+              {spells.length === 0 ? (
+                <div className="text-center py-4 px-2">
+                  <div className="text-3xl mb-2">📚</div>
+                  <div className="text-yellow-200 text-sm font-bold">No spells learned yet!</div>
+                  <div className="text-yellow-400 text-xs mt-1 opacity-75">Visit the Intellect Building in town to purchase spells.</div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {spells.map((spell) => (
+                    <button
+                      key={spell.name}
+                      onClick={() => handleSpell(spell)}
+                      disabled={!playerTurn || player.mp < spell.cost || animating}
+                      className="px-4 py-2 bg-amber-900 border-2 border-amber-700 text-yellow-200 font-bold rounded hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {spell.icon} {spell.name} ({spell.cost} MP)
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1653,6 +1723,30 @@ const BattleScreen = () => {
       >
         {battleSource === 'castle' ? 'Back to Castle' : battleSource === 'statTrainer' ? 'Back to Trainer' : 'Back to Town'}
       </button>
+
+      {/* Castle floor indicator */}
+      {battleSource === 'castle' && battleFloor && (
+        <div style={{
+          position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 1000, pointerEvents: 'none',
+          background: battleFloor === 11
+            ? 'linear-gradient(135deg,rgba(127,29,29,0.9),rgba(69,10,10,0.9))'
+            : 'rgba(0,0,0,0.6)',
+          border: `2px solid ${battleFloor === 11 ? '#7f1d1d' : '#b45309'}`,
+          borderRadius: 8,
+          padding: '4px 14px',
+          color: battleFloor === 11 ? '#fca5a5' : '#fcd34d',
+          fontFamily: 'Georgia,serif',
+          fontWeight: 'bold',
+          fontSize: 13,
+          textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+          whiteSpace: 'nowrap',
+        }}>
+          {battleFloor === 11
+            ? '👾 CARNAX — Legendary Boss'
+            : `🏰 Castle — Floor ${battleFloor} / 10`}
+        </div>
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ import ShopScreen from './components/ShopScreen'
 import CharacterPage from './components/CharacterPage'
 import PetShopScreen from './components/PetShopScreen'
 import StatTrainerScreen from './components/StatTrainerScreen'
+import SpellShopScreen from './components/SpellShopScreen'
 import { GameProvider } from './context/GameContext'
 
 function App() {
@@ -110,6 +111,16 @@ function App() {
           element={
             isAuthenticated ? (
               <StatTrainerScreen />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/spell-shop"
+          element={
+            isAuthenticated ? (
+              <SpellShopScreen />
             ) : (
               <Navigate to="/login" replace />
             )

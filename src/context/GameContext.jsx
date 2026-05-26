@@ -64,11 +64,12 @@ export const GameProvider = ({ children }) => {
           },
         }
       }
-      return parsed
+      // Always sync the name to whatever username was last used to log in
+      return { ...parsed, name: localStorage.getItem('username') || parsed.name || 'Hero' }
     }
 
     return {
-      name: 'Yankees12100',
+      name: localStorage.getItem('username') || 'Hero',
       level: 1,
       hp: 193,
       maxHp: 193,
@@ -87,6 +88,8 @@ export const GameProvider = ({ children }) => {
       pendingStatPoints: 0,
       spendableStatPoints: 0,
       bonusStats: { strength: 0, dexterity: 0, intellect: 0, endurance: 0, charisma: 0, luck: 0 },
+      purchasedSpells: [],
+      castleProgress: 0,  // highest floor beaten (0 = none yet, floor 1 available)
     }
   })
 
@@ -146,6 +149,11 @@ export const GameProvider = ({ children }) => {
           const willLevelUp = newXp >= xpForNextLevel
           const newLevel = willLevelUp ? prev.level + 1 : prev.level
 
+          // Track castle progress (defined before both branches)
+          const castleUpdate = (battleSource === 'castle' && battleFloor)
+            ? { castleProgress: Math.max(prev.castleProgress || 0, battleFloor) }
+            : {}
+
           setBattleRewards({
             xp: xpGain,
             gold: goldGain,
@@ -165,7 +173,8 @@ export const GameProvider = ({ children }) => {
               mp: prev.maxMp + 30,
               healthPotions: (prev.healthPotions || 0) + 1,
               manaPotions: (prev.manaPotions || 0) + 1,
-              pendingStatPoints: (prev.pendingStatPoints || 0) + 5,
+              pendingStatPoints: (prev.pendingStatPoints || 0) + 10,
+              ...castleUpdate,
             }
           }
 
@@ -173,6 +182,7 @@ export const GameProvider = ({ children }) => {
             ...prev,
             xp: newXp,
             gold: newGold,
+            ...castleUpdate,
             healthPotions: (prev.healthPotions || 0) + 1,
             manaPotions: (prev.manaPotions || 0) + 1,
           }
@@ -291,12 +301,61 @@ export const GameProvider = ({ children }) => {
       } else if (itemType === 'manaPotion') {
         updates.manaPotions = (prev.manaPotions || 0) + 1
       } else if (itemData) {
-        // Add equipment to inventory
+        // Prevent buying duplicates — check inventory and all equipped slots
         const inventory = prev.inventory || []
-        updates.inventory = [...inventory, { ...itemData, id: Date.now() + Math.random() }]
+        const equipped  = prev.equipped  || {}
+        const alreadyOwned =
+          inventory.some(i => i.name === itemData.name) ||
+          Object.values(equipped).some(e => e?.name === itemData.name)
+        if (alreadyOwned) return prev
+        updates.inventory = [...inventory, { ...itemData, price, id: Date.now() + Math.random() }]
       }
 
       return { ...prev, ...updates }
+    })
+  }, [])
+
+  const sellItem = useCallback((itemId) => {
+    setPlayer(prev => {
+      const inventory = prev.inventory || []
+      const equipped  = prev.equipped  || {}
+
+      // Check inventory first
+      const invItem = inventory.find(i => i.id === itemId)
+      if (invItem) {
+        const refund = Math.floor((invItem.price || 0) * 0.8)
+        return {
+          ...prev,
+          gold: prev.gold + refund,
+          inventory: inventory.filter(i => i.id !== itemId),
+        }
+      }
+
+      // Check equipped slots
+      const slot = Object.keys(equipped).find(k => equipped[k]?.id === itemId)
+      if (slot) {
+        const eqItem = equipped[slot]
+        const refund = Math.floor((eqItem.price || 0) * 0.8)
+        return {
+          ...prev,
+          gold: prev.gold + refund,
+          equipped: { ...equipped, [slot]: null },
+        }
+      }
+
+      return prev
+    })
+  }, [])
+
+  const purchaseSpell = useCallback((spellId, price) => {
+    setPlayer(prev => {
+      if (prev.gold < price) return prev
+      if ((prev.purchasedSpells || []).includes(spellId)) return prev
+      return {
+        ...prev,
+        gold: prev.gold - price,
+        purchasedSpells: [...(prev.purchasedSpells || []), spellId],
+      }
     })
   }, [])
 
@@ -374,6 +433,7 @@ export const GameProvider = ({ children }) => {
     }))
   }, [])
 
+  // Legacy single-point version (kept for compatibility)
   const allocateStatPoint = useCallback((stat) => {
     setPlayer(prev => {
       if ((prev.spendableStatPoints || 0) <= 0) return prev
@@ -383,12 +443,35 @@ export const GameProvider = ({ children }) => {
         spendableStatPoints: prev.spendableStatPoints - 1,
         bonusStats: { ...bonusStats, [stat]: (bonusStats[stat] || 0) + 1 },
       }
-      // Endurance: each point adds +10 max HP (and current HP)
       if (stat === 'endurance') {
         updates.maxHp = prev.maxHp + 10
         updates.hp = Math.min(prev.hp + 10, prev.maxHp + 10)
       }
       return updates
+    })
+  }, [])
+
+  // Bulk version — applies an entire { stat: count } map atomically
+  const allocateStatPoints = useCallback((allocs) => {
+    setPlayer(prev => {
+      const totalCost = Object.values(allocs).reduce((s, v) => s + v, 0)
+      if ((prev.spendableStatPoints || 0) < totalCost) return prev
+      const bonusStats = { ...(prev.bonusStats || { strength: 0, dexterity: 0, intellect: 0, endurance: 0, charisma: 0, luck: 0 }) }
+      let maxHpDelta = 0
+      Object.entries(allocs).forEach(([stat, count]) => {
+        if (count <= 0) return
+        bonusStats[stat] = (bonusStats[stat] || 0) + count
+        if (stat === 'endurance') maxHpDelta += count * 10
+      })
+      return {
+        ...prev,
+        spendableStatPoints: prev.spendableStatPoints - totalCost,
+        bonusStats,
+        ...(maxHpDelta > 0 ? {
+          maxHp: prev.maxHp + maxHpDelta,
+          hp: Math.min(prev.hp + maxHpDelta, prev.maxHp + maxHpDelta),
+        } : {}),
+      }
     })
   }, [])
 
@@ -442,13 +525,16 @@ export const GameProvider = ({ children }) => {
     useHealthPotion,
     useManaPotion,
     purchaseItem,
+    sellItem,
+    purchaseSpell,
     equipItem,
     unequipItem,
     getElementModifiers,
     purchasePet,
     setActivePet,
     allocateStatPoint,
-  }), [player, enemy, inBattle, battleRewards, battleSource, battleFloor, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet, allocateStatPoint])
+    allocateStatPoints,
+  }), [player, enemy, inBattle, battleRewards, battleSource, battleFloor, updatePlayer, startBattle, endBattle, damagePlayer, damageEnemy, healPlayer, useMana, resetPlayerStats, fullHeal, clearBattleRewards, useHealthPotion, useManaPotion, purchaseItem, sellItem, purchaseSpell, equipItem, unequipItem, getElementModifiers, purchasePet, setActivePet, allocateStatPoint, allocateStatPoints])
 
   return (
     <GameContext.Provider value={value}>

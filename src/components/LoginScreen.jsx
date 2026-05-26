@@ -9,6 +9,7 @@ const LoginScreen = ({ onLogin }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (username.trim() && password.trim()) {
+      localStorage.setItem('username', username.trim())
       onLogin()
       navigate('/town')
     }
