@@ -992,35 +992,51 @@ const TownScreen = ({ onLogout }) => {
               </svg>
 
               {/* Locations */}
-              {MAP_LOCATIONS.map(loc => (
-                <div
-                  key={loc.name}
-                  className="absolute flex flex-col items-center"
-                  style={{
-                    left: `${loc.x}%`,
-                    top: `${loc.y}%`,
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 2,
-                  }}
-                >
-                  <div style={{ fontSize: loc.bold ? 'clamp(2.8rem,5vw,4rem)' : 'clamp(1.8rem,3.6vw,2.8rem)' }}>
-                    {loc.icon}
-                  </div>
-                  <div
-                    className="text-center mt-1 leading-tight"
+              {MAP_LOCATIONS.map(loc => {
+                const isSwordhaven = loc.name === 'Swordhaven'
+                const Wrapper = isSwordhaven ? 'button' : 'div'
+                return (
+                  <Wrapper
+                    key={loc.name}
+                    onClick={isSwordhaven ? () => { setShowTravelMap(false); navigate('/swordhaven') } : undefined}
+                    className="absolute flex flex-col items-center"
                     style={{
-                      fontSize: 'clamp(0.75rem, 1.4vw, 1.1rem)',
-                      fontFamily: 'Georgia, serif',
-                      fontWeight: loc.bold ? 'bold' : 'normal',
-                      color: loc.bold ? '#4a2800' : '#6b4420',
-                      textShadow: '0 0 4px rgba(245,230,200,0.9)',
-                      whiteSpace: 'nowrap',
+                      left: `${loc.x}%`,
+                      top: `${loc.y}%`,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 2,
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: isSwordhaven ? 'pointer' : 'default',
                     }}
                   >
-                    {loc.name}
-                  </div>
-                </div>
-              ))}
+                    <div style={{
+                      fontSize: loc.bold ? 'clamp(2.8rem,5vw,4rem)' : 'clamp(1.8rem,3.6vw,2.8rem)',
+                      filter: isSwordhaven ? 'drop-shadow(0 0 6px rgba(212,160,48,0.9))' : 'none',
+                      animation: isSwordhaven ? 'pulse 2s infinite' : 'none',
+                    }}>
+                      {loc.icon}
+                    </div>
+                    <div
+                      className="text-center mt-1 leading-tight"
+                      style={{
+                        fontSize: 'clamp(0.75rem, 1.4vw, 1.1rem)',
+                        fontFamily: 'Georgia, serif',
+                        fontWeight: loc.bold ? 'bold' : 'normal',
+                        color: isSwordhaven ? '#8B4513' : loc.bold ? '#4a2800' : '#6b4420',
+                        textShadow: isSwordhaven
+                          ? '0 0 6px rgba(212,160,48,0.8)'
+                          : '0 0 4px rgba(245,230,200,0.9)',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {loc.name}
+                      {isSwordhaven && <div style={{ fontSize: '0.65rem', color: '#b45309' }}>⚔️ Quest</div>}
+                    </div>
+                  </Wrapper>
+                )
+              })}
 
               {/* Compass rose */}
               <div className="absolute z-10 flex flex-col items-center" style={{ right: '5%', bottom: '8%' }}>

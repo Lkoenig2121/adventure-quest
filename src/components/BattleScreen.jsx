@@ -101,25 +101,45 @@ const BattleScreen = () => {
     const damage = Math.round((baseDamage + randomVariation) * weaponMultiplier * critMult)
 
     const weaponEl = getWeaponElement()
-    const { finalDamage, label } = applyResistance(damage, weaponEl.key)
-    damageEnemy(finalDamage)
     const multiplierNote = weaponMultiplier > 1 ? ` [×${weaponMultiplier} weapon]` : ''
     const critNote = isCrit ? ' ⚡ CRITICAL HIT!' : ''
+
+    const isReignPlate = player.equipped?.armor?.name === 'Reign Plate'
+
+    if (isReignPlate) {
+      // 4 sequential hits at 75% damage each, separated by 400ms
+      let hit = 0
+      const doReignHit = () => {
+        if (hit >= 4) {
+          triggerPetEffect()
+          setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 300)
+          return
+        }
+        hit++
+        const singleDmg = Math.round(damage * 0.7)
+        const { finalDamage: fd, label: lbl } = applyResistance(singleDmg, weaponEl.key)
+        damageEnemy(fd)
+        addLog(`🛡️ Reign Strike ${hit}/4 — ${player.name} hits for ${fd} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${lbl}${hit === 1 ? critNote : ''}`)
+        setTimeout(doReignHit, 400)
+      }
+      doReignHit()
+      return
+    }
+
+    const { finalDamage, label } = applyResistance(damage, weaponEl.key)
+    damageEnemy(finalDamage)
     addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}${critNote}`)
     triggerPetEffect()
 
     // Guardian Blade 25% Dragon proc
     const isGuardianBlade = player.equipped?.weapon?.name === 'Guardian Blade'
     if (isGuardianBlade && Math.random() < 0.25) {
-      // Find the element the enemy is most vulnerable to (highest resistance value)
       const resistances = enemy.elementResistances || {}
       const ELEM_ICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
       const sorted = Object.entries(resistances).sort(([,a],[,b]) => b - a)
-      const [weakEl, weakVal] = sorted[0] || ['physical', 100]
+      const [weakEl] = sorted[0] || ['physical', 100]
       const weakIcon = ELEM_ICONS[weakEl] || '⚔️'
-      const dragonBase = 500
-      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(dragonBase, weakEl)
-
+      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(500, weakEl)
       setTimeout(() => {
         damageEnemy(dragonDmg)
         addLog(`🐉 GUARDIAN DRAGON swoops down and strikes ${enemy.name} for ${dragonDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dragonLabel}`)
@@ -135,7 +155,10 @@ const BattleScreen = () => {
   }, [playerTurn, animating, enemy, player, damageEnemy, triggerPetEffect, addLog])
 
 
-  const sourceNav = battleSource === 'castle' ? '/castle' : battleSource === 'statTrainer' ? '/stat-trainer' : '/town'
+  const sourceNav = battleSource === 'castle' ? '/castle'
+    : battleSource === 'statTrainer' ? '/stat-trainer'
+    : battleSource === 'reignQuest' ? '/reign-quest'
+    : '/town'
 
   useEffect(() => {
     if (!enemy && !showVictory) {
@@ -308,13 +331,13 @@ const BattleScreen = () => {
 
   const handleFlee = () => {
     endBattle(false)
-    navigate(battleSource === 'castle' ? '/castle' : battleSource === 'statTrainer' ? '/stat-trainer' : '/town')
+    navigate(sourceNav)
   }
 
   const handleVictoryContinue = () => {
     clearBattleRewards()
     setShowVictory(false)
-    navigate(battleSource === 'castle' ? '/castle' : battleSource === 'statTrainer' ? '/stat-trainer' : '/town')
+    navigate(sourceNav)
   }
 
   const handleNextBattle = () => {
@@ -500,6 +523,24 @@ const BattleScreen = () => {
                 >
                   ✨ Return to Trainer
                 </button>
+              ) : battleSource === 'reignQuest' ? (
+                <div className="flex flex-col gap-3 mt-6">
+                  {battleFloor === 6 ? (
+                    <button
+                      onClick={() => { clearBattleRewards(); setShowVictory(false); navigate('/reign-shop') }}
+                      className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-bold py-4 px-8 rounded-lg border-4 border-yellow-700 shadow-lg transform transition hover:scale-105 active:scale-95 text-xl"
+                    >
+                      👑 Open Reign Armoury!
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleVictoryContinue}
+                      className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-3 px-8 rounded-lg border-4 border-amber-800 shadow-lg transform transition hover:scale-105 active:scale-95"
+                    >
+                      ⚔️ Continue Quest
+                    </button>
+                  )}
+                </div>
               ) : (
                 <button
                   onClick={handleVictoryContinue}

@@ -90,6 +90,7 @@ export const GameProvider = ({ children }) => {
       bonusStats: { strength: 0, dexterity: 0, intellect: 0, endurance: 0, charisma: 0, luck: 0 },
       purchasedSpells: [],
       castleProgress: 0,  // highest floor beaten (0 = none yet, floor 1 available)
+      reignQuestProgress: 0, // highest Reign Quest stage beaten (0–6, 6 = boss defeated)
     }
   })
 
@@ -150,9 +151,12 @@ export const GameProvider = ({ children }) => {
           const willLevelUp = newXp >= xpForNextLevel
           const newLevel = willLevelUp ? prev.level + 1 : prev.level
 
-          // Track castle progress (defined before both branches)
+          // Track castle / reign-quest progress
           const castleUpdate = (battleSource === 'castle' && battleFloor)
             ? { castleProgress: Math.max(prev.castleProgress || 0, battleFloor) }
+            : {}
+          const reignUpdate = (battleSource === 'reignQuest' && battleFloor)
+            ? { reignQuestProgress: Math.max(prev.reignQuestProgress || 0, battleFloor) }
             : {}
 
           setBattleRewards({
@@ -176,6 +180,7 @@ export const GameProvider = ({ children }) => {
               manaPotions: (prev.manaPotions || 0) + 1,
               pendingStatPoints: (prev.pendingStatPoints || 0) + 10,
               ...castleUpdate,
+              ...reignUpdate,
             }
           }
 
@@ -184,6 +189,7 @@ export const GameProvider = ({ children }) => {
             xp: newXp,
             gold: newGold,
             ...castleUpdate,
+            ...reignUpdate,
             healthPotions: (prev.healthPotions || 0) + 1,
             manaPotions: (prev.manaPotions || 0) + 1,
           }

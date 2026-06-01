@@ -9,6 +9,9 @@ import CharacterPage from './components/CharacterPage'
 import PetShopScreen from './components/PetShopScreen'
 import StatTrainerScreen from './components/StatTrainerScreen'
 import SpellShopScreen from './components/SpellShopScreen'
+import SwordhavenScreen from './components/SwordhavenScreen'
+import ReignQuestScreen from './components/ReignQuestScreen'
+import ReignShopScreen from './components/ReignShopScreen'
 import { GameProvider } from './context/GameContext'
 
 function App() {
@@ -126,6 +129,9 @@ function App() {
             )
           }
         />
+        <Route path="/swordhaven" element={isAuthenticated ? <SwordhavenScreen /> : <Navigate to="/login" replace />} />
+        <Route path="/reign-quest" element={isAuthenticated ? <ReignQuestScreen /> : <Navigate to="/login" replace />} />
+        <Route path="/reign-shop" element={isAuthenticated ? <ReignShopScreen /> : <Navigate to="/login" replace />} />
         <Route path="/" element={<Navigate to={isAuthenticated ? "/town" : "/login"} replace />} />
       </Routes>
     </GameProvider>
