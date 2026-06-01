@@ -133,15 +133,16 @@ const BattleScreen = () => {
     addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}${critNote}`)
     triggerPetEffect()
 
-    // Guardian Blade 25% Dragon proc
+    // Guardian Blade 20% Dragon proc
     const isGuardianBlade = player.equipped?.weapon?.name === 'Guardian Blade'
-    if (isGuardianBlade && Math.random() < 0.25) {
+    if (isGuardianBlade && Math.random() < 0.20) {
       const resistances = enemy.elementResistances || {}
       const ELEM_ICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
       const sorted = Object.entries(resistances).sort(([,a],[,b]) => b - a)
       const [weakEl] = sorted[0] || ['physical', 100]
       const weakIcon = ELEM_ICONS[weakEl] || '⚔️'
-      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(500, weakEl)
+      const dragonBase = 1000 + Math.floor(Math.random() * 500)
+      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(dragonBase, weakEl)
       setTimeout(() => {
         damageEnemy(dragonDmg)
         addLog(`🐉 GUARDIAN DRAGON swoops down and strikes ${enemy.name} for ${dragonDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dragonLabel}`)
