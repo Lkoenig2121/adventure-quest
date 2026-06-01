@@ -108,7 +108,7 @@ const BattleScreen = () => {
     const isReignPlate = player.equipped?.armor?.name === 'Reign Plate'
 
     if (isReignPlate) {
-      // 4 sequential hits at 75% damage each, separated by 400ms
+      // 4 sequential hits — each re-rolls its own random variation
       let hit = 0
       const doReignHit = () => {
         if (hit >= 4) {
@@ -117,8 +117,9 @@ const BattleScreen = () => {
           return
         }
         hit++
-        const singleDmg = Math.round(damage * 0.7)
-        const { finalDamage: fd, label: lbl } = applyResistance(singleDmg, weaponEl.key)
+        const hitVariation = Math.floor(Math.random() * (50 + (bonusStats.dexterity || 0))) + 1
+        const hitDmg = Math.round((baseDamage + hitVariation) * weaponMultiplier * critMult * 0.7)
+        const { finalDamage: fd, label: lbl } = applyResistance(hitDmg, weaponEl.key)
         damageEnemy(fd)
         addLog(`🛡️ Reign Strike ${hit}/4 — ${player.name} hits for ${fd} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${lbl}${hit === 1 ? critNote : ''}`)
         setTimeout(doReignHit, 400)
