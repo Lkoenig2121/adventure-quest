@@ -147,7 +147,7 @@ const BattleScreen = () => {
   useEffect(() => {
     if (!enemy || showVictory) return
 
-    const trainerSurrenders = battleSource === 'statTrainer' && enemy.hp > 0 && enemy.hp <= 250
+    const trainerSurrenders = battleSource === 'statTrainer' && enemy.hp > 0 && enemy.hp <= (enemy.surrenderHp ?? 250)
     const normalDefeat = enemy.hp <= 0
 
     if (trainerSurrenders || normalDefeat) {

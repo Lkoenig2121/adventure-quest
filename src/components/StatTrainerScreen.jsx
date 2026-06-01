@@ -2,32 +2,37 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 
-const STAT_TRAINER_ENEMY = {
-  name: 'Trainer',
-  title: 'Guardian of Inner Light',
-  hp: 786,
-  maxHp: 786,
-  mp: 400,
-  maxMp: 400,
-  level: 20,
-  xpReward: 0,
-  goldReward: 0,
-  element: 'Light',
-  elementIcon: '✨',
-  elementResistances: {
-    fire: 100,
-    water: 100,
-    wind: 100,
-    ice: 100,
-    earth: 100,
-    energy: 100,
-    light: 100,
-    darkness: 100,
-    physical: 100,
-  },
-  attack: 85,
-  speed: 70,
-  icon: '👼',
+const makeTrainerEnemy = (playerLevel) => {
+  const hp = 500 + playerLevel * 120
+  const surrenderHp = Math.floor(hp * 0.30)
+  return {
+    name: 'Trainer',
+    title: 'Guardian of Inner Light',
+    hp,
+    maxHp: hp,
+    mp: 300 + playerLevel * 12,
+    maxMp: 300 + playerLevel * 12,
+    level: playerLevel + 10,
+    surrenderHp,
+    xpReward: 0,
+    goldReward: 0,
+    element: 'Light',
+    elementIcon: '✨',
+    elementResistances: {
+      fire: 100,
+      water: 100,
+      wind: 100,
+      ice: 100,
+      earth: 100,
+      energy: 100,
+      light: 100,
+      darkness: 100,
+      physical: 100,
+    },
+    attack: 85,
+    speed: 70,
+    icon: '👼',
+  }
 }
 
 const STAT_DEFS = [
@@ -53,7 +58,7 @@ export default function StatTrainerScreen() {
   const remaining = spendableStatPoints - pendingTotal
 
   function handleFight() {
-    startBattle(STAT_TRAINER_ENEMY, 'statTrainer')
+    startBattle(makeTrainerEnemy(player.level), 'statTrainer')
     navigate('/battle')
   }
 
@@ -203,9 +208,11 @@ export default function StatTrainerScreen() {
               "Blessed traveller, I am the keeper of divine wisdom. Reduce my essence below <strong>250</strong> and I shall yield — granting you the celestial knowledge to strengthen your very soul."
             </p>
             <div className="flex gap-4 mt-3 text-xs" style={{ color: '#b45309' }}>
-              <span>✨ Level {STAT_TRAINER_ENEMY.level}</span>
-              <span>❤️ {STAT_TRAINER_ENEMY.maxHp} HP</span>
-              <span>🕊️ Surrenders at 250 HP</span>
+              {(() => { const t = makeTrainerEnemy(player.level); return (<>
+                <span>✨ Level {t.level}</span>
+                <span>❤️ {t.maxHp} HP</span>
+                <span>🕊️ Surrenders at {t.surrenderHp} HP</span>
+              </>) })()}
             </div>
           </div>
         </div>
