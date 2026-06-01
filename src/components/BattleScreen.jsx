@@ -286,14 +286,14 @@ const BattleScreen = () => {
     setAnimating(true)
     useMana(spellCost)
 
-    const intBonus = (player.bonusStats?.intellect || 0) * 3  // +3 spell dmg per INT point
+    const totalInt = Math.floor(player.level * 8) + 40 + (player.bonusStats?.intellect || 0)
     if (spell.type === 'attack') {
-      const rawDamage = (spell.damage || 50) + intBonus
+      const rawDamage = (spell.damage || 50) + Math.floor(totalInt * 2.0)
       const { finalDamage, label } = applyResistance(rawDamage, spell.element.toLowerCase())
       damageEnemy(finalDamage)
       addLog(`${player.name} casts ${spell.name} for ${finalDamage} ${spell.elementIcon} ${spell.element} damage!${label}`)
     } else if (spell.type === 'heal') {
-      const heal = spell.heal || 50
+      const heal = (spell.heal || 50) + Math.floor(totalInt * 1.5)
       healPlayer(heal)
       addLog(`${player.name} casts ${spell.name} and heals for ${heal} ${spell.elementIcon} ${spell.element} HP!`)
     }
@@ -1326,16 +1326,24 @@ const BattleScreen = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {spells.map((spell) => (
-                    <button
-                      key={spell.name}
-                      onClick={() => handleSpell(spell)}
-                      disabled={!playerTurn || player.mp < spell.cost || animating}
-                      className="px-4 py-2 bg-amber-900 border-2 border-amber-700 text-yellow-200 font-bold rounded hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                    >
-                      {spell.icon} {spell.name} ({spell.cost} MP)
-                    </button>
-                  ))}
+                  {spells.map((spell) => {
+                    const totalInt = Math.floor(player.level * 8) + 40 + (player.bonusStats?.intellect || 0)
+                    const scaledValue = spell.type === 'attack'
+                      ? (spell.damage || 50) + Math.floor(totalInt * 2.0)
+                      : (spell.heal  || 50) + Math.floor(totalInt * 1.5)
+                    const valueLabel = spell.type === 'attack' ? `${scaledValue} dmg` : `+${scaledValue} HP`
+                    return (
+                      <button
+                        key={spell.name}
+                        onClick={() => handleSpell(spell)}
+                        disabled={!playerTurn || player.mp < spell.cost || animating}
+                        className="px-3 py-2 bg-amber-900 border-2 border-amber-700 text-yellow-200 font-bold rounded hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex flex-col items-center gap-0.5"
+                      >
+                        <span>{spell.icon} {spell.name}</span>
+                        <span className="text-xs font-normal opacity-80">{spell.cost} MP · {valueLabel}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
