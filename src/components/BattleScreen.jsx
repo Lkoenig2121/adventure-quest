@@ -40,6 +40,7 @@ const BattleScreen = () => {
   const [animating, setAnimating] = useState(false)
   const [showNecroPanel, setShowNecroPanel] = useState(false)
   const [showVictory, setShowVictory] = useState(false)
+  const [showDefeat, setShowDefeat] = useState(false)
   const [dragonStrike, setDragonStrike] = useState(null) // { element, icon, damage } | null
   const [showStatsTooltip, setShowStatsTooltip] = useState(false)
   const [showEnemyTooltip, setShowEnemyTooltip] = useState(false)
@@ -185,9 +186,8 @@ const BattleScreen = () => {
       }, 1500)
     } else if (player.hp <= 0) {
       setTimeout(() => {
-        endBattle(false)
-        navigate(sourceNav)
-      }, 1500)
+        setShowDefeat(true)
+      }, 800)
     }
   }, [enemy?.hp, player.hp, endBattle, navigate, showVictory, battleSource, addLog])
 
@@ -354,7 +354,92 @@ const BattleScreen = () => {
     setSelectedAction('attack')
   }
 
-  if (!enemy && !showVictory) return null
+  if (!enemy && !showVictory && !showDefeat) return null
+
+  // ── Defeat screen ────────────────────────────────────────────────────────
+  if (showDefeat) {
+    const defeatedBy = enemy?.name || 'your foe'
+    const defeatedIcon = enemy?.icon || '💀'
+    return (
+      <div className="w-full h-screen flex items-center justify-center" style={{
+        background: 'radial-gradient(ellipse at center, #3b0000 0%, #1a0000 60%, #000 100%)',
+      }}>
+        {/* Pulsing red glow */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(ellipse at center, rgba(180,0,0,0.18) 0%, transparent 70%)',
+          animation: 'pulse 2s infinite',
+        }} />
+
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24,
+          padding: 48, borderRadius: 20, zIndex: 10, textAlign: 'center',
+          background: 'rgba(0,0,0,0.6)',
+          border: '3px solid #7f1d1d',
+          boxShadow: '0 0 60px rgba(180,0,0,0.5)',
+          maxWidth: 480,
+        }}>
+          {/* Enemy icon */}
+          <div style={{ fontSize: 80, lineHeight: 1, filter: 'drop-shadow(0 0 20px rgba(255,0,0,0.7))' }}>
+            {defeatedIcon}
+          </div>
+
+          {/* Defeat title */}
+          <div style={{
+            fontFamily: 'Georgia, serif', fontSize: 42, fontWeight: 'bold',
+            color: '#ef4444', textShadow: '0 0 20px rgba(239,68,68,0.8), 0 2px 4px rgba(0,0,0,0.9)',
+            letterSpacing: 3,
+          }}>
+            DEFEATED
+          </div>
+
+          <div style={{ color: '#fca5a5', fontSize: 16, lineHeight: 1.6, fontFamily: 'Georgia,serif' }}>
+            <strong style={{ color: '#f87171' }}>{player.name}</strong> was overcome by{' '}
+            <strong style={{ color: '#fbbf24' }}>{defeatedBy}</strong>.<br />
+            <span style={{ color: '#9ca3af', fontSize: 14 }}>
+              Rest, recover, and return stronger.
+            </span>
+          </div>
+
+          {/* HP bar — showing 0 */}
+          <div style={{ width: '100%', maxWidth: 280 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ color: '#f87171', fontSize: 12, fontWeight: 'bold' }}>HP</span>
+              <span style={{ color: '#f87171', fontSize: 12 }}>0 / {player.maxHp}</span>
+            </div>
+            <div style={{ width: '100%', height: 10, background: 'rgba(255,255,255,0.1)', borderRadius: 5 }}>
+              <div style={{ width: '0%', height: '100%', background: '#ef4444', borderRadius: 5 }} />
+            </div>
+          </div>
+
+          {/* Continue button */}
+          <button
+            onClick={() => {
+              endBattle(false)
+              resetPlayerStats()
+              navigate('/town')
+            }}
+            style={{
+              marginTop: 8, padding: '14px 48px',
+              background: 'linear-gradient(to bottom, #dc2626, #991b1b)',
+              border: '3px solid #ef4444', borderRadius: 12,
+              color: 'white', fontWeight: 'bold', fontSize: 18,
+              cursor: 'pointer', fontFamily: 'Georgia,serif',
+              boxShadow: '0 0 20px rgba(239,68,68,0.5), 0 4px 0 #7f1d1d',
+              transition: 'transform 0.1s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            Continue...
+          </button>
+          <div style={{ color: '#6b7280', fontSize: 12 }}>
+            Your HP will be fully restored.
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Show victory screen
   if (showVictory) {
