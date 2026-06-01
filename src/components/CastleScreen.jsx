@@ -16,13 +16,14 @@ export const FLOOR_ENEMIES = {
   11: {
     name: 'Carnax',
     title: 'The Ancient Destroyer',
-    hp: 6000, maxHp: 6000, mp: 1200, maxMp: 1200,
+    hp: 77777, maxHp: 77777, mp: 1200, maxMp: 1200,
     level: 60,
-    xpReward: 5000, goldReward: 2000,
+    xpReward: 50000, goldReward: 10000,
     image: 'carnax',
     element: 'Earth', elementIcon: '🌍',
     icon: '👾',
     speed: 40,
+    attackMin: 700, attackMax: 1000,
     elementResistances: {
       fire: 150, water: 50, wind: 130, ice: 130,
       earth: 0, energy: 150, light: 130, darkness: 130, physical: 80,

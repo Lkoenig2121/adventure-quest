@@ -198,8 +198,8 @@ const BattleScreen = () => {
       setShowNecroPanel(false)
       const timer = setTimeout(() => {
         const enemyLv = enemy.level || player.level
-        const minDmg = Math.floor(10 + player.level * 4 + enemyLv * 1)
-        const maxDmg = Math.floor(20 + player.level * 8 + enemyLv * 2)
+        const minDmg = enemy.attackMin ?? Math.floor(10 + player.level * 4 + enemyLv * 1)
+        const maxDmg = enemy.attackMax ?? Math.floor(20 + player.level * 8 + enemyLv * 2)
         const damage = Math.floor(Math.random() * (maxDmg - minDmg + 1)) + minDmg
         damagePlayer(damage)
         const eIcon = enemy.elementIcon || '⚔️'
