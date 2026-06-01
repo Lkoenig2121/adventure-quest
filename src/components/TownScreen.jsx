@@ -179,7 +179,7 @@ const TownScreen = ({ onLogout }) => {
     ]
 
     const enemies = raw.map(({ hpB, hpS, mpB, mpS, xpB, xpS, gB, gS, lvOff, ...rest }) => {
-      const hp = s(hpB, hpS), mp = s(mpB, mpS)
+      const hp = Math.floor(hpB + lv * hpS * 1.6), mp = s(mpB, mpS)
       return { ...rest, hp, maxHp: hp, mp, maxMp: mp, level: lv + lvOff,
         xpReward: s(xpB, xpS), goldReward: s(gB, gS) }
     })

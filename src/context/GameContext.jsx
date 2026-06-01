@@ -145,7 +145,8 @@ export const GameProvider = ({ children }) => {
           const newXp = prev.xp + xpGain
           const newGold = prev.gold + goldGain
 
-          const xpForNextLevel = prev.level * 1000
+          // XP resets each level; requirement grows with level so fights-per-level increases
+          const xpForNextLevel = 920 + prev.level * 80
           const willLevelUp = newXp >= xpForNextLevel
           const newLevel = willLevelUp ? prev.level + 1 : prev.level
 
@@ -164,7 +165,7 @@ export const GameProvider = ({ children }) => {
           if (willLevelUp) {
             return {
               ...prev,
-              xp: newXp,
+              xp: 0,   // reset XP each level
               gold: newGold,
               level: newLevel,
               maxHp: prev.maxHp + 50,

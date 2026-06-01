@@ -379,11 +379,18 @@ const ShopScreen = () => {
             </div>
 
             {activeTab === 'shop' ? (
-              <div className="overflow-y-auto flex-1" style={{
-                background: '#1a0d00',
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#8B5E3C #1a0d00',
-              }}>
+              <div
+                className="overflow-y-auto flex-1"
+                tabIndex={0}
+                onMouseEnter={e => e.currentTarget.focus()}
+                style={{
+                  background: '#1a0d00',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#8B5E3C #1a0d00',
+                  overscrollBehavior: 'contain',
+                  outline: 'none',
+                }}
+              >
                 {categories.map(cat => {
                   const items = shopItems.filter(cat.filter)
                   if (!items.length) return null
@@ -453,7 +460,18 @@ const ShopScreen = () => {
               </div>
             ) : (
               /* Inventory tab */
-              <div className="overflow-y-auto flex-1" style={{ background: '#1a0d00' }}>
+              <div
+                className="overflow-y-auto flex-1"
+                tabIndex={0}
+                onMouseEnter={e => e.currentTarget.focus()}
+                style={{
+                  background: '#1a0d00',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#8B5E3C #1a0d00',
+                  overscrollBehavior: 'contain',
+                  outline: 'none',
+                }}
+              >
                 {/* Consumables (not sellable) */}
                 <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508' }}>
                   Consumables

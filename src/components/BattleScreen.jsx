@@ -50,20 +50,34 @@ const BattleScreen = () => {
     setBattleLog(prev => [...prev, message])
   }, [])
 
+  // Returns scaled pet stats based on player level
+  const getScaledPet = (petDef, lv) => {
+    if (!petDef) return {}
+    if (petDef.effect === 'heal') {
+      return { healAmount: petDef.effectAmount + lv * 2 }
+    }
+    return {
+      min: petDef.effectMin + lv * 4,
+      max: petDef.effectMax + lv * 6,
+    }
+  }
+
   const triggerPetEffect = useCallback(() => {
     const activePetId = player.activePetId
     if (!activePetId) return
     const petDef = PET_DEFS[activePetId]
     if (!petDef) return
+    const lv = player.level || 1
+    const scaled = getScaledPet(petDef, lv)
     if (petDef.effect === 'attack') {
-      const petDmg = Math.floor(Math.random() * (petDef.effectMax - petDef.effectMin + 1)) + petDef.effectMin
+      const petDmg = Math.floor(Math.random() * (scaled.max - scaled.min + 1)) + scaled.min
       damageEnemy(petDmg)
       addLog(`${petDef.icon} ${petDef.name} attacks for ${petDmg} damage!`)
     } else if (petDef.effect === 'heal') {
-      healPlayer(petDef.effectAmount)
-      addLog(`${petDef.icon} ${petDef.name} heals you for ${petDef.effectAmount} HP!`)
+      healPlayer(scaled.healAmount)
+      addLog(`${petDef.icon} ${petDef.name} heals you for ${scaled.healAmount} HP!`)
     }
-  }, [player.activePetId, damageEnemy, healPlayer, addLog])
+  }, [player.activePetId, player.level, damageEnemy, healPlayer, addLog])
 
   const handleAttack = useCallback(() => {
     console.log('⚔️ Attack clicked!', { playerTurn, animating, hasEnemy: !!enemy })
@@ -160,8 +174,9 @@ const BattleScreen = () => {
     if (!playerTurn && enemy && enemy.hp > 0 && player.hp > 0) {
       setShowNecroPanel(false)
       const timer = setTimeout(() => {
-        const minDmg = 10 + Math.floor(player.level * 4)
-        const maxDmg = 20 + Math.floor(player.level * 7)
+        const enemyLv = enemy.level || player.level
+        const minDmg = Math.floor(10 + player.level * 4 + enemyLv * 1)
+        const maxDmg = Math.floor(20 + player.level * 8 + enemyLv * 2)
         const damage = Math.floor(Math.random() * (maxDmg - minDmg + 1)) + minDmg
         damagePlayer(damage)
         const eIcon = enemy.elementIcon || '⚔️'
@@ -780,7 +795,7 @@ const BattleScreen = () => {
                         </div>
                         <div className="flex justify-between pr-2 col-span-2">
                           <span className="font-semibold">Experience:</span>
-                          <span className="text-purple-700 font-bold">{player.xp || 0} / {player.level * 1000} XP</span>
+                          <span className="text-purple-700 font-bold">{player.xp || 0} / {920 + player.level * 80} XP</span>
                         </div>
                       </div>
                     </div>
@@ -1167,15 +1182,15 @@ const BattleScreen = () => {
                       <div className="mt-3">
                         <div className="flex justify-between text-xs text-amber-700 mb-1">
                           <span>Your XP Progress after win:</span>
-                          <span className="font-bold">{Math.min(player.xp + (enemy.xpReward || 0), player.level * 1000)} / {player.level * 1000}</span>
+                          <span className="font-bold">{Math.min(player.xp + (enemy.xpReward || 0), 920 + player.level * 80)} / {920 + player.level * 80}</span>
                         </div>
                         <div className="w-full bg-gray-300 h-3 rounded overflow-hidden">
                           <div
                             className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-300"
-                            style={{ width: `${Math.min(100, ((player.xp + (enemy.xpReward || 0)) / (player.level * 1000)) * 100)}%` }}
+                            style={{ width: `${Math.min(100, ((player.xp + (enemy.xpReward || 0)) / (920 + player.level * 80)) * 100)}%` }}
                           />
                         </div>
-                        {player.xp + (enemy.xpReward || 0) >= player.level * 1000 && (
+                        {player.xp + (enemy.xpReward || 0) >= 920 + player.level * 80 && (
                           <div className="text-center text-green-700 font-bold text-xs mt-1 animate-pulse">🎉 LEVEL UP on victory!</div>
                         )}
                       </div>
@@ -1224,11 +1239,17 @@ const BattleScreen = () => {
             <div className="text-xs text-green-200 font-bold uppercase tracking-wide">Active Pet</div>
             <div className="text-5xl">{PET_DEFS[player.activePetId].icon}</div>
             <div className="text-yellow-200 font-bold text-sm text-center leading-tight">{PET_DEFS[player.activePetId].name}</div>
-            <div className={`text-xs font-semibold text-center ${PET_DEFS[player.activePetId].effect === 'heal' ? 'text-green-300' : 'text-red-300'}`}>
-              {PET_DEFS[player.activePetId].effect === 'heal'
-                ? `💚 +${PET_DEFS[player.activePetId].effectAmount} HP/turn`
-                : `⚔️ ${PET_DEFS[player.activePetId].effectMin}–${PET_DEFS[player.activePetId].effectMax} dmg`}
-            </div>
+            {(() => {
+              const pd = PET_DEFS[player.activePetId]
+              const sc = getScaledPet(pd, player.level || 1)
+              return (
+                <div className={`text-xs font-semibold text-center ${pd.effect === 'heal' ? 'text-green-300' : 'text-red-300'}`}>
+                  {pd.effect === 'heal'
+                    ? `💚 +${sc.healAmount} HP/turn`
+                    : `⚔️ ${sc.min}–${sc.max} dmg`}
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}
@@ -1528,9 +1549,12 @@ const BattleScreen = () => {
                         <div className="text-left flex-1">
                           <div className="font-bold">{petDef.name}</div>
                           <div className="text-xs opacity-90">
-                            {petDef.effect === 'heal'
-                              ? `💚 Heals ${petDef.effectAmount} HP per turn`
-                              : `⚔️ Deals ${petDef.effectMin}–${petDef.effectMax} dmg per turn`}
+                            {(() => {
+                              const sc = getScaledPet(petDef, player.level || 1)
+                              return petDef.effect === 'heal'
+                                ? `💚 Heals ${sc.healAmount} HP per turn`
+                                : `⚔️ Deals ${sc.min}–${sc.max} dmg per turn`
+                            })()}
                           </div>
                         </div>
                         {isActive && (
