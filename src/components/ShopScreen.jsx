@@ -269,7 +269,7 @@ const ShopScreen = () => {
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`px-4 py-2 font-bold text-sm rounded transition-all ${className}`}
+      className={`px-5 py-2 font-bold text-base rounded transition-all ${className}`}
       style={{
         background: disabled
           ? 'linear-gradient(to bottom,#888,#555)'
@@ -291,7 +291,7 @@ const ShopScreen = () => {
     }}>
       {/* Outer wooden frame */}
       <div className="flex flex-col" style={{
-        width: 780, minHeight: 520,
+        width: 940, minHeight: 580,
         ...woodBorder,
         borderRadius: 8,
         padding: 6,
@@ -313,7 +313,7 @@ const ShopScreen = () => {
 
           {/* LEFT — treasure chest + gold */}
           <div className="flex flex-col items-center justify-between py-4 px-3" style={{
-            width: 130,
+            width: 155,
             background: 'linear-gradient(160deg,#6b3f1f,#3b1f08)',
             borderRight: '2px solid #4a2c0a',
           }}>
@@ -360,8 +360,8 @@ const ShopScreen = () => {
                   onClick={() => setActiveTab(tab)}
                   style={{
                     flex: 1,
-                    padding: '6px 0',
-                    fontSize: 12,
+                    padding: '8px 0',
+                    fontSize: 15,
                     fontWeight: 'bold',
                     fontFamily: 'Georgia,serif',
                     color: activeTab === tab ? '#ffd87a' : '#c4a87a',
@@ -397,12 +397,12 @@ const ShopScreen = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '5px 10px',
+                          padding: '8px 12px',
                           background: isOpen
                             ? 'linear-gradient(to right,#5c3410,#3b1f08)'
                             : 'linear-gradient(to right,#3b1f08,#2a1508)',
                           color: isOpen ? '#ffd87a' : '#c4a87a',
-                          fontSize: 11,
+                          fontSize: 14,
                           fontWeight: 'bold',
                           borderBottom: '1px solid #4a2c0a',
                           borderTop: '1px solid #4a2c0a',
@@ -411,7 +411,7 @@ const ShopScreen = () => {
                         }}
                       >
                         <span>{cat.label}</span>
-                        <span style={{ fontSize: 9, opacity: 0.8 }}>{isOpen ? '▲' : '▼'}</span>
+                        <span style={{ fontSize: 11, opacity: 0.8 }}>{isOpen ? '▲' : '▼'}</span>
                       </div>
 
                       {/* Items — only shown when open */}
@@ -424,8 +424,8 @@ const ShopScreen = () => {
                             style={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 8,
-                              padding: '6px 10px',
+                              gap: 10,
+                              padding: '10px 14px',
                               cursor: 'pointer',
                               borderBottom: '1px solid #2a1508',
                               background: selectedItem?.id === item.id
@@ -439,9 +439,9 @@ const ShopScreen = () => {
                             onMouseEnter={e => { if (selectedItem?.id !== item.id) e.currentTarget.style.background = 'rgba(80,40,10,0.4)' }}
                             onMouseLeave={e => { if (selectedItem?.id !== item.id) e.currentTarget.style.background = 'transparent' }}
                           >
-                            <span style={{ fontSize: 16, minWidth: 22 }}>{item.icon}</span>
-                            <span style={{ fontSize: 12, fontFamily: 'Georgia,serif' }}>{item.name}</span>
-                            <span style={{ marginLeft: 'auto', fontSize: 11, color: owned ? '#6b5030' : '#ffd87a' }}>
+                            <span style={{ fontSize: 20, minWidth: 26 }}>{item.icon}</span>
+                            <span style={{ fontSize: 15, fontFamily: 'Georgia,serif' }}>{item.name}</span>
+                            <span style={{ marginLeft: 'auto', fontSize: 14, color: owned ? '#6b5030' : '#ffd87a' }}>
                               {owned ? '✓' : `${item.price}g`}
                             </span>
                           </div>
@@ -455,7 +455,7 @@ const ShopScreen = () => {
               /* Inventory tab */
               <div className="overflow-y-auto flex-1" style={{ background: '#1a0d00' }}>
                 {/* Consumables (not sellable) */}
-                <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 11, padding: '5px 10px 3px', borderBottom: '1px solid #2a1508' }}>
+                <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508' }}>
                   Consumables
                 </div>
                 {[
@@ -463,11 +463,11 @@ const ShopScreen = () => {
                   { icon: '💧', label: 'Mana Potions',   count: player.manaPotions   || 0 },
                 ].map(c => (
                   <div key={c.label} style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '5px 10px', borderBottom: '1px solid #2a1508',
-                    color: '#d4b896', fontSize: 12,
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '9px 14px', borderBottom: '1px solid #2a1508',
+                    color: '#d4b896', fontSize: 15,
                   }}>
-                    <span style={{ fontSize: 14 }}>{c.icon}</span>
+                    <span style={{ fontSize: 18 }}>{c.icon}</span>
                     <span>{c.label}</span>
                     <span style={{ marginLeft: 'auto', color: '#ffd87a', fontWeight: 'bold' }}>×{c.count}</span>
                   </div>
@@ -476,27 +476,27 @@ const ShopScreen = () => {
                 {/* Equipped items */}
                 {Object.entries(player.equipped || {}).some(([, v]) => v) && (
                   <>
-                    <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 11, padding: '5px 10px 3px', borderBottom: '1px solid #2a1508', borderTop: '1px solid #4a2c0a' }}>
+                    <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508', borderTop: '1px solid #4a2c0a' }}>
                       Equipped
                     </div>
                     {Object.entries(player.equipped || {}).filter(([, v]) => v).map(([slot, eq]) => {
                       const sellPrice = Math.floor((eq.price || 0) * 0.8)
                       return (
                         <div key={slot} style={{
-                          display: 'flex', alignItems: 'center', gap: 6,
-                          padding: '5px 10px', borderBottom: '1px solid #2a1508',
-                          color: '#d4b896', fontSize: 11,
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          padding: '9px 14px', borderBottom: '1px solid #2a1508',
+                          color: '#d4b896', fontSize: 14,
                         }}>
-                          <span style={{ fontSize: 14 }}>{eq.icon || '⚔️'}</span>
+                          <span style={{ fontSize: 18 }}>{eq.icon || '⚔️'}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eq.name}</div>
-                            <div style={{ fontSize: 9, color: '#a08060', textTransform: 'capitalize' }}>{slot} — equipped</div>
+                            <div style={{ fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eq.name}</div>
+                            <div style={{ fontSize: 11, color: '#a08060', textTransform: 'capitalize' }}>{slot} — equipped</div>
                           </div>
                           {sellPrice > 0 && (
                             <button
                               onClick={() => { sellItem(eq.id); setPurchaseMessage({ type: 'success', text: `Sold ${eq.name} for ${sellPrice}g!` }); setTimeout(() => setPurchaseMessage(null), 3000) }}
                               style={{
-                                fontSize: 10, padding: '2px 6px', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap',
+                                fontSize: 13, padding: '4px 9px', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap',
                                 background: 'linear-gradient(to bottom,#7a3a0a,#4a2005)',
                                 border: '1px solid #4a2c0a', color: '#ffd87a',
                               }}
@@ -511,30 +511,30 @@ const ShopScreen = () => {
                 )}
 
                 {/* Bag items */}
-                <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 11, padding: '5px 10px 3px', borderBottom: '1px solid #2a1508', borderTop: '1px solid #4a2c0a' }}>
+                <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508', borderTop: '1px solid #4a2c0a' }}>
                   Bag ({(player.inventory || []).length} items)
                 </div>
                 {(player.inventory || []).length === 0 ? (
-                  <div style={{ color: '#6b5030', fontSize: 11, padding: '6px 10px' }}>Bag is empty.</div>
+                  <div style={{ color: '#6b5030', fontSize: 14, padding: '9px 14px' }}>Bag is empty.</div>
                 ) : (
                   (player.inventory || []).map(eq => {
                     const sellPrice = Math.floor((eq.price || 0) * 0.8)
                     return (
                       <div key={eq.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        padding: '5px 10px', borderBottom: '1px solid #2a1508',
-                        color: '#d4b896', fontSize: 11,
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '9px 14px', borderBottom: '1px solid #2a1508',
+                        color: '#d4b896', fontSize: 14,
                       }}>
-                        <span style={{ fontSize: 14 }}>{eq.icon || '⚔️'}</span>
+                        <span style={{ fontSize: 18 }}>{eq.icon || '⚔️'}</span>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 11, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eq.name}</div>
-                          <div style={{ fontSize: 9, color: '#a08060', textTransform: 'capitalize' }}>{eq.slot}</div>
+                          <div style={{ fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eq.name}</div>
+                          <div style={{ fontSize: 11, color: '#a08060', textTransform: 'capitalize' }}>{eq.slot}</div>
                         </div>
                         {sellPrice > 0 ? (
                           <button
                             onClick={() => { sellItem(eq.id); setPurchaseMessage({ type: 'success', text: `Sold ${eq.name} for ${sellPrice}g!` }); setTimeout(() => setPurchaseMessage(null), 3000) }}
                             style={{
-                              fontSize: 10, padding: '2px 6px', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap',
+                              fontSize: 13, padding: '4px 9px', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap',
                               background: 'linear-gradient(to bottom,#7a3a0a,#4a2005)',
                               border: '1px solid #4a2c0a', color: '#ffd87a',
                             }}
@@ -542,7 +542,7 @@ const ShopScreen = () => {
                             Sell {sellPrice}g
                           </button>
                         ) : (
-                          <span style={{ fontSize: 9, color: '#6b5030' }}>No value</span>
+                          <span style={{ fontSize: 11, color: '#6b5030' }}>No value</span>
                         )}
                       </div>
                     )
@@ -554,7 +554,7 @@ const ShopScreen = () => {
 
           {/* RIGHT — item detail panel */}
           <div className="flex flex-col" style={{
-            width: 200,
+            width: 240,
             background: 'linear-gradient(160deg,#6b3f1f,#3b1f08)',
             borderLeft: '2px solid #4a2c0a',
           }}>
@@ -567,12 +567,12 @@ const ShopScreen = () => {
                   padding: '8px 10px',
                   textAlign: 'center',
                 }}>
-                  <div style={{ fontSize: 32, lineHeight: 1 }}>{selectedItem.icon}</div>
+                  <div style={{ fontSize: 40, lineHeight: 1 }}>{selectedItem.icon}</div>
                   <div style={{
                     color: '#ffd87a',
                     fontFamily: 'Georgia,serif',
                     fontWeight: 'bold',
-                    fontSize: 13,
+                    fontSize: 16,
                     marginTop: 4,
                     textShadow: '0 1px 3px rgba(0,0,0,0.8)',
                   }}>
@@ -583,26 +583,26 @@ const ShopScreen = () => {
                 {/* Details parchment */}
                 <div className="flex-1 p-3" style={{ ...parchment, margin: 8, borderRadius: 6, overflow: 'auto' }}>
                   <div style={{ marginBottom: 6 }}>
-                    <span style={{ fontSize: 11, color: '#5c3410', fontWeight: 'bold' }}>Price: </span>
-                    <span style={{ fontSize: 13, color: '#8B5E0A', fontWeight: 'bold' }}>{selectedItem.price.toLocaleString()} Gold</span>
+                    <span style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold' }}>Price: </span>
+                    <span style={{ fontSize: 15, color: '#8B5E0A', fontWeight: 'bold' }}>{selectedItem.price.toLocaleString()} Gold</span>
                   </div>
                   {selectedItem.slot && (
                     <div style={{ marginBottom: 6 }}>
-                      <span style={{ fontSize: 11, color: '#5c3410', fontWeight: 'bold' }}>Slot: </span>
-                      <span style={{ fontSize: 12, color: '#3b1f08', textTransform: 'capitalize' }}>{selectedItem.slot}</span>
+                      <span style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold' }}>Slot: </span>
+                      <span style={{ fontSize: 14, color: '#3b1f08', textTransform: 'capitalize' }}>{selectedItem.slot}</span>
                     </div>
                   )}
                   <div style={{ borderTop: '1px solid #8B6914', paddingTop: 6, marginTop: 4 }}>
-                    <div style={{ fontSize: 11, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Description</div>
-                    <div style={{ fontSize: 11, color: '#3b2010', lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Description</div>
+                    <div style={{ fontSize: 13, color: '#3b2010', lineHeight: 1.5 }}>
                       {selectedItem.description}
                     </div>
                   </div>
                   {selectedItem.elementBonuses && (
                     <div style={{ borderTop: '1px solid #8B6914', paddingTop: 6, marginTop: 6 }}>
-                      <div style={{ fontSize: 11, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Elements</div>
+                      <div style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Elements</div>
                       {Object.entries(selectedItem.elementBonuses).map(([el, val]) => (
-                        <div key={el} style={{ fontSize: 11, color: '#3b2010', display: 'flex', justifyContent: 'space-between' }}>
+                        <div key={el} style={{ fontSize: 13, color: '#3b2010', display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ textTransform: 'capitalize' }}>{el}</span>
                           <span style={{ fontWeight: 'bold', color: '#8B5E0A' }}>+{val}%</span>
                         </div>
@@ -640,7 +640,7 @@ const ShopScreen = () => {
           borderTop: '2px solid #4a2c0a',
           borderRadius: '0 0 4px 4px',
         }}>
-          <div style={{ color: '#c4a87a', fontSize: 12, fontFamily: 'Georgia,serif' }}>
+          <div style={{ color: '#c4a87a', fontSize: 14, fontFamily: 'Georgia,serif' }}>
             HP <span style={{ color: '#f87171', fontWeight: 'bold' }}>{player.hp}</span>
             <span style={{ color: '#6b5030' }}> / {player.maxHp}</span>
             {'  '}MP <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>{player.mp}</span>
