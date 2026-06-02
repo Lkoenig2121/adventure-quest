@@ -107,6 +107,27 @@ const BattleScreen = () => {
 
     const isReignPlate = player.equipped?.armor?.name === 'Reign Plate'
 
+    // Guardian Blade 25% Dragon proc — REPLACES the player's attack entirely
+    const isGuardianBlade = player.equipped?.weapon?.name === 'Guardian Blade'
+    if (isGuardianBlade && Math.random() < 0.25) {
+      const resistances = enemy.elementResistances || {}
+      const ELEM_ICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
+      const sorted = Object.entries(resistances).sort(([,a],[,b]) => b - a)
+      const [weakEl] = sorted[0] || ['physical', 100]
+      const weakIcon = ELEM_ICONS[weakEl] || '⚔️'
+      const dragonBase = 1000 + Math.floor(Math.random() * 500)
+      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(dragonBase, weakEl)
+      setTimeout(() => {
+        damageEnemy(dragonDmg)
+        addLog(`🐉 GUARDIAN DRAGON replaces your attack and strikes ${enemy.name} for ${dragonDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dragonLabel}`)
+        setDragonStrike({ element: weakEl, icon: weakIcon, damage: dragonDmg })
+        setTimeout(() => setDragonStrike(null), 1800)
+      }, 400)
+      triggerPetEffect()
+      setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 600)
+      return
+    }
+
     if (isReignPlate) {
       // 4 sequential hits — each re-rolls its own random variation
       let hit = 0
@@ -132,24 +153,6 @@ const BattleScreen = () => {
     damageEnemy(finalDamage)
     addLog(`${player.name} attacks ${enemy.name} for ${finalDamage} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${label}${critNote}`)
     triggerPetEffect()
-
-    // Guardian Blade 20% Dragon proc
-    const isGuardianBlade = player.equipped?.weapon?.name === 'Guardian Blade'
-    if (isGuardianBlade && Math.random() < 0.20) {
-      const resistances = enemy.elementResistances || {}
-      const ELEM_ICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
-      const sorted = Object.entries(resistances).sort(([,a],[,b]) => b - a)
-      const [weakEl] = sorted[0] || ['physical', 100]
-      const weakIcon = ELEM_ICONS[weakEl] || '⚔️'
-      const dragonBase = 1000 + Math.floor(Math.random() * 500)
-      const { finalDamage: dragonDmg, label: dragonLabel } = applyResistance(dragonBase, weakEl)
-      setTimeout(() => {
-        damageEnemy(dragonDmg)
-        addLog(`🐉 GUARDIAN DRAGON swoops down and strikes ${enemy.name} for ${dragonDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dragonLabel}`)
-        setDragonStrike({ element: weakEl, icon: weakIcon, damage: dragonDmg })
-        setTimeout(() => setDragonStrike(null), 1800)
-      }, 600)
-    }
 
     setTimeout(() => {
       setAnimating(false)
@@ -1561,7 +1564,27 @@ const BattleScreen = () => {
                 onClick={(e) => {
                   e.preventDefault(); e.stopPropagation()
                   if (hasObsidianCloak) {
-                    if (playerTurn && !animating) setShowNecroPanel(true)
+                    if (!playerTurn || animating) return
+                    const isGB = player.equipped?.weapon?.name === 'Guardian Blade'
+                    if (isGB && Math.random() < 0.25) {
+                      // Dragon replaces the attack — skip the Necro panel entirely
+                      setAnimating(true)
+                      const EICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
+                      const [weakEl] = Object.entries(enemy.elementResistances || {}).sort(([,a],[,b]) => b - a)[0] || ['physical', 100]
+                      const weakIcon = EICONS[weakEl] || '⚔️'
+                      const dragonBase = 1000 + Math.floor(Math.random() * 500)
+                      const { finalDamage: dDmg, label: dLbl } = applyResistance(dragonBase, weakEl)
+                      setTimeout(() => {
+                        damageEnemy(dDmg)
+                        addLog(`🐉 GUARDIAN DRAGON swoops in and strikes ${enemy.name} for ${dDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dLbl}`)
+                        setDragonStrike({ element: weakEl, icon: weakIcon, damage: dDmg })
+                        setTimeout(() => setDragonStrike(null), 1800)
+                      }, 400)
+                      triggerPetEffect()
+                      setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 600)
+                    } else {
+                      setShowNecroPanel(true)
+                    }
                   } else {
                     handleAttack()
                   }
