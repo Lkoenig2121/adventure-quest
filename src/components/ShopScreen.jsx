@@ -39,6 +39,17 @@ const ShopScreen = () => {
       damageMultiplier: 2,
     },
     {
+      id: 'abyssalWhip',
+      name: 'Abyssal Whip',
+      description: 'Weapon: Deals TRIPLE damage with 🌪️ Wind element. Forged from abyssal essence — lashes enemies with devastating wind strikes.',
+      price: 100000,
+      icon: '⛓️',
+      type: 'equipment',
+      slot: 'weapon',
+      elementBonuses: { wind: 25 },
+      damageMultiplier: 3,
+    },
+    {
       id: 'fireSword',
       name: 'Fire Sword',
       description: 'Weapon: +15% Fire, +5% Energy',
