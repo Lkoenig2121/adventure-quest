@@ -17,6 +17,9 @@ const PET_DEFS = {
   chibiLoco:     { name: 'Chibi Loco',     icon: '😈', effect: 'attack', effectMin: 6,  effectMax: 22 },
 }
 
+const getStrengthDamageBonus = (strength) =>
+  Math.floor(Math.sqrt(strength || 0) * 5)
+
 const BattleScreen = () => {
   const navigate = useNavigate()
   const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, battleFloor, startBattle, resetPlayerStats, useHealthPotion, useManaPotion, equipItem, unequipItem, getElementModifiers, setActivePet } = useGame()
@@ -89,7 +92,7 @@ const BattleScreen = () => {
     
     setAnimating(true)
     const bonusStats = player.bonusStats || {}
-    const strBonus    = (bonusStats.strength  || 0) * 2   // +2 dmg per STR point
+    const strBonus    = getStrengthDamageBonus(bonusStats.strength)
     const dexBonus    = (bonusStats.dexterity || 0) * 1   // +1 to random range per DEX point
     const luckPoints  = bonusStats.luck || 0
     const critChance  = luckPoints * 0.02                  // 2% crit chance per LCK point
@@ -241,7 +244,7 @@ const BattleScreen = () => {
     if (move.mpCost > 0) useMana(move.mpCost)
 
     const bonusStats = player.bonusStats || {}
-    const strBonus  = (bonusStats.strength  || 0) * 2
+    const strBonus  = getStrengthDamageBonus(bonusStats.strength)
     const dexBonus  = (bonusStats.dexterity || 0)
     const calcBase  = () => 25 + strBonus + Math.floor(Math.random() * (50 + dexBonus)) + 1
 
