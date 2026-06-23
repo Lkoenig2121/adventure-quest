@@ -315,6 +315,7 @@ const BattleScreen = () => {
     }
 
     setAnimating(true)
+    setSelectedAction('attack')
     useMana(spellCost)
 
     const totalInt = Math.floor(player.level * 8) + 40 + (player.bonusStats?.intellect || 0)
