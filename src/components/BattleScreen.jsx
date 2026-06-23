@@ -706,8 +706,6 @@ const BattleScreen = () => {
 
   const spells = ALL_SPELLS.filter(s => (player.purchasedSpells || []).includes(s.id))
 
-  const spellIcons = ['⭐', '⬜', '🔴', '🟢', '🟡', '⚫']
-
   const isHeavenlyBattle = battleSource === 'statTrainer'
 
   return (
@@ -1440,18 +1438,6 @@ const BattleScreen = () => {
           {/* Spell Selection */}
           {selectedAction === 'spells' && (
             <div className="space-y-2">
-              <div className="grid grid-cols-6 gap-2 mb-3">
-                {spellIcons.map((icon, idx) => (
-                  <div
-                    key={idx}
-                    className={`w-10 h-10 border-2 rounded flex items-center justify-center text-xl ${
-                      idx === 0 ? 'border-white bg-yellow-400' : 'border-gray-600 bg-gray-700'
-                    }`}
-                  >
-                    {icon}
-                  </div>
-                ))}
-              </div>
               {spells.length === 0 ? (
                 <div className="text-center py-4 px-2">
                   <div className="text-3xl mb-2">📚</div>
