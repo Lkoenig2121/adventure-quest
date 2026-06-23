@@ -112,7 +112,7 @@ const BattleScreen = () => {
 
     // Guardian Blade 25% Dragon proc — REPLACES the player's attack entirely
     const isGuardianBlade = player.equipped?.weapon?.name === 'Guardian Blade'
-    if (isGuardianBlade && Math.random() < 0.25) {
+    if (isGuardianBlade && Math.random() < 0.10) {
       const resistances = enemy.elementResistances || {}
       const ELEM_ICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
       const sorted = Object.entries(resistances).sort(([,a],[,b]) => b - a)
