@@ -265,7 +265,7 @@ const BattleScreen = () => {
         const dmg = Math.round(calcBase() * 0.5)
         const { finalDamage, label } = applyResistance(dmg, elKey)
         damageEnemy(finalDamage)
-        addLog(`🧟 Undead Mutant hit ${hit + 1}/8 — ${finalDamage} ${elLabel} damage!${label}`)
+        addLog(`🧟 Undead Mutant hit ${hit + 1} — ${finalDamage} ${elLabel} damage!${label}`)
         hit++
         setTimeout(doHit, 500)
       }
