@@ -249,6 +249,33 @@ const ShopScreen = () => {
   const [selectedItem, setSelectedItem] = useState(shopItems[0])
   const [openCategories, setOpenCategories] = useState(new Set(['🧪 Potions']))
 
+  const loadOptions = () => {
+    try { return JSON.parse(localStorage.getItem('gameOptions') || '{}') } catch { return {} }
+  }
+  const [gameOptions, setGameOptions] = useState(() => ({
+    showDamageNumbers: true,
+    fastBattleMode: false,
+    showElementTips: true,
+    confirmPurchases: false,
+    showStatChanges: true,
+    ...loadOptions(),
+  }))
+  const toggleOption = (key) => {
+    setGameOptions(prev => {
+      const next = { ...prev, [key]: !prev[key] }
+      localStorage.setItem('gameOptions', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const optionsList = [
+    { key: 'showDamageNumbers', label: 'Show Damage Numbers',   desc: 'Display damage values during battle' },
+    { key: 'fastBattleMode',    label: 'Fast Battle Mode',       desc: 'Skip battle animations for quicker fights' },
+    { key: 'showElementTips',   label: 'Show Element Tips',      desc: 'Hint which elements are strong/weak' },
+    { key: 'confirmPurchases',  label: 'Confirm Purchases',      desc: 'Ask before spending gold in the shop' },
+    { key: 'showStatChanges',   label: 'Show Stat Changes',      desc: 'Highlight stat changes after level-up' },
+  ]
+
   const toggleCategory = (label) => {
     setOpenCategories(prev => {
       const next = new Set(prev)
@@ -365,26 +392,29 @@ const ShopScreen = () => {
           <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
             {/* Tab row */}
             <div className="flex" style={{ borderBottom: '2px solid #4a2c0a' }}>
-              {['shop','inventory'].map(tab => (
+              {[
+                { id: 'shop',      label: '🛒 Buy Items' },
+                { id: 'inventory', label: '🎒 Inventory' },
+                { id: 'options',   label: '⚙️ Options' },
+              ].map(tab => (
                 <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
                   style={{
                     flex: 1,
                     padding: '8px 0',
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: 'bold',
                     fontFamily: 'Georgia,serif',
-                    color: activeTab === tab ? '#ffd87a' : '#c4a87a',
-                    background: activeTab === tab
+                    color: activeTab === tab.id ? '#ffd87a' : '#c4a87a',
+                    background: activeTab === tab.id
                       ? 'linear-gradient(to bottom,#5c3410,#3b1f08)'
                       : 'linear-gradient(to bottom,#3b1f08,#2a1508)',
                     border: 'none',
                     cursor: 'pointer',
-                    textTransform: 'capitalize',
                   }}
                 >
-                  {tab === 'shop' ? '🛒 Buy Items' : '🎒 Inventory'}
+                  {tab.label}
                 </button>
               ))}
             </div>
@@ -469,7 +499,7 @@ const ShopScreen = () => {
                   )
                 })}
               </div>
-            ) : (
+            ) : activeTab === 'inventory' ? (
               /* Inventory tab */
               <div
                 className="overflow-y-auto flex-1"
@@ -578,6 +608,89 @@ const ShopScreen = () => {
                   })
                 )}
               </div>
+            ) : activeTab === 'options' ? (
+              /* Options tab */
+              <div
+                className="overflow-y-auto flex-1"
+                style={{
+                  background: '#1a0d00',
+                  scrollbarWidth: 'thin',
+                  scrollbarColor: '#8B5E3C #1a0d00',
+                }}
+              >
+                <div style={{
+                  color: '#c4a87a',
+                  fontFamily: 'Georgia,serif',
+                  fontSize: 13,
+                  padding: '8px 14px 5px',
+                  borderBottom: '1px solid #2a1508',
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                }}>
+                  Game Settings
+                </div>
+
+                {optionsList.map(opt => (
+                  <div
+                    key={opt.key}
+                    onClick={() => toggleOption(opt.key)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '11px 14px',
+                      borderBottom: '1px solid #2a1508',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(80,40,10,0.4)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                  >
+                    {/* Toggle pill */}
+                    <div style={{
+                      flexShrink: 0,
+                      width: 40,
+                      height: 22,
+                      borderRadius: 11,
+                      background: gameOptions[opt.key]
+                        ? 'linear-gradient(to right,#c8860a,#8B5E0A)'
+                        : 'linear-gradient(to right,#2a1508,#1a0d00)',
+                      border: `2px solid ${gameOptions[opt.key] ? '#8B5E0A' : '#4a2c0a'}`,
+                      position: 'relative',
+                      transition: 'background 0.2s, border-color 0.2s',
+                      boxShadow: gameOptions[opt.key] ? '0 0 6px rgba(200,134,10,0.4)' : 'none',
+                    }}>
+                      <div style={{
+                        position: 'absolute',
+                        top: 2,
+                        left: gameOptions[opt.key] ? 18 : 2,
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        background: gameOptions[opt.key] ? '#ffd87a' : '#6b5030',
+                        transition: 'left 0.2s, background 0.2s',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      }} />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontSize: 14,
+                        fontFamily: 'Georgia,serif',
+                        color: gameOptions[opt.key] ? '#ffd87a' : '#d4b896',
+                        fontWeight: gameOptions[opt.key] ? 'bold' : 'normal',
+                      }}>
+                        {opt.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#6b5030', marginTop: 2 }}>
+                        {opt.desc}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div /> /* fallback — should not reach */
             )}
           </div>
 
@@ -657,7 +770,7 @@ const ShopScreen = () => {
               </>
             ) : (
               <div className="flex items-center justify-center flex-1" style={{ color: '#6b5030', fontSize: 12, padding: 16, textAlign: 'center' }}>
-                {activeTab === 'shop' ? 'Select an item to see details' : 'Viewing your inventory'}
+                {activeTab === 'shop' ? 'Select an item to see details' : activeTab === 'inventory' ? 'Viewing your inventory' : 'Toggle options on the left'}
               </div>
             )}
           </div>

@@ -1732,7 +1732,7 @@ const BattleScreen = () => {
 
           {/* Equipment Management */}
           {selectedAction === 'equipment' && (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
+            <div className="space-y-3 overflow-y-auto" style={{ maxHeight: 320 }}>
               <div className="bg-gradient-to-br from-purple-100 to-purple-50 border-4 border-purple-600 rounded-lg p-4 mb-3">
                 <h3 className="text-xl font-bold text-purple-900 mb-2">Current Element Modifiers</h3>
                 <div className="grid grid-cols-3 gap-2 text-xs">
@@ -1824,7 +1824,7 @@ const BattleScreen = () => {
               {/* Inventory Items */}
               <div className="bg-gradient-to-br from-green-100 to-green-50 border-4 border-green-600 rounded-lg p-3">
                 <h3 className="text-lg font-bold text-green-900 mb-2">Inventory</h3>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
+                <div className="space-y-2">
                   {(player.inventory || []).length > 0 ? (
                     (player.inventory || []).map(item => {
                       const primaryEl = getItemPrimaryElement(item)
