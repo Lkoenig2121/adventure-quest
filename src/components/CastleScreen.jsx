@@ -31,6 +31,35 @@ export const FLOOR_ENEMIES = {
   },
 }
 
+// Scale castle floor enemies with player level (floors 1–10 only; Carnax stays fixed)
+export function scaleCastleEnemy(enemy, playerLevel, floor) {
+  if (floor === 11 || enemy?.name === 'Carnax') {
+    return { ...enemy, hp: enemy.hp, maxHp: enemy.maxHp, mp: enemy.mp, maxMp: enemy.maxMp }
+  }
+
+  const lv = playerLevel || 1
+  const lvGain = lv - 1
+  const baseLv = enemy.level || 12
+  const hpBonus = Math.floor(enemy.maxHp / baseLv * 1.2)
+  const mpBonus = Math.floor(enemy.maxMp / baseLv * 0.8)
+  const xpBonus = Math.floor(enemy.xpReward / baseLv * 0.5)
+  const goldBonus = Math.floor(enemy.goldReward / baseLv * 0.4)
+
+  const hp = Math.floor(enemy.maxHp + lvGain * hpBonus)
+  const mp = Math.floor(enemy.maxMp + lvGain * mpBonus)
+
+  return {
+    ...enemy,
+    hp,
+    maxHp: hp,
+    mp,
+    maxMp: mp,
+    level: baseLv + lvGain,
+    xpReward: Math.floor(enemy.xpReward + lvGain * xpBonus),
+    goldReward: Math.floor(enemy.goldReward + lvGain * goldBonus),
+  }
+}
+
 const FLOOR_LABELS = {
   1:'F1', 2:'F2', 3:'F3', 4:'F4', 5:'F5',
   6:'F6', 7:'F7', 8:'F8', 9:'F9', 10:'F10', 11:'👾',
@@ -46,12 +75,12 @@ const CastleScreen = () => {
   const [selectedFloor, setSelectedFloor] = useState(nextFloor)
 
   const handleBattle = (floor) => {
-    startBattle(FLOOR_ENEMIES[floor], 'castle', floor)
+    startBattle(scaleCastleEnemy(FLOOR_ENEMIES[floor], player.level, floor), 'castle', floor)
     navigate('/battle')
   }
 
   const isCarnax = selectedFloor === 11
-  const sel = FLOOR_ENEMIES[selectedFloor]
+  const sel = scaleCastleEnemy(FLOOR_ENEMIES[selectedFloor], player.level, selectedFloor)
 
   return (
     <div className="w-full h-screen relative overflow-hidden flex items-center justify-center"

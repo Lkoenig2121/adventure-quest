@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { FLOOR_ENEMIES } from './CastleScreen'
+import { FLOOR_ENEMIES, scaleCastleEnemy } from './CastleScreen'
 import { ALL_SPELLS } from '../data/spells'
 
 // Full pet definitions mirrored from PetShopScreen so BattleScreen can read effect data
@@ -350,10 +350,10 @@ const BattleScreen = () => {
 
   const handleNextBattle = () => {
     const nextFloor = (battleFloor || 0) + 1
-    const nextEnemy = FLOOR_ENEMIES[nextFloor]
-    if (!nextEnemy) return
+    const baseEnemy = FLOOR_ENEMIES[nextFloor]
+    if (!baseEnemy) return
     clearBattleRewards()
-    startBattle(nextEnemy, 'castle', nextFloor)
+    startBattle(scaleCastleEnemy(baseEnemy, player.level, nextFloor), 'castle', nextFloor)
     // Reset local battle state
     setShowVictory(false)
     setPlayerTurn(true)
@@ -572,7 +572,7 @@ const BattleScreen = () => {
                     <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-4 border-green-400 animate-pulse">
                       <div className="text-amber-900 font-semibold text-lg mb-1">🎉 Level Up! 🎉</div>
                       <div className="text-2xl font-bold text-green-700">You are now Level {battleRewards.newLevel}!</div>
-                      <div className="text-green-600 text-sm mt-1">⚡ 10 Attribute Points are ready at the Portal!</div>
+                      <div className="text-green-600 text-sm mt-1">⚡ Visit the Trainer at the Portal and prove yourself to unlock 10 Attribute Points!</div>
                     </div>
                   )}
                 </>

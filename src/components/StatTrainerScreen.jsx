@@ -58,7 +58,7 @@ export default function StatTrainerScreen() {
   const remaining = spendableStatPoints - pendingTotal
 
   function handleFight() {
-    if (pendingStatPoints <= 0 || spendableStatPoints > 0) return
+    if (pendingStatPoints <= 0) return
     startBattle(makeTrainerEnemy(player.level), 'statTrainer')
     navigate('/battle')
   }
@@ -219,6 +219,32 @@ export default function StatTrainerScreen() {
         </div>
 
         {/* Status panels */}
+        {pendingStatPoints > 0 && (
+          <div
+            className="rounded-xl p-4 text-center border-2"
+            style={{ background: 'rgba(254,243,199,0.9)', borderColor: '#f59e0b', boxShadow: '0 0 16px rgba(245,158,11,0.4)' }}
+          >
+            <div className="font-bold text-lg mb-1" style={{ color: '#92400e' }}>🔒 Blessed Power Awaits!</div>
+            <p className="text-sm mb-4" style={{ color: '#78350f' }}>
+              You earned <strong>{pendingStatPoints} attribute point{pendingStatPoints !== 1 ? 's' : ''}</strong> from leveling up.
+              Challenge the Trainer and prove your worth to unlock them.
+            </p>
+            <button
+              onClick={handleFight}
+              className="w-full py-4 rounded-xl font-bold text-xl shadow-lg transition-all border-2"
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+                borderColor: '#b45309',
+                color: '#fff',
+                textShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                boxShadow: '0 4px 20px rgba(251,191,36,0.6)',
+              }}
+            >
+              ⚔️ Challenge the Seraph
+            </button>
+          </div>
+        )}
+
         {spendableStatPoints > 0 && (
           <div
             className="rounded-xl p-4 text-center border-2"
@@ -238,26 +264,9 @@ export default function StatTrainerScreen() {
           >
             <div className="font-bold text-lg mb-1" style={{ color: '#6b7280' }}>🕊️ No Points Available</div>
             <p className="text-sm" style={{ color: '#9ca3af' }}>
-              Earn attribute points by leveling up in battle, then return here to spend them.
+              Earn attribute points by leveling up in battle, then return here to challenge the Trainer.
             </p>
           </div>
-        )}
-
-        {/* Legacy fight button — only for old saves that still have locked pending points */}
-        {pendingStatPoints > 0 && spendableStatPoints === 0 && (
-          <button
-            onClick={handleFight}
-            className="w-full py-4 rounded-xl font-bold text-xl shadow-lg transition-all border-2"
-            style={{
-              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
-              borderColor: '#b45309',
-              color: '#fff',
-              textShadow: '0 1px 3px rgba(0,0,0,0.3)',
-              boxShadow: '0 4px 20px rgba(251,191,36,0.6)',
-            }}
-          >
-            ⚔️ Challenge the Seraph
-          </button>
         )}
 
         {/* Stat allocation panel */}
