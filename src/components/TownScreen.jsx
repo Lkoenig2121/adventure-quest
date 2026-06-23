@@ -293,8 +293,8 @@ const TownScreen = ({ onLogout }) => {
             <circle cx="50" cy="50" r="4" fill="#f5d0fe" opacity="0.95" />
           </svg>
 
-          {/* Notification badge when pending stat points */}
-          {(player.pendingStatPoints || 0) > 0 && (
+          {/* Notification badge when stat points are ready to spend */}
+          {((player.spendableStatPoints || 0) > 0 || (player.pendingStatPoints || 0) > 0) && (
             <div style={{
               position: 'absolute',
               top: -6, right: -6,
@@ -366,7 +366,7 @@ const TownScreen = ({ onLogout }) => {
             <circle cx="50" cy="50" r="13" fill="url(#ptCore2)" className="pt-core2" opacity="0.9" />
             <circle cx="50" cy="50" r="4" fill="#f5d0fe" opacity="0.95" />
           </svg>
-          {(player.pendingStatPoints || 0) > 0 && (
+          {((player.spendableStatPoints || 0) > 0 || (player.pendingStatPoints || 0) > 0) && (
             <div style={{
               position: 'absolute', top: -6, right: -6,
               width: 22, height: 22, borderRadius: '50%',

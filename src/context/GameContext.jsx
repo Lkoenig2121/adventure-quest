@@ -52,6 +52,12 @@ export const GameProvider = ({ children }) => {
     const saved = localStorage.getItem('playerData')
     if (saved) {
       const parsed = JSON.parse(saved)
+      // Migrate legacy pending stat points — no trainer fight needed to unlock them
+      const legacyPending = parsed.pendingStatPoints || 0
+      if (legacyPending > 0) {
+        parsed.spendableStatPoints = (parsed.spendableStatPoints || 0) + legacyPending
+        parsed.pendingStatPoints = 0
+      }
       // Migrate: if weapon slot is empty, give the full Guardian set
       if (!parsed.equipped?.weapon) {
         return {
@@ -178,7 +184,7 @@ export const GameProvider = ({ children }) => {
               mp: prev.maxMp + 30,
               healthPotions: (prev.healthPotions || 0) + 1,
               manaPotions: (prev.manaPotions || 0) + 1,
-              pendingStatPoints: (prev.pendingStatPoints || 0) + 10,
+              spendableStatPoints: (prev.spendableStatPoints || 0) + 10,
               ...castleUpdate,
               ...reignUpdate,
             }

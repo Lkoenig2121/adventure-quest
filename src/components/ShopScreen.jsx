@@ -302,7 +302,7 @@ const ShopScreen = () => {
     }}>
       {/* Outer wooden frame */}
       <div className="flex flex-col" style={{
-        width: 940, minHeight: 580,
+        width: 940, minHeight: 580, maxHeight: 640, overflow: 'hidden',
         ...woodBorder,
         borderRadius: 8,
         padding: 6,
@@ -320,7 +320,7 @@ const ShopScreen = () => {
         </div>
 
         {/* Main 3-column layout */}
-        <div className="flex gap-1 flex-1" style={{ minHeight: 0 }}>
+        <div className="flex gap-1 flex-1" style={{ minHeight: 0, overflow: 'hidden' }}>
 
           {/* LEFT — treasure chest + gold */}
           <div className="flex flex-col items-center justify-between py-4 px-3" style={{

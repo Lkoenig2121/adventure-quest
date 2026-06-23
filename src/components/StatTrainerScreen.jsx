@@ -58,6 +58,7 @@ export default function StatTrainerScreen() {
   const remaining = spendableStatPoints - pendingTotal
 
   function handleFight() {
+    if (pendingStatPoints <= 0 || spendableStatPoints > 0) return
     startBattle(makeTrainerEnemy(player.level), 'statTrainer')
     navigate('/battle')
   }
@@ -205,7 +206,7 @@ export default function StatTrainerScreen() {
             <div className="text-xs font-bold tracking-widest mb-1" style={{ color: '#d97706' }}>GUARDIAN OF INNER LIGHT</div>
             <div className="text-xl font-bold mb-2" style={{ color: '#78350f', fontFamily: 'Georgia, serif' }}>Trainer</div>
             <p className="text-sm leading-relaxed" style={{ color: '#92400e' }}>
-              "Blessed traveller, I am the keeper of divine wisdom. Reduce my essence below <strong>250</strong> and I shall yield — granting you the celestial knowledge to strengthen your very soul."
+              "Blessed traveller, I am the keeper of divine wisdom. When you grow in power through battle, I shall bless you with attribute points to strengthen your very soul."
             </p>
             <div className="flex gap-4 mt-3 text-xs" style={{ color: '#b45309' }}>
               {(() => { const t = makeTrainerEnemy(player.level); return (<>
@@ -218,15 +219,14 @@ export default function StatTrainerScreen() {
         </div>
 
         {/* Status panels */}
-        {pendingStatPoints > 0 && spendableStatPoints === 0 && (
+        {spendableStatPoints > 0 && (
           <div
             className="rounded-xl p-4 text-center border-2"
             style={{ background: 'rgba(255,251,235,0.85)', borderColor: '#fcd34d', boxShadow: '0 0 16px rgba(253,224,71,0.4)' }}
           >
             <div className="font-bold text-lg mb-1" style={{ color: '#92400e' }}>⬆️ Divine Power Awaits!</div>
             <p className="text-sm" style={{ color: '#78350f' }}>
-              You've earned <strong>{pendingStatPoints} attribute point{pendingStatPoints !== 1 ? 's' : ''}</strong> from leveling up.
-              Defeat the Seraph to unlock them!
+              You have <strong>{spendableStatPoints} attribute point{spendableStatPoints !== 1 ? 's' : ''}</strong> ready to allocate below.
             </p>
           </div>
         )}
@@ -238,17 +238,16 @@ export default function StatTrainerScreen() {
           >
             <div className="font-bold text-lg mb-1" style={{ color: '#6b7280' }}>🕊️ No Points Available</div>
             <p className="text-sm" style={{ color: '#9ca3af' }}>
-              Earn attribute points by leveling up in battle, then return here and overcome the Trainer to spend them.
+              Earn attribute points by leveling up in battle, then return here to spend them.
             </p>
           </div>
         )}
 
-        {/* Fight button */}
-        {(pendingStatPoints > 0 || spendableStatPoints > 0) && (
+        {/* Legacy fight button — only for old saves that still have locked pending points */}
+        {pendingStatPoints > 0 && spendableStatPoints === 0 && (
           <button
             onClick={handleFight}
-            disabled={spendableStatPoints > 0 && remaining > 0}
-            className="w-full py-4 rounded-xl font-bold text-xl shadow-lg transition-all border-2 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full py-4 rounded-xl font-bold text-xl shadow-lg transition-all border-2"
             style={{
               background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
               borderColor: '#b45309',

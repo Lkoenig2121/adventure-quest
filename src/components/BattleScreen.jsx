@@ -572,7 +572,7 @@ const BattleScreen = () => {
                     <div className="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-4 border-green-400 animate-pulse">
                       <div className="text-amber-900 font-semibold text-lg mb-1">🎉 Level Up! 🎉</div>
                       <div className="text-2xl font-bold text-green-700">You are now Level {battleRewards.newLevel}!</div>
-                      <div className="text-green-600 text-sm mt-1">⚡ 5 Attribute Points are waiting at the Portal!</div>
+                      <div className="text-green-600 text-sm mt-1">⚡ 10 Attribute Points are ready at the Portal!</div>
                     </div>
                   )}
                 </>
