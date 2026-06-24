@@ -145,7 +145,7 @@ const BattleScreen = () => {
         const hitDmg = Math.round((baseDamage + hitVariation) * weaponMultiplier * critMult * 0.7)
         const { finalDamage: fd, label: lbl } = applyResistance(hitDmg, weaponEl.key)
         damageEnemy(fd)
-        addLog(`🛡️ Reign Strike ${hit}/4 — ${player.name} hits for ${fd} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${lbl}${hit === 1 ? critNote : ''}`)
+        addLog(`🛡️ Reign Strike ${hit} — ${player.name} hits for ${fd} ${weaponEl.icon} ${weaponEl.name} damage!${multiplierNote}${lbl}${hit === 1 ? critNote : ''}`)
         setTimeout(doReignHit, 400)
       }
       doReignHit()
