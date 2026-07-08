@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { ATTRIBUTE_ROWS, getCombatDefense, getTotalStat } from '../utils/playerStats'
 
 const TownScreen = ({ onLogout }) => {
   const navigate = useNavigate()
@@ -208,6 +209,8 @@ const TownScreen = ({ onLogout }) => {
   const mpPercentage = (player.mp / player.maxMp) * 100
   const spPercentage = (player.sp / player.maxSp) * 100
   const elementModifiers = getElementModifiers()
+  const bonusStats = player.bonusStats || {}
+  const combatDefense = getCombatDefense(player.level, bonusStats)
 
   return (
     <div className="w-full h-screen bg-gradient-to-b from-blue-400 via-blue-300 to-green-300 relative overflow-hidden">
@@ -720,15 +723,15 @@ const TownScreen = ({ onLogout }) => {
                         <div className="grid grid-cols-3 gap-2 text-sm">
                           <div className="flex justify-between">
                             <span>Melee:</span>
-                            <span className="font-bold text-red-700">{Math.floor(player.level * 2) + 30}</span>
+                            <span className="font-bold text-red-700">{combatDefense.melee}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Ranged:</span>
-                            <span className="font-bold text-blue-700">{Math.floor(player.level * 1.8) + 25}</span>
+                            <span className="font-bold text-blue-700">{combatDefense.ranged}</span>
                           </div>
                           <div className="flex justify-between">
                             <span>Magic:</span>
-                            <span className="font-bold text-purple-700">{Math.floor(player.level * 1.8) + 25}</span>
+                            <span className="font-bold text-purple-700">{combatDefense.magic}</span>
                           </div>
                         </div>
                       </div>
@@ -737,17 +740,10 @@ const TownScreen = ({ onLogout }) => {
                       <div className="mb-4 pb-3 border-b-2 border-amber-700">
                         <h5 className="font-bold mb-2 text-amber-800">Attributes</h5>
                         <div className="grid grid-cols-2 gap-2 text-sm">
-                          {[
-                            { label: 'Strength',  base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0), color: 'text-red-700'    },
-                            { label: 'Dexterity', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0), color: 'text-purple-700' },
-                            { label: 'Intellect', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0), color: 'text-blue-700'   },
-                            { label: 'Endurance', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0), color: 'text-orange-700' },
-                            { label: 'Charisma',  base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0), color: 'text-pink-700'   },
-                            { label: 'Luck',      base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0), color: 'text-yellow-700' },
-                          ].map(({ label, base, bonus, color }) => (
-                            <div key={label} className="flex justify-between">
+                          {ATTRIBUTE_ROWS.map(({ key, label, color }) => (
+                            <div key={key} className="flex justify-between">
                               <span>{label}:</span>
-                              <span className={`font-bold ${color}`}>{base + bonus}</span>
+                              <span className={`font-bold ${color}`}>{getTotalStat(key, player.level, bonusStats)}</span>
                             </div>
                           ))}
                         </div>

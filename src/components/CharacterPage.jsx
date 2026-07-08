@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useState } from 'react'
+import { ATTRIBUTE_ROWS, getCombatDefense, getTotalStat } from '../utils/playerStats'
 
 const CharacterPage = () => {
   const navigate = useNavigate()
@@ -10,6 +11,8 @@ const CharacterPage = () => {
   const equipped = player.equipped || { weapon: null, helmet: null, armor: null, boots: null }
   const inventory = player.inventory || []
   const elementModifiers = getElementModifiers()
+  const bonusStats = player.bonusStats || {}
+  const combatDefense = getCombatDefense(player.level, bonusStats)
 
   const slotNames = {
     weapon: '⚔️ Weapon',
@@ -134,6 +137,33 @@ const CharacterPage = () => {
 
           {/* Right Column - Element Modifiers & Inventory */}
           <div>
+            <div className="mb-6 bg-gradient-to-br from-amber-100 to-amber-50 border-4 border-amber-700 rounded-lg p-4">
+              <h2 className="text-3xl font-bold text-amber-900 mb-4">Attributes</h2>
+              <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                {ATTRIBUTE_ROWS.map(({ key, label, color }) => (
+                  <div key={key} className="flex justify-between">
+                    <span className="font-semibold">{label}:</span>
+                    <span className={`font-bold ${color}`}>{getTotalStat(key, player.level, bonusStats)}</span>
+                  </div>
+                ))}
+              </div>
+              <h3 className="text-xl font-bold text-amber-900 mb-2">Combat Defense</h3>
+              <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="font-semibold">Melee:</span>
+                  <span className="font-bold text-red-700">{combatDefense.melee}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Ranged:</span>
+                  <span className="font-bold text-blue-700">{combatDefense.ranged}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-semibold">Magic:</span>
+                  <span className="font-bold text-purple-700">{combatDefense.magic}</span>
+                </div>
+              </div>
+            </div>
+
             {/* Element Modifiers */}
             <div className="mb-6 bg-gradient-to-br from-purple-100 to-purple-50 border-4 border-purple-600 rounded-lg p-4">
               <h2 className="text-3xl font-bold text-purple-900 mb-4">Element Modifiers</h2>

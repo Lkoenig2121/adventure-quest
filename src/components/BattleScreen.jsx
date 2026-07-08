@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { FLOOR_ENEMIES, scaleCastleEnemy } from './CastleScreen'
 import { ALL_SPELLS } from '../data/spells'
+import { ATTRIBUTE_ROWS, getCombatDefense, getTotalStat } from '../utils/playerStats'
 
 // Full pet definitions mirrored from PetShopScreen so BattleScreen can read effect data
 const PET_DEFS = {
@@ -49,6 +50,9 @@ const BattleScreen = () => {
   const [showEnemyTooltip, setShowEnemyTooltip] = useState(false)
   const portraitRef = useRef(null)
 
+  const bonusStats = player.bonusStats || {}
+  const combatDefense = getCombatDefense(player.level, bonusStats)
+  const totalIntellect = getTotalStat('intellect', player.level, bonusStats)
 
   const addLog = useCallback((message) => {
     setBattleLog(prev => [...prev, message])
@@ -318,7 +322,7 @@ const BattleScreen = () => {
     setSelectedAction('attack')
     useMana(spellCost)
 
-    const totalInt = Math.floor(player.level * 8) + 40 + (player.bonusStats?.intellect || 0)
+    const totalInt = totalIntellect
     if (spell.type === 'attack') {
       const rawDamage = (spell.damage || 50) + Math.floor(totalInt * 2.0)
       const { finalDamage, label } = applyResistance(rawDamage, spell.element.toLowerCase())
@@ -939,15 +943,15 @@ const BattleScreen = () => {
                       <div className="grid grid-cols-3 gap-1">
                         <div className="flex justify-between">
                           <span>Melee:</span>
-                          <span className="font-bold text-red-700">{Math.floor(player.level * 2) + 30}</span>
+                          <span className="font-bold text-red-700">{combatDefense.melee}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Ranged:</span>
-                          <span className="font-bold text-blue-700">{Math.floor(player.level * 1.8) + 25}</span>
+                          <span className="font-bold text-blue-700">{combatDefense.ranged}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Magic:</span>
-                          <span className="font-bold text-purple-700">{Math.floor(player.level * 1.8) + 25}</span>
+                          <span className="font-bold text-purple-700">{combatDefense.magic}</span>
                         </div>
                       </div>
                     </div>
@@ -956,17 +960,10 @@ const BattleScreen = () => {
                     <div className="mb-3 pb-3 border-b-2 border-amber-700">
                       <h5 className="font-bold mb-1 text-amber-800">Attributes</h5>
                       <div className="grid grid-cols-3 gap-1">
-                        {[
-                          { label: 'STR', base: Math.floor(player.level * 10) + 50, bonus: (player.bonusStats?.strength  || 0), color: 'text-red-700'    },
-                          { label: 'DEX', base: Math.floor(player.level * 7)  + 35, bonus: (player.bonusStats?.dexterity || 0), color: 'text-purple-700' },
-                          { label: 'INT', base: Math.floor(player.level * 8)  + 40, bonus: (player.bonusStats?.intellect || 0), color: 'text-blue-700'   },
-                          { label: 'END', base: Math.floor(player.level * 9)  + 45, bonus: (player.bonusStats?.endurance || 0), color: 'text-orange-700' },
-                          { label: 'CHA', base: Math.floor(player.level * 6)  + 30, bonus: (player.bonusStats?.charisma  || 0), color: 'text-pink-700'   },
-                          { label: 'LCK', base: Math.floor(player.level * 5)  + 25, bonus: (player.bonusStats?.luck      || 0), color: 'text-yellow-700' },
-                        ].map(({ label, base, bonus, color }) => (
-                          <div key={label} className="flex justify-between">
-                            <span>{label}:</span>
-                            <span className={`font-bold ${color}`}>{base + bonus}</span>
+                        {ATTRIBUTE_ROWS.map(({ key, short, color }) => (
+                          <div key={key} className="flex justify-between">
+                            <span>{short}:</span>
+                            <span className={`font-bold ${color}`}>{getTotalStat(key, player.level, bonusStats)}</span>
                           </div>
                         ))}
                       </div>
@@ -1448,10 +1445,9 @@ const BattleScreen = () => {
               ) : (
                 <div className="grid grid-cols-2 gap-2">
                   {spells.map((spell) => {
-                    const totalInt = Math.floor(player.level * 8) + 40 + (player.bonusStats?.intellect || 0)
                     const scaledValue = spell.type === 'attack'
-                      ? (spell.damage || 50) + Math.floor(totalInt * 2.0)
-                      : (spell.heal  || 50) + Math.floor(totalInt * 1.5)
+                      ? (spell.damage || 50) + Math.floor(totalIntellect * 2.0)
+                      : (spell.heal  || 50) + Math.floor(totalIntellect * 1.5)
                     const valueLabel = spell.type === 'attack' ? `${scaledValue} dmg` : `+${scaledValue} HP`
                     return (
                       <button

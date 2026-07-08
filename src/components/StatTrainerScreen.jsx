@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
+import { getTotalStat } from '../utils/playerStats'
 
 const makeTrainerEnemy = (playerLevel) => {
   const hp = 500 + playerLevel * 120
@@ -82,17 +83,7 @@ export default function StatTrainerScreen() {
     setPending({})
   }
 
-  const baseStatValue = (key) => {
-    const base = {
-      strength:  Math.floor(player.level * 10) + 50,
-      dexterity: Math.floor(player.level * 8) + 35,
-      intellect: Math.floor(player.level * 9) + 40,
-      endurance: Math.floor(player.level * 10) + 45,
-      charisma:  Math.floor(player.level * 7) + 30,
-      luck:      Math.floor(player.level * 6) + 25,
-    }
-    return (base[key] || 0) + (bonusStats[key] || 0)
-  }
+  const baseStatValue = (key) => getTotalStat(key, player.level, bonusStats)
 
   return (
     <div

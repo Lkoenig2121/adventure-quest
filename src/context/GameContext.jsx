@@ -52,6 +52,9 @@ export const GameProvider = ({ children }) => {
     const saved = localStorage.getItem('playerData')
     if (saved) {
       const parsed = JSON.parse(saved)
+      if (!parsed.bonusStats) {
+        parsed.bonusStats = { strength: 0, dexterity: 0, intellect: 0, endurance: 0, charisma: 0, luck: 0 }
+      }
       // Migrate: if weapon slot is empty, give the full Guardian set
       if (!parsed.equipped?.weapon) {
         return {
