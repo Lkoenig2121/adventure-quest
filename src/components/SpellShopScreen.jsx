@@ -3,10 +3,20 @@ import { useGame } from '../context/GameContext'
 import { useState } from 'react'
 import { ALL_SPELLS } from '../data/spells'
 
+const elementColors = {
+  Fire: 'bg-red-200 text-red-900 border-red-500',
+  Ice: 'bg-sky-200 text-sky-900 border-sky-500',
+  Energy: 'bg-yellow-200 text-yellow-900 border-yellow-500',
+  Wind: 'bg-emerald-200 text-emerald-900 border-emerald-500',
+  Earth: 'bg-amber-200 text-amber-900 border-amber-600',
+  Darkness: 'bg-purple-300 text-purple-900 border-purple-600',
+  Light: 'bg-yellow-100 text-yellow-800 border-yellow-400',
+  Water: 'bg-blue-200 text-blue-900 border-blue-500',
+}
+
 const SpellShopScreen = () => {
   const navigate = useNavigate()
   const { player, purchaseSpell } = useGame()
-  const [selectedSpell, setSelectedSpell] = useState(ALL_SPELLS[0])
   const [message, setMessage] = useState(null)
 
   const isOwned = (spell) => (player.purchasedSpells || []).includes(spell.id)
@@ -23,273 +33,112 @@ const SpellShopScreen = () => {
     setTimeout(() => setMessage(null), 3000)
   }
 
-  const woodBorder = {
-    background: 'linear-gradient(135deg,#4a2a6b,#2d1a4a)',
-    border: '3px solid #2a0a4a',
-    boxShadow: 'inset 0 0 8px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.6)',
-  }
-
-  const parchment = {
-    background: 'linear-gradient(160deg,#f0e8f8,#ddd0f0)',
-    border: '3px solid #6b3a9a',
-  }
-
-  const AqButton = ({ onClick, disabled, children }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: '6px 14px',
-        fontWeight: 'bold',
-        fontSize: 12,
-        borderRadius: 4,
-        background: disabled
-          ? 'linear-gradient(to bottom,#888,#555)'
-          : 'linear-gradient(to bottom,#7b2fc0,#4a1a80)',
-        border: '2px solid #2a0a4a',
-        color: disabled ? '#999' : '#f0d8ff',
-        textShadow: disabled ? 'none' : '0 1px 2px rgba(0,0,0,0.7)',
-        boxShadow: disabled ? 'none' : '0 3px 0 #2a0a4a, inset 0 1px 0 rgba(255,255,255,0.2)',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
-    >
-      {children}
-    </button>
-  )
-
-  const elementColors = {
-    Fire: '#ef4444', Ice: '#60a5fa', Energy: '#facc15', Wind: '#34d399',
-    Earth: '#a16207', Darkness: '#a855f7', Light: '#fde68a', Water: '#38bdf8',
-  }
+  const learnedCount = (player.purchasedSpells || []).length
 
   return (
-    <div className="w-full h-screen flex items-center justify-center" style={{
-      background: 'linear-gradient(to bottom, #0d0020 0%, #1a0030 100%)',
-    }}>
-      {/* Outer arcane frame */}
-      <div className="flex flex-col" style={{
-        width: 780, minHeight: 520,
-        ...woodBorder,
-        borderRadius: 8,
-        padding: 6,
-      }}>
+    <div className="w-full h-screen bg-gradient-to-b from-violet-800 via-purple-700 to-fuchsia-800 relative overflow-hidden flex items-center justify-center p-4">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-700 to-violet-800"></div>
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.06) 10px, rgba(255,255,255,0.06) 20px)',
+        }}></div>
+        <div className="absolute top-20 left-20 text-6xl opacity-20">📚</div>
+        <div className="absolute top-40 right-32 text-5xl opacity-20">✨</div>
+        <div className="absolute bottom-32 left-32 text-4xl opacity-20">🔥</div>
+        <div className="absolute bottom-20 right-20 text-5xl opacity-20">❄️</div>
+      </div>
 
-        {/* Title bar */}
-        <div className="flex items-center justify-center py-2 mb-1" style={{
-          background: 'linear-gradient(to bottom,#2d1a4a,#1a0a30)',
-          borderRadius: '4px 4px 0 0',
-          borderBottom: '2px solid #2a0a4a',
-        }}>
-          <span style={{ fontFamily: 'Georgia,serif', color: '#d8b4fe', fontSize: 20, fontWeight: 'bold', textShadow: '0 1px 6px rgba(139,92,246,0.8)' }}>
-            📚 Intellect Building — Spell Tome
-          </span>
-        </div>
-
-        {/* Main 3-column layout */}
-        <div className="flex gap-1 flex-1" style={{ minHeight: 0 }}>
-
-          {/* LEFT — arcane decoration + gold */}
-          <div className="flex flex-col items-center justify-between py-4 px-3" style={{
-            width: 130,
-            background: 'linear-gradient(160deg,#2d1a4a,#1a0a30)',
-            borderRight: '2px solid #2a0a4a',
+      <div className="relative z-10 w-full max-w-4xl bg-gradient-to-br from-violet-100 to-purple-50 border-8 border-purple-800 rounded-lg shadow-2xl p-8 flex flex-col max-h-screen overflow-hidden">
+        {/* Header */}
+        <div className="text-center mb-6 flex-shrink-0">
+          <h1 className="text-5xl font-bold text-purple-900 mb-2 drop-shadow-lg" style={{
+            textShadow: '3px 3px 0px #6b21a8',
+            fontFamily: 'Georgia, serif'
           }}>
-            <div className="text-center">
-              {/* Arcane tower icon */}
-              <div style={{ fontSize: 56, lineHeight: 1 }}>🏛️</div>
-              <div style={{ color: '#d8b4fe', fontFamily: 'Georgia,serif', fontSize: 11, marginTop: 6, textAlign: 'center', fontWeight: 'bold' }}>
-                Spell Tomes
-              </div>
-              <div style={{ color: '#9f7aea', fontSize: 10, marginTop: 4, textAlign: 'center' }}>
-                {(player.purchasedSpells || []).length}/{ALL_SPELLS.length} learned
-              </div>
-              {/* Floating sparkles */}
-              {['✨','⭐','💫'].map((s, i) => (
-                <div key={i} style={{ fontSize: 14, marginTop: 4, opacity: 0.6, animation: `bounce ${1.2 + i * 0.3}s infinite alternate` }}>{s}</div>
-              ))}
-            </div>
-
-            <div className="w-full">
-              <div style={{ ...parchment, borderRadius: 6, padding: '6px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: '#4a1a80', fontWeight: 'bold' }}>Your Gold</div>
-                <div style={{ fontSize: 16, color: '#7b2fc0', fontWeight: 'bold', marginTop: 2 }}>
-                  🪙 {player.gold.toLocaleString()}
-                </div>
-              </div>
-
-              {message && (
-                <div style={{
-                  marginTop: 6, padding: '4px 6px', borderRadius: 4, fontSize: 10,
-                  fontWeight: 'bold', textAlign: 'center',
-                  background: message.type === 'success' ? '#d4edda' : '#f8d7da',
-                  color:      message.type === 'success' ? '#155724' : '#721c24',
-                  border:     `1px solid ${message.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
-                }}>
-                  {message.text}
-                </div>
-              )}
+            📚 Intellect Building
+          </h1>
+          <p className="text-purple-700 text-sm mb-3">Learn powerful spells to unleash in battle! ({learnedCount}/{ALL_SPELLS.length} learned)</p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <div className="bg-gradient-to-r from-yellow-200 to-yellow-300 border-4 border-yellow-600 rounded-lg px-4 py-2 inline-block">
+              <span className="text-purple-900 font-bold text-lg">
+                🪙 Gold: <span className="text-yellow-700">{player.gold.toLocaleString()}</span>
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* MIDDLE — spell list */}
-          <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
-            <div style={{
-              padding: '4px 10px',
-              background: 'linear-gradient(to right,#2d1a4a,#1a0a30)',
-              color: '#c4a8e8',
-              fontSize: 11,
-              fontWeight: 'bold',
-              borderBottom: '1px solid #2a0a4a',
-              fontFamily: 'Georgia,serif',
-            }}>
-              Available Spells
-            </div>
+        {/* Message */}
+        {message && (
+          <div className={`mb-4 p-3 rounded-lg border-4 text-center font-bold flex-shrink-0 ${
+            message.type === 'success'
+              ? 'bg-green-100 border-green-600 text-green-800'
+              : 'bg-red-100 border-red-600 text-red-800'
+          } animate-fade-in`}>
+            {message.text}
+          </div>
+        )}
 
-            <div className="overflow-y-auto flex-1" style={{
-              background: '#0d0020',
-              scrollbarWidth: 'thin',
-              scrollbarColor: '#4a1a80 #0d0020',
-            }}>
-              {ALL_SPELLS.map(spell => {
-                const owned = isOwned(spell)
-                return (
-                  <div
-                    key={spell.id}
-                    onClick={() => setSelectedSpell(spell)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '7px 10px',
-                      cursor: 'pointer',
-                      borderBottom: '1px solid #1a0a30',
-                      background: selectedSpell?.id === spell.id
-                        ? 'rgba(109,40,217,0.35)'
-                        : 'transparent',
-                      color: owned ? '#5a3a7a' : selectedSpell?.id === spell.id ? '#e9d5ff' : '#c4a8e8',
-                      opacity: owned ? 0.6 : 1,
-                    }}
-                    onMouseEnter={e => { if (selectedSpell?.id !== spell.id) e.currentTarget.style.background = 'rgba(80,20,160,0.25)' }}
-                    onMouseLeave={e => { if (selectedSpell?.id !== spell.id) e.currentTarget.style.background = 'transparent' }}
-                  >
-                    <span style={{ fontSize: 18, minWidth: 24 }}>{spell.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, fontFamily: 'Georgia,serif' }}>{spell.name}</div>
-                      <div style={{ fontSize: 9, color: elementColors[spell.element] || '#c4a8e8' }}>
-                        {spell.element} · {spell.type === 'heal' ? `Heal ${spell.heal} HP` : `${spell.damage} dmg`} · {spell.cost} MP
+        {/* Spell Grid */}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+            {ALL_SPELLS.map(spell => {
+              const owned = isOwned(spell)
+              return (
+                <div
+                  key={spell.id}
+                  className={`bg-gradient-to-br from-white to-purple-50 border-4 rounded-lg p-5 shadow-xl transition transform hover:scale-102 ${
+                    owned ? 'border-blue-500' : 'border-purple-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-6xl flex-shrink-0">{spell.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="text-xl font-bold text-purple-900">{spell.name}</h3>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full border-2 ${elementColors[spell.element] || 'bg-purple-200 text-purple-900 border-purple-500'}`}>
+                          {spell.element}
+                        </span>
+                        {owned && (
+                          <span className="text-xs bg-blue-600 text-white px-1 rounded font-bold">LEARNED</span>
+                        )}
+                      </div>
+                      <p className="text-purple-700 text-sm mb-2">{spell.description}</p>
+                      <div className={`text-sm font-bold mb-3 ${spell.type === 'heal' ? 'text-green-700' : 'text-red-700'}`}>
+                        {spell.type === 'heal' ? '💚' : '⚔️'} {spell.type === 'heal' ? `Heals ${spell.heal} HP` : `Deals ${spell.damage} damage`} · 💧 {spell.cost} MP
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-lg font-bold text-yellow-700">🪙 {spell.price.toLocaleString()}</div>
+                        <button
+                          onClick={() => handlePurchase(spell)}
+                          disabled={owned || player.gold < spell.price}
+                          className={`px-4 py-2 font-bold rounded-lg border-4 transition transform hover:scale-105 text-sm ${
+                            owned
+                              ? 'bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed'
+                              : player.gold >= spell.price
+                                ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-green-800 shadow-lg'
+                                : 'bg-gray-400 border-gray-500 text-gray-600 cursor-not-allowed'
+                          }`}
+                        >
+                          {owned ? 'Learned' : 'Learn'}
+                        </button>
                       </div>
                     </div>
-                    <span style={{ fontSize: 11, color: owned ? '#5a3a7a' : '#e9d5ff', fontWeight: 'bold' }}>
-                      {owned ? '✓' : `${spell.price}g`}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          {/* RIGHT — detail panel */}
-          <div className="flex flex-col" style={{
-            width: 210,
-            background: 'linear-gradient(160deg,#2d1a4a,#1a0a30)',
-            borderLeft: '2px solid #2a0a4a',
-          }}>
-            {selectedSpell ? (
-              <>
-                {/* Spell name banner */}
-                <div style={{
-                  background: 'linear-gradient(to bottom,#4a1a80,#2d1a4a)',
-                  borderBottom: '2px solid #2a0a4a',
-                  padding: '10px 10px 8px',
-                  textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 36, lineHeight: 1 }}>{selectedSpell.icon}</div>
-                  <div style={{
-                    color: '#e9d5ff',
-                    fontFamily: 'Georgia,serif',
-                    fontWeight: 'bold',
-                    fontSize: 14,
-                    marginTop: 5,
-                    textShadow: '0 1px 4px rgba(139,92,246,0.8)',
-                  }}>
-                    {selectedSpell.name}
-                  </div>
-                  <div style={{
-                    display: 'inline-block',
-                    marginTop: 4,
-                    padding: '1px 8px',
-                    borderRadius: 10,
-                    fontSize: 10,
-                    fontWeight: 'bold',
-                    background: elementColors[selectedSpell.element] ? `${elementColors[selectedSpell.element]}33` : '#ffffff22',
-                    color: elementColors[selectedSpell.element] || '#e9d5ff',
-                    border: `1px solid ${elementColors[selectedSpell.element] || '#9f7aea'}`,
-                  }}>
-                    {selectedSpell.element}
                   </div>
                 </div>
-
-                {/* Parchment details */}
-                <div className="flex-1 p-3" style={{ ...parchment, margin: 8, borderRadius: 6, overflow: 'auto' }}>
-                  <div style={{ marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, color: '#4a1a80', fontWeight: 'bold' }}>Price</span>
-                    <span style={{ fontSize: 13, color: '#7b2fc0', fontWeight: 'bold' }}>{selectedSpell.price.toLocaleString()}g</span>
-                  </div>
-                  <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, color: '#4a1a80', fontWeight: 'bold' }}>MP Cost</span>
-                    <span style={{ fontSize: 12, color: '#1a4a80' }}>{selectedSpell.cost} MP</span>
-                  </div>
-                  <div style={{ marginBottom: 4, display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 11, color: '#4a1a80', fontWeight: 'bold' }}>
-                      {selectedSpell.type === 'heal' ? 'Heals' : 'Base Dmg'}
-                    </span>
-                    <span style={{ fontSize: 12, color: selectedSpell.type === 'heal' ? '#15803d' : '#7f1d1d' }}>
-                      {selectedSpell.type === 'heal' ? `${selectedSpell.heal} HP` : `${selectedSpell.damage} dmg`}
-                    </span>
-                  </div>
-                  <div style={{ borderTop: '1px solid #6b3a9a', paddingTop: 6, marginTop: 6 }}>
-                    <div style={{ fontSize: 11, color: '#4a1a80', fontWeight: 'bold', marginBottom: 4 }}>Description</div>
-                    <div style={{ fontSize: 11, color: '#2d1054', lineHeight: 1.5 }}>
-                      {selectedSpell.description}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Buy/Owned button */}
-                <div className="p-3">
-                  <AqButton
-                    onClick={() => handlePurchase(selectedSpell)}
-                    disabled={isOwned(selectedSpell) || player.gold < selectedSpell.price}
-                  >
-                    <span style={{ width: '100%', display: 'block', textAlign: 'center' }}>
-                      {isOwned(selectedSpell)
-                        ? '✓ Already Learned'
-                        : player.gold >= selectedSpell.price
-                          ? '📖 Learn Spell'
-                          : '❌ Not Enough Gold'}
-                    </span>
-                  </AqButton>
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center flex-1" style={{ color: '#5a3a7a', fontSize: 12, padding: 16, textAlign: 'center' }}>
-                Select a spell to see details
-              </div>
-            )}
+              )
+            })}
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="flex items-center justify-between px-4 py-3" style={{
-          background: 'linear-gradient(to bottom,#1a0a30,#0d0020)',
-          borderTop: '2px solid #2a0a4a',
-          borderRadius: '0 0 4px 4px',
-        }}>
-          <div style={{ color: '#c4a8e8', fontSize: 12, fontFamily: 'Georgia,serif' }}>
-            HP <span style={{ color: '#f87171', fontWeight: 'bold' }}>{player.hp}</span>
-            <span style={{ color: '#5a3a7a' }}> / {player.maxHp}</span>
-            {'  '}MP <span style={{ color: '#a78bfa', fontWeight: 'bold' }}>{player.mp}</span>
-            <span style={{ color: '#5a3a7a' }}> / {player.maxMp}</span>
-          </div>
-          <AqButton onClick={() => navigate('/town')}>🚪 Exit</AqButton>
+        {/* Return */}
+        <div className="mt-4 flex-shrink-0">
+          <button
+            onClick={() => navigate('/town')}
+            className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-gray-500 shadow-lg transform transition hover:scale-105 text-xl"
+          >
+            Return to Town
+          </button>
         </div>
       </div>
     </div>

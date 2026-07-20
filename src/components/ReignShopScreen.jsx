@@ -49,7 +49,6 @@ const REIGN_ITEMS = [
 export default function ReignShopScreen() {
   const navigate = useNavigate()
   const { player, purchaseItem } = useGame()
-  const [selectedItem, setSelectedItem] = useState(REIGN_ITEMS[0])
   const [message, setMessage] = useState(null)
 
   const isOwned = (item) => {
@@ -78,204 +77,127 @@ export default function ReignShopScreen() {
   const allOwned = REIGN_ITEMS.every(isOwned)
 
   return (
-    <div className="w-full h-screen flex items-center justify-center" style={{
-      background: 'linear-gradient(180deg,#2a1a00 0%,#1a0d00 100%)',
-    }}>
-      <div style={{
-        width: 860, minHeight: 540,
-        background: 'linear-gradient(135deg,#8B5E3C,#6B3F1F)',
-        border: '4px solid #ffd87a',
-        borderRadius: 12, padding: 6,
-        boxShadow: 'inset 0 0 12px rgba(0,0,0,0.5), 0 0 40px rgba(212,160,48,0.4)',
-      }}>
+    <div className="w-full h-screen bg-gradient-to-b from-yellow-500 via-amber-500 to-yellow-600 relative overflow-hidden flex items-center justify-center p-4">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-yellow-600"></div>
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.15) 10px, rgba(255,255,255,0.15) 20px)',
+        }}></div>
+        <div className="absolute top-20 left-20 text-6xl opacity-25">👑</div>
+        <div className="absolute top-40 right-32 text-5xl opacity-25">🏆</div>
+        <div className="absolute bottom-32 left-32 text-4xl opacity-25">⚔️</div>
+        <div className="absolute bottom-20 right-20 text-5xl opacity-25">🛡️</div>
+      </div>
 
-        {/* Title */}
-        <div style={{
-          background: 'linear-gradient(to bottom,#7c5010,#4a2c00)',
-          borderRadius: '6px 6px 0 0', borderBottom: '2px solid #ffd87a',
-          padding: '10px 16px', textAlign: 'center',
-        }}>
-          <div style={{ fontSize: 22, fontWeight: 'bold', fontFamily: 'Georgia,serif',
-            color: '#ffd87a', textShadow: '0 0 12px rgba(212,160,48,0.8)' }}>
+      <div className="relative z-10 w-full max-w-4xl bg-gradient-to-br from-yellow-50 to-amber-50 border-8 border-yellow-600 rounded-lg shadow-2xl p-8 flex flex-col max-h-screen overflow-hidden">
+        {/* Header */}
+        <div className="text-center mb-6 flex-shrink-0">
+          <h1 className="text-5xl font-bold text-amber-900 mb-2 drop-shadow-lg" style={{
+            textShadow: '3px 3px 0px #b45309',
+            fontFamily: 'Georgia, serif'
+          }}>
             👑 Reign Armoury
-          </div>
-          <div style={{ color: '#c4a87a', fontSize: 12, marginTop: 2 }}>
-            Legendary equipment of Swordhaven's champions
-          </div>
-        </div>
-
-        <div className="flex gap-1 flex-1" style={{ minHeight: 0 }}>
-
-          {/* LEFT panel */}
-          <div style={{ width: 150, background: 'linear-gradient(160deg,#6b3f1f,#3b1f08)',
-            borderRight: '2px solid #c8a030', display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'space-between', padding: '16px 10px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 64 }}>🏆</div>
-              <div style={{ color: '#ffd87a', fontFamily: 'Georgia,serif', fontSize: 11,
-                marginTop: 6, fontWeight: 'bold' }}>Reign Set</div>
-              {allOwned && (
-                <div style={{ marginTop: 8, color: '#86efac', fontSize: 10, fontWeight: 'bold' }}>
-                  ✅ Full set acquired!
-                </div>
-              )}
+          </h1>
+          <p className="text-amber-700 text-sm mb-3">Legendary equipment of Swordhaven's champions</p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <div className="bg-gradient-to-r from-yellow-200 to-yellow-300 border-4 border-yellow-600 rounded-lg px-4 py-2 inline-block">
+              <span className="text-amber-900 font-bold text-lg">
+                🪙 Gold: <span className="text-yellow-700">{player.gold.toLocaleString()}</span>
+              </span>
             </div>
-            <div style={{
-              background: 'linear-gradient(160deg,#f5e6c8,#e8d0a0)',
-              border: '2px solid #8B6914', borderRadius: 6, padding: '6px 8px', textAlign: 'center',
-            }}>
-              <div style={{ fontSize: 10, color: '#5c3410', fontWeight: 'bold' }}>Your Gold</div>
-              <div style={{ fontSize: 16, color: '#8B5E0A', fontWeight: 'bold', marginTop: 2 }}>
-                🪙 {player.gold.toLocaleString()}
-              </div>
-            </div>
-            {message && (
-              <div style={{
-                marginTop: 6, padding: '4px 6px', borderRadius: 4, fontSize: 10,
-                fontWeight: 'bold', textAlign: 'center',
-                background: message.type === 'success' ? '#d4edda' : '#f8d7da',
-                color: message.type === 'success' ? '#155724' : '#721c24',
-                border: `1px solid ${message.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
-              }}>
-                {message.text}
+            {allOwned && (
+              <div className="bg-gradient-to-r from-green-200 to-emerald-200 border-4 border-green-600 rounded-lg px-4 py-2 inline-block">
+                <span className="text-green-900 font-bold text-lg">✅ Full set acquired!</span>
               </div>
             )}
           </div>
+        </div>
 
-          {/* MIDDLE — item list */}
-          <div style={{ flex: 1, background: '#1a0d00', overflowY: 'auto' }}>
-            <div style={{ padding: '8px 12px', borderBottom: '1px solid #4a2c0a',
-              color: '#c8a030', fontFamily: 'Georgia,serif', fontSize: 13, fontWeight: 'bold' }}>
-              ⚔️ Reign Equipment
-            </div>
+        {/* Message */}
+        {message && (
+          <div className={`mb-4 p-3 rounded-lg border-4 text-center font-bold flex-shrink-0 ${
+            message.type === 'success'
+              ? 'bg-green-100 border-green-600 text-green-800'
+              : 'bg-red-100 border-red-600 text-red-800'
+          } animate-fade-in`}>
+            {message.text}
+          </div>
+        )}
+
+        {/* Item Grid */}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {REIGN_ITEMS.map(item => {
               const owned = isOwned(item)
               return (
-                <div key={item.id}
-                  onClick={() => setSelectedItem(item)}
-                  onMouseEnter={e => { if (selectedItem?.id !== item.id) e.currentTarget.style.background = 'rgba(80,40,10,0.4)' }}
-                  onMouseLeave={e => { if (selectedItem?.id !== item.id) e.currentTarget.style.background = 'transparent' }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-                    cursor: 'pointer', borderBottom: '1px solid #2a1508',
-                    background: selectedItem?.id === item.id ? 'rgba(200,160,48,0.25)' : 'transparent',
-                    color: owned ? '#6b5030' : selectedItem?.id === item.id ? '#ffd87a' : '#d4b896',
-                    opacity: owned ? 0.65 : 1,
-                  }}>
-                  <span style={{ fontSize: 26, minWidth: 32 }}>{item.icon}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 15, fontFamily: 'Georgia,serif', fontWeight: 'bold' }}>{item.name}</div>
-                    <div style={{ fontSize: 11, color: '#a08060', textTransform: 'capitalize', marginTop: 2 }}>
-                      {item.slot}
-                      {item.damageMultiplier ? ` · ×${item.damageMultiplier} dmg` : ''}
+                <div
+                  key={item.id}
+                  className={`bg-gradient-to-br from-white to-yellow-50 border-4 rounded-lg p-5 shadow-xl transition transform hover:scale-102 ${
+                    owned ? 'border-blue-500' : 'border-yellow-600'
+                  }`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-6xl flex-shrink-0">{item.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="text-xl font-bold text-amber-900">{item.name}</h3>
+                        <span className="text-xs font-bold text-amber-700 capitalize bg-amber-100 border-2 border-amber-400 px-2 py-0.5 rounded-full">
+                          {item.slot}
+                        </span>
+                        {owned && (
+                          <span className="text-xs bg-blue-600 text-white px-1 rounded font-bold">OWNED</span>
+                        )}
+                      </div>
+                      <p className="text-amber-700 text-sm mb-2">{item.description}</p>
+                      <div className="flex gap-1.5 flex-wrap mb-3">
+                        {item.damageMultiplier && (
+                          <span className="text-xs font-bold bg-red-200 text-red-900 px-2 py-0.5 rounded-full border-2 border-red-500">
+                            ×{item.damageMultiplier} damage
+                          </span>
+                        )}
+                        {Object.entries(item.elementBonuses).map(([el, val]) => (
+                          <span key={el} className="text-xs font-bold bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full border-2 border-yellow-500 capitalize">
+                            {el} +{val}%
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-lg font-bold text-yellow-700">🪙 {item.price.toLocaleString()}</div>
+                        <button
+                          onClick={() => handleBuy(item)}
+                          disabled={owned || player.gold < item.price}
+                          className={`px-4 py-2 font-bold rounded-lg border-4 transition transform hover:scale-105 text-sm ${
+                            owned
+                              ? 'bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed'
+                              : player.gold >= item.price
+                                ? 'bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white border-amber-800 shadow-lg'
+                                : 'bg-gray-400 border-gray-500 text-gray-600 cursor-not-allowed'
+                          }`}
+                        >
+                          {owned ? 'Owned' : 'Purchase'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <span style={{ fontSize: 14, color: owned ? '#6b5030' : '#ffd87a', fontWeight: 'bold' }}>
-                    {owned ? '✓ Owned' : `${item.price.toLocaleString()}g`}
-                  </span>
                 </div>
               )
             })}
           </div>
-
-          {/* RIGHT — detail */}
-          <div style={{ width: 230, background: 'linear-gradient(160deg,#6b3f1f,#3b1f08)',
-            borderLeft: '2px solid #c8a030', display: 'flex', flexDirection: 'column' }}>
-            {selectedItem ? (
-              <>
-                <div style={{ background: 'linear-gradient(to bottom,#7c5010,#4a2c00)',
-                  borderBottom: '2px solid #c8a030', padding: '12px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 44 }}>{selectedItem.icon}</div>
-                  <div style={{ color: '#ffd87a', fontFamily: 'Georgia,serif', fontWeight: 'bold',
-                    fontSize: 15, marginTop: 6 }}>{selectedItem.name}</div>
-                </div>
-
-                <div style={{ flex: 1, padding: 12, background: 'linear-gradient(160deg,#f5e6c8,#e8d0a0)',
-                  margin: 8, borderRadius: 6, border: '2px solid #8B6914', overflow: 'auto', fontSize: 12 }}>
-                  <div style={{ marginBottom: 6 }}>
-                    <span style={{ color: '#5c3410', fontWeight: 'bold' }}>Price: </span>
-                    <span style={{ color: '#8B5E0A', fontWeight: 'bold', fontSize: 14 }}>
-                      {selectedItem.price.toLocaleString()} Gold
-                    </span>
-                  </div>
-                  <div style={{ marginBottom: 6 }}>
-                    <span style={{ color: '#5c3410', fontWeight: 'bold' }}>Slot: </span>
-                    <span style={{ textTransform: 'capitalize' }}>{selectedItem.slot}</span>
-                  </div>
-                  {selectedItem.damageMultiplier && (
-                    <div style={{ marginBottom: 6 }}>
-                      <span style={{ color: '#5c3410', fontWeight: 'bold' }}>Damage: </span>
-                      <span style={{ color: '#b45309', fontWeight: 'bold' }}>×{selectedItem.damageMultiplier}</span>
-                    </div>
-                  )}
-                  <div style={{ borderTop: '1px solid #8B6914', paddingTop: 6, marginTop: 4 }}>
-                    <div style={{ fontSize: 11, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Description</div>
-                    <div style={{ fontSize: 11, color: '#3b2010', lineHeight: 1.5 }}>{selectedItem.description}</div>
-                  </div>
-                  <div style={{ borderTop: '1px solid #8B6914', paddingTop: 6, marginTop: 6 }}>
-                    <div style={{ fontSize: 11, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>✨ Bonuses</div>
-                    {Object.entries(selectedItem.elementBonuses).map(([el, val]) => (
-                      <div key={el} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#3b2010' }}>
-                        <span style={{ textTransform: 'capitalize' }}>{el}</span>
-                        <span style={{ fontWeight: 'bold', color: '#b45309' }}>+{val}%</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div style={{ padding: '0 12px 14px' }}>
-                  <button
-                    onClick={() => handleBuy(selectedItem)}
-                    disabled={player.gold < selectedItem.price || isOwned(selectedItem)}
-                    style={{
-                      width: '100%', padding: '10px 0', borderRadius: 8,
-                      fontWeight: 'bold', fontSize: 14, cursor: 'pointer',
-                      color: (player.gold < selectedItem.price || isOwned(selectedItem)) ? '#999' : '#fff2cc',
-                      background: isOwned(selectedItem)
-                        ? 'linear-gradient(to bottom,#888,#555)'
-                        : player.gold < selectedItem.price
-                          ? 'linear-gradient(to bottom,#888,#555)'
-                          : 'linear-gradient(to bottom,#d4a030,#8B6010)',
-                      border: isOwned(selectedItem) ? '2px solid #666'
-                        : player.gold < selectedItem.price ? '2px solid #666'
-                        : '3px solid #ffd87a',
-                      boxShadow: (!isOwned(selectedItem) && player.gold >= selectedItem.price)
-                        ? '0 3px 0 #4a2c0a' : 'none',
-                    }}
-                  >
-                    {isOwned(selectedItem) ? '✓ Already Owned'
-                      : player.gold >= selectedItem.price ? '👑 Purchase'
-                      : '❌ Not Enough Gold'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#6b5030', fontSize: 12, padding: 16, textAlign: 'center' }}>
-                Select an item
-              </div>
-            )}
-          </div>
         </div>
 
-        {/* Bottom bar */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          padding: '10px 16px', background: 'linear-gradient(to bottom,#3b1f08,#2a1508)',
-          borderTop: '2px solid #c8a030', borderRadius: '0 0 8px 8px', gap: 10,
-        }}>
-          <button onClick={() => navigate('/swordhaven')} style={{
-            background: 'linear-gradient(to bottom,#c8860a,#8B5E0A)',
-            border: '2px solid #4a2c0a', borderRadius: 6, padding: '8px 20px',
-            color: '#fff2cc', fontWeight: 'bold', fontSize: 13, cursor: 'pointer',
-          }}>
+        {/* Return */}
+        <div className="mt-4 flex-shrink-0 flex gap-3">
+          <button
+            onClick={() => navigate('/swordhaven')}
+            className="flex-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-4 px-8 rounded-lg border-4 border-amber-800 shadow-lg transform transition hover:scale-105 text-lg"
+          >
             ← Swordhaven
           </button>
-          <button onClick={() => navigate('/town')} style={{
-            background: 'linear-gradient(to bottom,#c8860a,#8B5E0A)',
-            border: '2px solid #4a2c0a', borderRadius: 6, padding: '8px 20px',
-            color: '#fff2cc', fontWeight: 'bold', fontSize: 13, cursor: 'pointer',
-          }}>
+          <button
+            onClick={() => navigate('/town')}
+            className="flex-1 bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-gray-500 shadow-lg transform transition hover:scale-105 text-lg"
+          >
             🚪 Back to Town
           </button>
         </div>

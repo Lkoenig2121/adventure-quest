@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { useState } from 'react'
 
 export const FLOOR_ENEMIES = {
   1:  { name: 'Iron Guardian',       icon:'🛡️',  hp: 600,  maxHp: 600,  mp: 150, maxMp: 150, level: 12, xpReward: 200,  goldReward: 80,  element: 'Light',    elementIcon: '✨', speed: 35, elementResistances: { fire: 100, water: 100, wind: 100, ice: 100, earth: 100, energy: 150, light: 50,  darkness: 200, physical: 80  } },
@@ -60,315 +59,167 @@ export function scaleCastleEnemy(enemy, playerLevel, floor) {
   }
 }
 
-const FLOOR_LABELS = {
-  1:'F1', 2:'F2', 3:'F3', 4:'F4', 5:'F5',
-  6:'F6', 7:'F7', 8:'F8', 9:'F9', 10:'F10', 11:'👾',
-}
-
 const CastleScreen = () => {
   const navigate = useNavigate()
   const { player, startBattle } = useGame()
 
   const castleProgress = player.castleProgress || 0
   const nextFloor = Math.min(castleProgress + 1, 11)
-
-  const [selectedFloor, setSelectedFloor] = useState(nextFloor)
+  const carnaxUnlocked = castleProgress >= 10
 
   const handleBattle = (floor) => {
     startBattle(scaleCastleEnemy(FLOOR_ENEMIES[floor], player.level, floor), 'castle', floor)
     navigate('/battle')
   }
 
-  const isCarnax = selectedFloor === 11
-  const sel = scaleCastleEnemy(FLOOR_ENEMIES[selectedFloor], player.level, selectedFloor)
+  const regularFloors = Object.entries(FLOOR_ENEMIES).filter(([f]) => parseInt(f) !== 11)
 
   return (
-    <div className="w-full h-screen relative overflow-hidden flex items-center justify-center"
-      style={{ background: 'linear-gradient(180deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)' }}>
+    <div className="w-full h-screen bg-gradient-to-b from-blue-700 via-indigo-700 to-blue-900 relative overflow-hidden flex items-center justify-center p-4">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-600 to-indigo-800"></div>
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.08) 10px, rgba(255,255,255,0.08) 20px)',
+        }}></div>
+        <div className="absolute top-20 left-20 text-6xl opacity-20">🏰</div>
+        <div className="absolute top-40 right-32 text-5xl opacity-20">⚔️</div>
+        <div className="absolute bottom-32 left-32 text-4xl opacity-20">🛡️</div>
+        <div className="absolute bottom-20 right-20 text-5xl opacity-20">👑</div>
+      </div>
 
-      {/* Torch flickers */}
-      {[{t:'8%',l:'4%'},{t:'8%',r:'4%'},{t:'50%',l:'2%'},{t:'50%',r:'2%'}].map((pos,i)=>(
-        <div key={i} style={{ position:'absolute',...pos, zIndex:1, textAlign:'center' }}>
-          <div style={{ fontSize:28, animation:`pulse ${1+i*0.3}s infinite alternate` }}>🔥</div>
-        </div>
-      ))}
-
-      <div className="relative z-10 flex gap-6 items-start w-full max-w-5xl mx-4">
-
-        {/* LEFT — floor ladder */}
-        <div style={{
-          width: 160, flexShrink: 0,
-          background: 'rgba(0,0,0,0.5)',
-          border: '2px solid #4a3f2a',
-          borderRadius: 10,
-          padding: '12px 8px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}>
-          <div style={{ color:'#ffd87a', fontFamily:'Georgia,serif', fontSize:13, fontWeight:'bold', textAlign:'center', marginBottom:10 }}>
-            🏰 Castle Floors
+      <div className="relative z-10 w-full max-w-5xl bg-gradient-to-br from-sky-100 to-blue-50 border-8 border-blue-800 rounded-lg shadow-2xl p-8 flex flex-col max-h-screen overflow-hidden">
+        {/* Header */}
+        <div className="text-center mb-6 flex-shrink-0">
+          <h1 className="text-5xl font-bold text-blue-900 mb-2 drop-shadow-lg" style={{
+            textShadow: '3px 3px 0px #1e3a8a',
+            fontFamily: 'Georgia, serif'
+          }}>
+            🏰 The Castle
+          </h1>
+          <p className="text-blue-700 text-sm mb-3">Climb the floors and defeat the guardians within!</p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <div className="bg-gradient-to-r from-yellow-200 to-yellow-300 border-4 border-yellow-600 rounded-lg px-4 py-2 inline-block">
+              <span className="text-blue-900 font-bold text-lg">
+                🗝️ Progress: <span className="text-yellow-700">{castleProgress}/10</span>
+              </span>
+            </div>
+            <div className="w-48 bg-blue-200 border-4 border-blue-600 rounded-lg h-6 overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 transition-all duration-500"
+                style={{ width: `${(castleProgress / 10) * 100}%` }}
+              />
+            </div>
           </div>
-
-          {/* Progress bar */}
-          <div style={{ marginBottom:10, background:'#1a1a2e', borderRadius:4, height:6 }}>
-            <div style={{
-              height:6, borderRadius:4,
-              width:`${(castleProgress/10)*100}%`,
-              background:'linear-gradient(to right,#fbbf24,#f59e0b)',
-              transition:'width 0.5s',
-            }} />
-          </div>
-          <div style={{ color:'#a0a0a0', fontSize:10, textAlign:'center', marginBottom:10 }}>
-            {castleProgress}/10 floors cleared
-          </div>
-
-          {Object.entries(FLOOR_ENEMIES).map(([f, enemy]) => {
-            const fn = parseInt(f)
-            const beaten  = fn <= castleProgress
-            const current = fn === nextFloor
-            const locked  = fn > nextFloor
-            const isCarnaxFloor = fn === 11
-            return (
-              <button
-                key={f}
-                disabled={locked}
-                onClick={() => !locked && setSelectedFloor(fn)}
-                style={{
-                  display:'flex', alignItems:'center', gap:6,
-                  width:'100%', padding:'7px 8px', marginBottom:4,
-                  borderRadius:6,
-                  border:`2px solid ${selectedFloor===fn ? '#fbbf24' : beaten ? '#22c55e' : current ? '#f59e0b' : '#333'}`,
-                  background: selectedFloor===fn
-                    ? 'rgba(251,191,36,0.15)'
-                    : beaten ? 'rgba(34,197,94,0.08)' : current ? 'rgba(245,158,11,0.1)' : 'transparent',
-                  color: locked ? '#444' : beaten ? '#86efac' : current ? '#fcd34d' : '#d4d4d4',
-                  cursor: locked ? 'not-allowed' : 'pointer',
-                  fontSize: 11,
-                }}
-              >
-                <span style={{ fontSize:14 }}>{locked ? '🔒' : beaten ? '✅' : current ? '⚔️' : '👁️'}</span>
-                <span style={{ flex:1, textAlign:'left', fontWeight: current ? 'bold' : 'normal' }}>
-                  {isCarnaxFloor ? '👾 Carnax' : `F${f}: ${enemy.name}`}
-                </span>
-              </button>
-            )
-          })}
         </div>
 
-        {/* RIGHT — selected floor detail */}
-        <div style={{ flex:1, minWidth:0 }}>
-
-          {/* Header */}
-          <div style={{
-            textAlign:'center', marginBottom:16,
-            fontFamily:'Georgia,serif',
-            color: isCarnax ? '#ff6b6b' : '#ffd87a',
-            textShadow: isCarnax ? '0 0 20px rgba(255,100,100,0.8)' : '0 0 10px rgba(255,200,0,0.6)',
-          }}>
-            <div style={{ fontSize: 15, opacity:0.8, marginBottom:4 }}>
-              {isCarnax ? '⚠️ LEGENDARY BOSS' : `Floor ${selectedFloor} of ${castleProgress >= 10 ? '11' : '10'}`}
-            </div>
-            <div style={{ fontSize: isCarnax ? 30 : 24, fontWeight:'bold' }}>
-              {sel?.name}
-            </div>
-            {isCarnax && <div style={{ fontSize:12, color:'#fca5a5', marginTop:4 }}>The Ancient Destroyer</div>}
+        {/* Floor Grid */}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
+            {regularFloors.map(([f, enemy]) => {
+              const fn = parseInt(f)
+              const beaten = fn <= castleProgress
+              const current = fn === nextFloor
+              const locked = fn > nextFloor
+              const scaled = scaleCastleEnemy(enemy, player.level, fn)
+              return (
+                <div
+                  key={f}
+                  className={`bg-gradient-to-br from-white to-blue-50 border-4 rounded-lg p-5 shadow-xl transition transform hover:scale-102 ${
+                    current ? 'border-amber-500' : beaten ? 'border-green-500' : locked ? 'border-gray-300' : 'border-blue-700'
+                  } ${locked ? 'opacity-60' : ''}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="text-6xl flex-shrink-0">{locked ? '🔒' : scaled.elementIcon || enemy.elementIcon}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h3 className="text-xl font-bold text-blue-900">Floor {f}: {enemy.name}</h3>
+                        {beaten && (
+                          <span className="text-xs bg-green-600 text-white px-1 rounded font-bold">CLEARED</span>
+                        )}
+                        {current && (
+                          <span className="text-xs bg-amber-600 text-white px-1 rounded font-bold">NEXT</span>
+                        )}
+                      </div>
+                      <div className="flex gap-1.5 flex-wrap mb-3">
+                        <span className="text-xs font-bold bg-yellow-200 text-yellow-900 px-2 py-0.5 rounded-full border-2 border-yellow-500">
+                          Lv {scaled.level}
+                        </span>
+                        <span className="text-xs font-bold bg-red-200 text-red-900 px-2 py-0.5 rounded-full border-2 border-red-500">
+                          ❤️ {scaled.hp.toLocaleString()}
+                        </span>
+                        <span className="text-xs font-bold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full border-2 border-purple-500">
+                          {scaled.elementIcon} {scaled.element}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm font-bold text-green-700">
+                          +{scaled.xpReward.toLocaleString()} XP · <span className="text-yellow-700">+{scaled.goldReward.toLocaleString()} 🪙</span>
+                        </div>
+                        <button
+                          onClick={() => handleBattle(fn)}
+                          disabled={locked}
+                          className={`font-bold rounded-lg border-4 transition transform hover:scale-105 whitespace-nowrap ${
+                            locked
+                              ? 'px-4 py-2 text-sm bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed'
+                              : beaten
+                                ? 'px-6 py-3 text-lg bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white border-red-900 shadow-lg'
+                                : 'px-4 py-2 text-sm bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-green-800 shadow-lg'
+                          }`}
+                        >
+                          {locked ? 'Locked' : beaten ? 'Fight!' : 'Enter'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
 
-          {/* Carnax visual OR regular enemy */}
-          <div style={{
-            background: isCarnax
-              ? 'radial-gradient(ellipse at center, rgba(80,10,10,0.9) 0%, rgba(20,5,5,0.95) 100%)'
-              : 'rgba(0,0,0,0.6)',
-            border: `3px solid ${isCarnax ? '#7f1d1d' : '#4a3f2a'}`,
-            borderRadius:12,
-            padding: 20,
-            marginBottom:16,
-            textAlign:'center',
-          }}>
-            {isCarnax ? (
-              <>
-                {/* Carnax monster display */}
-                <div style={{ position:'relative', display:'inline-block', marginBottom:12 }}>
-                  <div style={{
-                    fontSize:100, lineHeight:1,
-                    filter:'drop-shadow(0 0 30px rgba(0,200,0,0.5))',
-                    animation:'pulse 2s infinite',
-                  }}>👾</div>
-                  {/* Red eye glow overlays */}
-                  <div style={{
-                    position:'absolute', top:'20%', left:'25%',
-                    width:12, height:8, borderRadius:'50%',
-                    background:'#ef4444',
-                    boxShadow:'0 0 12px #ef4444',
-                  }}/>
-                  <div style={{
-                    position:'absolute', top:'20%', right:'25%',
-                    width:12, height:8, borderRadius:'50%',
-                    background:'#ef4444',
-                    boxShadow:'0 0 12px #ef4444',
-                  }}/>
-                </div>
-                <div style={{ color:'#fca5a5', fontSize:12, marginBottom:12, fontStyle:'italic' }}>
-                  "An ancient evil awakens…"
-                </div>
-              </>
-            ) : (
-              <div style={{ fontSize:72, marginBottom:12 }}>
-                {FLOOR_ENEMIES[selectedFloor]?.elementIcon || '👹'}
+          {/* Carnax banner */}
+          <div className={`mt-4 rounded-lg border-4 p-5 shadow-xl ${
+            carnaxUnlocked ? 'bg-gradient-to-br from-red-800 to-black border-red-500' : 'bg-gradient-to-br from-gray-300 to-gray-400 border-gray-500 opacity-70'
+          }`}>
+            <div className="flex items-center gap-4">
+              <span className={`text-6xl flex-shrink-0 ${carnaxUnlocked ? 'animate-pulse' : ''}`}>
+                {carnaxUnlocked ? '👾' : '🔒'}
+              </span>
+              <div className="flex-1 min-w-0">
+                <h3 className={`text-2xl font-bold ${carnaxUnlocked ? 'text-red-200' : 'text-gray-600'}`} style={{ fontFamily: 'Georgia, serif' }}>
+                  {carnaxUnlocked ? '💀 Carnax — The Ancient Destroyer' : '🔒 Carnax — Locked'}
+                </h3>
+                <p className={`text-sm mt-1 ${carnaxUnlocked ? 'text-red-300' : 'text-gray-600'}`}>
+                  {carnaxUnlocked
+                    ? `Lv 60 · ${FLOOR_ENEMIES[11].hp.toLocaleString()} HP · +${FLOOR_ENEMIES[11].xpReward.toLocaleString()} XP · +${FLOOR_ENEMIES[11].goldReward.toLocaleString()} Gold`
+                    : `Clear all 10 floors to unlock (${castleProgress}/10 cleared)`}
+                </p>
               </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-3" style={{ fontSize:13 }}>
-              {[
-                ['Level',    sel?.level,            '#fcd34d'],
-                ['HP',       sel?.hp?.toLocaleString(), '#f87171'],
-                ['MP',       sel?.mp?.toLocaleString(), '#60a5fa'],
-                ['Element',  `${sel?.elementIcon} ${sel?.element}`, '#e9d5ff'],
-                ['XP',       `+${sel?.xpReward?.toLocaleString()}`, '#86efac'],
-                ['Gold',     `+${sel?.goldReward?.toLocaleString()}`, '#fbbf24'],
-              ].map(([label, val, color]) => (
-                <div key={label} style={{
-                  background:'rgba(255,255,255,0.05)',
-                  borderRadius:6, padding:'8px 10px',
-                  border:'1px solid rgba(255,255,255,0.08)',
-                }}>
-                  <div style={{ color:'#9ca3af', fontSize:10 }}>{label}</div>
-                  <div style={{ color, fontWeight:'bold', fontSize:15 }}>{val}</div>
-                </div>
-              ))}
+              <button
+                onClick={() => carnaxUnlocked && handleBattle(11)}
+                disabled={!carnaxUnlocked}
+                className={`px-5 py-3 font-bold rounded-lg border-4 transition transform hover:scale-105 text-base whitespace-nowrap ${
+                  carnaxUnlocked
+                    ? 'bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white border-red-400 shadow-lg'
+                    : 'bg-gray-400 border-gray-500 text-gray-600 cursor-not-allowed'
+                }`}
+              >
+                {carnaxUnlocked ? 'Face Carnax!' : 'Locked'}
+              </button>
             </div>
           </div>
+        </div>
 
-          {/* Current floor badge */}
-          <div style={{
-            textAlign:'center',
-            color: '#9ca3af', fontSize:12, marginBottom:10,
-          }}>
-            {selectedFloor <= castleProgress
-              ? '✅ Floor already cleared — you may replay it'
-              : selectedFloor === nextFloor
-                ? `⚔️ Next challenge — Floor ${selectedFloor}`
-                : '🔒 Complete previous floors to unlock'}
-          </div>
-
-          {/* Battle button */}
-          <button
-            onClick={() => handleBattle(selectedFloor)}
-            disabled={selectedFloor > nextFloor}
-            style={{
-              width:'100%',
-              padding:'14px 0',
-              borderRadius:10,
-              fontWeight:'bold',
-              fontSize:18,
-              fontFamily:'Georgia,serif',
-              border:`3px solid ${isCarnax ? '#7f1d1d' : '#b45309'}`,
-              background: selectedFloor > nextFloor
-                ? '#1f1f1f'
-                : isCarnax
-                  ? 'linear-gradient(135deg,#7f1d1d,#450a0a)'
-                  : 'linear-gradient(135deg,#b45309,#78350f)',
-              color: selectedFloor > nextFloor ? '#444' : '#fff',
-              cursor: selectedFloor > nextFloor ? 'not-allowed' : 'pointer',
-              textShadow: selectedFloor > nextFloor ? 'none' : '0 1px 3px rgba(0,0,0,0.5)',
-              boxShadow: selectedFloor > nextFloor ? 'none' : isCarnax
-                ? '0 0 20px rgba(255,50,50,0.4)'
-                : '0 0 12px rgba(180,83,9,0.4)',
-              marginBottom:10,
-            }}
-          >
-            {selectedFloor > nextFloor
-              ? '🔒 Locked'
-              : isCarnax
-                ? '💀 Face Carnax!'
-                : `⚔️ Enter Floor ${selectedFloor}`}
-          </button>
-
+        {/* Return */}
+        <div className="mt-4 flex-shrink-0">
           <button
             onClick={() => navigate('/town')}
-            style={{
-              width:'100%', padding:'10px 0', borderRadius:8,
-              background:'rgba(0,0,0,0.4)', border:'2px solid #374151',
-              color:'#9ca3af', fontSize:14, cursor:'pointer',
-            }}
+            className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-gray-500 shadow-lg transform transition hover:scale-105 text-xl"
           >
-            ← Return to Town
+            Return to Town
           </button>
         </div>
       </div>
-
-      {/* ── Carnax Banner — always visible at the bottom ─────────────── */}
-      {(() => {
-        const carnaxUnlocked = castleProgress >= 10
-        return (
-          <div style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0,
-            zIndex: 20,
-          }}>
-            <button
-              onClick={() => carnaxUnlocked && handleBattle(11)}
-              disabled={!carnaxUnlocked}
-              style={{
-                width: '100%',
-                padding: '14px 24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 16,
-                cursor: carnaxUnlocked ? 'pointer' : 'not-allowed',
-                border: 'none',
-                borderTop: `3px solid ${carnaxUnlocked ? '#7f1d1d' : '#374151'}`,
-                background: carnaxUnlocked
-                  ? 'linear-gradient(90deg, #0a0000 0%, #3b0000 30%, #7f1d1d 50%, #3b0000 70%, #0a0000 100%)'
-                  : 'rgba(10,10,10,0.85)',
-                boxShadow: carnaxUnlocked ? '0 -4px 24px rgba(200,0,0,0.4), inset 0 1px 0 rgba(255,50,50,0.2)' : 'none',
-                transition: 'all 0.3s',
-              }}
-            >
-              {/* Left: pulsing eye */}
-              <span style={{
-                fontSize: 36,
-                filter: carnaxUnlocked ? 'drop-shadow(0 0 10px #ef4444)' : 'grayscale(1)',
-                animation: carnaxUnlocked ? 'pulse 1.5s infinite' : 'none',
-              }}>
-                👾
-              </span>
-
-              {/* Centre text */}
-              <div style={{ textAlign: 'center' }}>
-                <div style={{
-                  fontFamily: 'Georgia,serif',
-                  fontWeight: 'bold',
-                  fontSize: 20,
-                  color: carnaxUnlocked ? '#fca5a5' : '#4b5563',
-                  textShadow: carnaxUnlocked ? '0 0 16px rgba(255,50,50,0.8)' : 'none',
-                  letterSpacing: 2,
-                }}>
-                  {carnaxUnlocked ? '💀 FACE CARNAX 💀' : '🔒 CARNAX — Clear all 10 floors to unlock'}
-                </div>
-                <div style={{
-                  fontSize: 11,
-                  color: carnaxUnlocked ? '#f87171' : '#374151',
-                  marginTop: 2,
-                }}>
-                  {carnaxUnlocked
-                    ? 'The Ancient Destroyer  ·  Lv 60  ·  6,000 HP  ·  +5,000 XP  ·  +2,000 Gold'
-                    : `${castleProgress}/10 floors cleared`}
-                </div>
-              </div>
-
-              {/* Right: pulsing eye */}
-              <span style={{
-                fontSize: 36,
-                filter: carnaxUnlocked ? 'drop-shadow(0 0 10px #ef4444)' : 'grayscale(1)',
-                animation: carnaxUnlocked ? 'pulse 1.5s infinite 0.75s' : 'none',
-              }}>
-                👾
-              </span>
-            </button>
-          </div>
-        )
-      })()}
     </div>
   )
 }

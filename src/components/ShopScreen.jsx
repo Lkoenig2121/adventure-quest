@@ -246,8 +246,16 @@ const ShopScreen = () => {
     setTimeout(() => setPurchaseMessage(null), 3000)
   }
 
-  const [selectedItem, setSelectedItem] = useState(shopItems[0])
-  const [openCategories, setOpenCategories] = useState(new Set(['🧪 Potions']))
+  const handleSell = (eq) => {
+    const sellPrice = Math.floor((eq.price || 0) * 0.8)
+    sellItem(eq.id)
+    setPurchaseMessage({ type: 'success', text: `Sold ${eq.name} for ${sellPrice}g!` })
+    setTimeout(() => setPurchaseMessage(null), 3000)
+  }
+
+  const [openCategories, setOpenCategories] = useState(new Set([
+    '🧪 Potions', '⚔️ Weapons', '🪖 Helmets', '🛡️ Armor', '👢 Boots',
+  ]))
 
   const loadOptions = () => {
     try { return JSON.parse(localStorage.getItem('gameOptions') || '{}') } catch { return {} }
@@ -292,273 +300,189 @@ const ShopScreen = () => {
     { label: '👢 Boots',    filter: i => i.slot === 'boots'  },
   ]
 
-  const woodBorder = {
-    background: 'linear-gradient(135deg,#8B5E3C,#6B3F1F)',
-    border: '3px solid #4a2c0a',
-    boxShadow: 'inset 0 0 8px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.6)',
-  }
+  const equippedEntries = Object.entries(player.equipped || {}).filter(([, v]) => v)
+  const bagItems = player.inventory || []
 
-  const parchment = {
-    background: 'linear-gradient(160deg,#f5e6c8,#e8d0a0)',
-    border: '3px solid #8B6914',
-  }
-
-  const AqButton = ({ onClick, disabled, children, className = '' }) => (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`px-5 py-2 font-bold text-base rounded transition-all ${className}`}
-      style={{
-        background: disabled
-          ? 'linear-gradient(to bottom,#888,#555)'
-          : 'linear-gradient(to bottom,#c8860a,#8B5E0A)',
-        border: '2px solid #4a2c0a',
-        color: disabled ? '#999' : '#fff2cc',
-        textShadow: disabled ? 'none' : '0 1px 2px rgba(0,0,0,0.7)',
-        boxShadow: disabled ? 'none' : '0 3px 0 #4a2c0a, inset 0 1px 0 rgba(255,255,255,0.2)',
-        cursor: disabled ? 'not-allowed' : 'pointer',
-      }}
-    >
-      {children}
-    </button>
-  )
+  const tabs = [
+    { id: 'shop',      label: '🛒 Buy Items' },
+    { id: 'inventory', label: '🎒 Inventory' },
+    { id: 'options',   label: '⚙️ Options' },
+  ]
 
   return (
-    <div className="w-full h-screen flex items-center justify-center" style={{
-      background: 'linear-gradient(to bottom, #2a1a0a 0%, #1a0d00 100%)',
-    }}>
-      {/* Outer wooden frame */}
-      <div className="flex flex-col" style={{
-        width: 940, minHeight: 580, maxHeight: 640, overflow: 'hidden',
-        ...woodBorder,
-        borderRadius: 8,
-        padding: 6,
-      }}>
+    <div className="w-full h-screen bg-gradient-to-b from-amber-700 via-amber-600 to-amber-700 relative overflow-hidden flex items-center justify-center p-4">
+      {/* Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-600 to-orange-700"></div>
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.1) 10px, rgba(0,0,0,0.1) 20px)',
+        }}></div>
+        <div className="absolute top-20 left-20 text-6xl opacity-20">🏪</div>
+        <div className="absolute top-40 right-32 text-5xl opacity-20">⚔️</div>
+        <div className="absolute bottom-32 left-32 text-4xl opacity-20">🛡️</div>
+        <div className="absolute bottom-20 right-20 text-5xl opacity-20">🧪</div>
+      </div>
 
-        {/* Title bar */}
-        <div className="flex items-center justify-center py-2 mb-1" style={{
-          background: 'linear-gradient(to bottom,#5c3410,#3b1f08)',
-          borderRadius: '4px 4px 0 0',
-          borderBottom: '2px solid #4a2c0a',
-        }}>
-          <span style={{ fontFamily: 'Georgia,serif', color: '#ffd87a', fontSize: 20, fontWeight: 'bold', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
-            🏪 Item Shop
-          </span>
-        </div>
-
-        {/* Main 3-column layout */}
-        <div className="flex gap-1 flex-1" style={{ minHeight: 0, overflow: 'hidden' }}>
-
-          {/* LEFT — treasure chest + gold */}
-          <div className="flex flex-col items-center justify-between py-4 px-3" style={{
-            width: 155,
-            background: 'linear-gradient(160deg,#6b3f1f,#3b1f08)',
-            borderRight: '2px solid #4a2c0a',
+      <div className="relative z-10 w-full max-w-5xl bg-gradient-to-br from-amber-100 to-amber-50 border-8 border-amber-800 rounded-lg shadow-2xl p-8 flex flex-col max-h-screen overflow-hidden">
+        {/* Header */}
+        <div className="text-center mb-6 flex-shrink-0">
+          <h1 className="text-5xl font-bold text-amber-900 mb-2 drop-shadow-lg" style={{
+            textShadow: '3px 3px 0px #8b6914',
+            fontFamily: 'Georgia, serif'
           }}>
-            <div className="text-center">
-              <div style={{ fontSize: 64, lineHeight: 1 }}>🗃️</div>
-              <div style={{ color: '#ffd87a', fontFamily: 'Georgia,serif', fontSize: 11, marginTop: 6, textAlign: 'center', fontWeight: 'bold' }}>
-                Shop Wares
-              </div>
-            </div>
-
-            <div className="w-full">
-              <div style={{ ...parchment, borderRadius: 6, padding: '6px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: 10, color: '#5c3410', fontWeight: 'bold' }}>Your Gold</div>
-                <div style={{ fontSize: 16, color: '#8B5E0A', fontWeight: 'bold', marginTop: 2 }}>
-                  🪙 {player.gold.toLocaleString()}
-                </div>
-              </div>
-
-              {purchaseMessage && (
-                <div style={{
-                  marginTop: 6,
-                  padding: '4px 6px',
-                  borderRadius: 4,
-                  fontSize: 10,
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  background: purchaseMessage.type === 'success' ? '#d4edda' : '#f8d7da',
-                  color:      purchaseMessage.type === 'success' ? '#155724' : '#721c24',
-                  border:     `1px solid ${purchaseMessage.type === 'success' ? '#c3e6cb' : '#f5c6cb'}`,
-                }}>
-                  {purchaseMessage.text}
-                </div>
-              )}
+            🏪 Item Shop
+          </h1>
+          <p className="text-amber-700 text-sm mb-3">Gear up with potions, weapons, and armor!</p>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            <div className="bg-gradient-to-r from-yellow-200 to-yellow-300 border-4 border-yellow-600 rounded-lg px-4 py-2 inline-block">
+              <span className="text-amber-900 font-bold text-lg">
+                🪙 Gold: <span className="text-yellow-700">{player.gold.toLocaleString()}</span>
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* MIDDLE — scrollable item list */}
-          <div className="flex flex-col flex-1" style={{ minWidth: 0 }}>
-            {/* Tab row */}
-            <div className="flex" style={{ borderBottom: '2px solid #4a2c0a' }}>
-              {[
-                { id: 'shop',      label: '🛒 Buy Items' },
-                { id: 'inventory', label: '🎒 Inventory' },
-                { id: 'options',   label: '⚙️ Options' },
-              ].map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  style={{
-                    flex: 1,
-                    padding: '8px 0',
-                    fontSize: 14,
-                    fontWeight: 'bold',
-                    fontFamily: 'Georgia,serif',
-                    color: activeTab === tab.id ? '#ffd87a' : '#c4a87a',
-                    background: activeTab === tab.id
-                      ? 'linear-gradient(to bottom,#5c3410,#3b1f08)'
-                      : 'linear-gradient(to bottom,#3b1f08,#2a1508)',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+        {/* Message */}
+        {purchaseMessage && (
+          <div className={`mb-4 p-3 rounded-lg border-4 text-center font-bold flex-shrink-0 ${
+            purchaseMessage.type === 'success'
+              ? 'bg-green-100 border-green-600 text-green-800'
+              : 'bg-red-100 border-red-600 text-red-800'
+          } animate-fade-in`}>
+            {purchaseMessage.text}
+          </div>
+        )}
 
-            {activeTab === 'shop' ? (
-              <div
-                className="overflow-y-auto flex-1"
-                tabIndex={0}
-                onMouseEnter={e => e.currentTarget.focus()}
-                style={{
-                  background: '#1a0d00',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#8B5E3C #1a0d00',
-                  overscrollBehavior: 'contain',
-                  outline: 'none',
-                }}
-              >
-                {categories.map(cat => {
-                  const items = shopItems.filter(cat.filter)
-                  if (!items.length) return null
-                  const isOpen = openCategories.has(cat.label)
-                  return (
-                    <div key={cat.label}>
-                      {/* Clickable category header */}
-                      <div
-                        onClick={() => toggleCategory(cat.label)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 12px',
-                          background: isOpen
-                            ? 'linear-gradient(to right,#5c3410,#3b1f08)'
-                            : 'linear-gradient(to right,#3b1f08,#2a1508)',
-                          color: isOpen ? '#ffd87a' : '#c4a87a',
-                          fontSize: 14,
-                          fontWeight: 'bold',
-                          borderBottom: '1px solid #4a2c0a',
-                          borderTop: '1px solid #4a2c0a',
-                          cursor: 'pointer',
-                          userSelect: 'none',
-                        }}
-                      >
-                        <span>{cat.label}</span>
-                        <span style={{ fontSize: 11, opacity: 0.8 }}>{isOpen ? '▲' : '▼'}</span>
+        {/* Tabs */}
+        <div className="flex gap-2 mb-4 flex-shrink-0 flex-wrap justify-center">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-5 py-2.5 font-bold rounded-lg border-4 transition transform hover:scale-105 text-sm md:text-base ${
+                activeTab === tab.id
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white border-amber-800 shadow-lg'
+                  : 'bg-white text-amber-800 border-amber-300 hover:bg-amber-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="overflow-y-auto flex-1 min-h-0">
+          {activeTab === 'shop' && (
+            <div className="p-1">
+              {categories.map(cat => {
+                const items = shopItems.filter(cat.filter)
+                if (!items.length) return null
+                const isOpen = openCategories.has(cat.label)
+                return (
+                  <div key={cat.label} className="mb-4">
+                    <button
+                      onClick={() => toggleCategory(cat.label)}
+                      className="w-full bg-gradient-to-br from-amber-200 to-amber-100 border-4 border-amber-600 rounded-lg px-4 py-3 mb-3 flex items-center justify-between transition hover:scale-101"
+                    >
+                      <h3 className="text-lg font-bold text-amber-900">{cat.label}</h3>
+                      <span className="text-amber-700 font-bold text-sm">{isOpen ? '▲ Hide' : '▼ Show'}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {items.map(item => {
+                          const owned = isOwned(item)
+                          return (
+                            <div
+                              key={item.id}
+                              className={`bg-gradient-to-br from-white to-amber-50 border-4 rounded-lg p-5 shadow-xl transition transform hover:scale-102 ${
+                                owned ? 'border-blue-500' : 'border-amber-700'
+                              }`}
+                            >
+                              <div className="flex items-start gap-4">
+                                <div className="text-5xl flex-shrink-0">{item.icon}</div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <h3 className="text-lg font-bold text-amber-900">{item.name}</h3>
+                                    {owned && (
+                                      <span className="text-xs bg-blue-600 text-white px-1 rounded font-bold">OWNED</span>
+                                    )}
+                                  </div>
+                                  <p className="text-amber-700 text-sm mb-2">{item.description}</p>
+                                  {item.elementBonuses && (
+                                    <div className="flex gap-1.5 flex-wrap mb-3">
+                                      {Object.entries(item.elementBonuses).map(([el, val]) => (
+                                        <span key={el} className="text-xs font-bold bg-orange-200 text-orange-900 px-2 py-0.5 rounded-full border-2 border-orange-400 capitalize">
+                                          {el} +{val}%
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="text-lg font-bold text-yellow-700">🪙 {item.price.toLocaleString()}</div>
+                                    <button
+                                      onClick={() => handlePurchase(item)}
+                                      disabled={owned || player.gold < item.price}
+                                      className={`px-4 py-2 font-bold rounded-lg border-4 transition transform hover:scale-105 text-sm ${
+                                        owned
+                                          ? 'bg-gray-300 border-gray-400 text-gray-500 cursor-not-allowed'
+                                          : player.gold >= item.price
+                                            ? 'bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white border-green-800 shadow-lg'
+                                            : 'bg-gray-400 border-gray-500 text-gray-600 cursor-not-allowed'
+                                      }`}
+                                    >
+                                      {owned ? 'Owned' : 'Buy'}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
                       </div>
-
-                      {/* Items — only shown when open */}
-                      {isOpen && items.map(item => {
-                        const owned = isOwned(item)
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => setSelectedItem(item)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 10,
-                              padding: '10px 14px',
-                              cursor: 'pointer',
-                              borderBottom: '1px solid #2a1508',
-                              background: selectedItem?.id === item.id
-                                ? 'rgba(100,60,20,0.6)'
-                                : 'transparent',
-                              color: owned
-                                ? '#6b5030'
-                                : selectedItem?.id === item.id ? '#ffd87a' : '#d4b896',
-                              opacity: owned ? 0.6 : 1,
-                            }}
-                            onMouseEnter={e => { if (selectedItem?.id !== item.id) e.currentTarget.style.background = 'rgba(80,40,10,0.4)' }}
-                            onMouseLeave={e => { if (selectedItem?.id !== item.id) e.currentTarget.style.background = 'transparent' }}
-                          >
-                            <span style={{ fontSize: 20, minWidth: 26 }}>{item.icon}</span>
-                            <span style={{ fontSize: 15, fontFamily: 'Georgia,serif' }}>{item.name}</span>
-                            <span style={{ marginLeft: 'auto', fontSize: 14, color: owned ? '#6b5030' : '#ffd87a' }}>
-                              {owned ? '✓' : `${item.price}g`}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )
-                })}
-              </div>
-            ) : activeTab === 'inventory' ? (
-              /* Inventory tab */
-              <div
-                className="overflow-y-auto flex-1"
-                tabIndex={0}
-                onMouseEnter={e => e.currentTarget.focus()}
-                style={{
-                  background: '#1a0d00',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#8B5E3C #1a0d00',
-                  overscrollBehavior: 'contain',
-                  outline: 'none',
-                }}
-              >
-                {/* Consumables (not sellable) */}
-                <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508' }}>
-                  Consumables
-                </div>
-                {[
-                  { icon: '🧪', label: 'Health Potions', count: player.healthPotions || 0 },
-                  { icon: '💧', label: 'Mana Potions',   count: player.manaPotions   || 0 },
-                ].map(c => (
-                  <div key={c.label} style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    padding: '9px 14px', borderBottom: '1px solid #2a1508',
-                    color: '#d4b896', fontSize: 15,
-                  }}>
-                    <span style={{ fontSize: 18 }}>{c.icon}</span>
-                    <span>{c.label}</span>
-                    <span style={{ marginLeft: 'auto', color: '#ffd87a', fontWeight: 'bold' }}>×{c.count}</span>
+                    )}
                   </div>
-                ))}
+                )
+              })}
+            </div>
+          )}
 
-                {/* Equipped items */}
-                {Object.entries(player.equipped || {}).some(([, v]) => v) && (
-                  <>
-                    <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508', borderTop: '1px solid #4a2c0a' }}>
-                      Equipped
+          {activeTab === 'inventory' && (
+            <div className="p-1 space-y-6">
+              {/* Consumables */}
+              <div>
+                <h3 className="text-lg font-bold text-amber-900 mb-3">🧪 Consumables</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { icon: '🧪', label: 'Health Potions', count: player.healthPotions || 0 },
+                    { icon: '💧', label: 'Mana Potions',   count: player.manaPotions   || 0 },
+                  ].map(c => (
+                    <div key={c.label} className="bg-gradient-to-br from-white to-amber-50 border-4 border-amber-700 rounded-lg p-4 shadow-xl flex items-center gap-3">
+                      <span className="text-4xl">{c.icon}</span>
+                      <span className="flex-1 font-bold text-amber-900">{c.label}</span>
+                      <span className="text-xl font-bold text-yellow-700">×{c.count}</span>
                     </div>
-                    {Object.entries(player.equipped || {}).filter(([, v]) => v).map(([slot, eq]) => {
+                  ))}
+                </div>
+              </div>
+
+              {/* Equipped */}
+              {equippedEntries.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-amber-900 mb-3">🛡️ Equipped</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {equippedEntries.map(([slot, eq]) => {
                       const sellPrice = Math.floor((eq.price || 0) * 0.8)
                       return (
-                        <div key={slot} style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '9px 14px', borderBottom: '1px solid #2a1508',
-                          color: '#d4b896', fontSize: 14,
-                        }}>
-                          <span style={{ fontSize: 18 }}>{eq.icon || '⚔️'}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eq.name}</div>
-                            <div style={{ fontSize: 11, color: '#a08060', textTransform: 'capitalize' }}>{slot} — equipped</div>
+                        <div key={slot} className="bg-gradient-to-br from-white to-blue-50 border-4 border-blue-500 rounded-lg p-4 shadow-xl flex items-center gap-3">
+                          <span className="text-4xl">{eq.icon || '⚔️'}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-amber-900 truncate">{eq.name}</div>
+                            <div className="text-xs text-amber-600 capitalize">{slot} — equipped</div>
                           </div>
                           {sellPrice > 0 && (
                             <button
-                              onClick={() => { sellItem(eq.id); setPurchaseMessage({ type: 'success', text: `Sold ${eq.name} for ${sellPrice}g!` }); setTimeout(() => setPurchaseMessage(null), 3000) }}
-                              style={{
-                                fontSize: 13, padding: '4px 9px', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap',
-                                background: 'linear-gradient(to bottom,#7a3a0a,#4a2005)',
-                                border: '1px solid #4a2c0a', color: '#ffd87a',
-                              }}
+                              onClick={() => handleSell(eq)}
+                              className="px-3 py-1.5 font-bold rounded-lg border-4 border-red-800 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-xs shadow-lg transition transform hover:scale-105 whitespace-nowrap"
                             >
                               Sell {sellPrice}g
                             </button>
@@ -566,233 +490,85 @@ const ShopScreen = () => {
                         </div>
                       )
                     })}
-                  </>
-                )}
-
-                {/* Bag items */}
-                <div style={{ color: '#c4a87a', fontFamily: 'Georgia,serif', fontSize: 14, padding: '7px 12px 4px', borderBottom: '1px solid #2a1508', borderTop: '1px solid #4a2c0a' }}>
-                  Bag ({(player.inventory || []).length} items)
+                  </div>
                 </div>
-                {(player.inventory || []).length === 0 ? (
-                  <div style={{ color: '#6b5030', fontSize: 14, padding: '9px 14px' }}>Bag is empty.</div>
+              )}
+
+              {/* Bag */}
+              <div>
+                <h3 className="text-lg font-bold text-amber-900 mb-3">🎒 Bag ({bagItems.length} items)</h3>
+                {bagItems.length === 0 ? (
+                  <div className="bg-gradient-to-br from-white to-amber-50 border-4 border-amber-300 rounded-lg p-6 text-center text-amber-600 font-semibold">
+                    Bag is empty.
+                  </div>
                 ) : (
-                  (player.inventory || []).map(eq => {
-                    const sellPrice = Math.floor((eq.price || 0) * 0.8)
-                    return (
-                      <div key={eq.id} style={{
-                        display: 'flex', alignItems: 'center', gap: 8,
-                        padding: '9px 14px', borderBottom: '1px solid #2a1508',
-                        color: '#d4b896', fontSize: 14,
-                      }}>
-                        <span style={{ fontSize: 18 }}>{eq.icon || '⚔️'}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 14, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eq.name}</div>
-                          <div style={{ fontSize: 11, color: '#a08060', textTransform: 'capitalize' }}>{eq.slot}</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {bagItems.map(eq => {
+                      const sellPrice = Math.floor((eq.price || 0) * 0.8)
+                      return (
+                        <div key={eq.id} className="bg-gradient-to-br from-white to-amber-50 border-4 border-amber-700 rounded-lg p-4 shadow-xl flex items-center gap-3">
+                          <span className="text-4xl">{eq.icon || '⚔️'}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-amber-900 truncate">{eq.name}</div>
+                            <div className="text-xs text-amber-600 capitalize">{eq.slot}</div>
+                          </div>
+                          {sellPrice > 0 ? (
+                            <button
+                              onClick={() => handleSell(eq)}
+                              className="px-3 py-1.5 font-bold rounded-lg border-4 border-red-800 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-xs shadow-lg transition transform hover:scale-105 whitespace-nowrap"
+                            >
+                              Sell {sellPrice}g
+                            </button>
+                          ) : (
+                            <span className="text-xs text-amber-500 font-semibold">No value</span>
+                          )}
                         </div>
-                        {sellPrice > 0 ? (
-                          <button
-                            onClick={() => { sellItem(eq.id); setPurchaseMessage({ type: 'success', text: `Sold ${eq.name} for ${sellPrice}g!` }); setTimeout(() => setPurchaseMessage(null), 3000) }}
-                            style={{
-                              fontSize: 13, padding: '4px 9px', borderRadius: 3, cursor: 'pointer', whiteSpace: 'nowrap',
-                              background: 'linear-gradient(to bottom,#7a3a0a,#4a2005)',
-                              border: '1px solid #4a2c0a', color: '#ffd87a',
-                            }}
-                          >
-                            Sell {sellPrice}g
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: 11, color: '#6b5030' }}>No value</span>
-                        )}
-                      </div>
-                    )
-                  })
+                      )
+                    })}
+                  </div>
                 )}
               </div>
-            ) : activeTab === 'options' ? (
-              /* Options tab */
-              <div
-                className="overflow-y-auto flex-1"
-                style={{
-                  background: '#1a0d00',
-                  scrollbarWidth: 'thin',
-                  scrollbarColor: '#8B5E3C #1a0d00',
-                }}
-              >
-                <div style={{
-                  color: '#c4a87a',
-                  fontFamily: 'Georgia,serif',
-                  fontSize: 13,
-                  padding: '8px 14px 5px',
-                  borderBottom: '1px solid #2a1508',
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                }}>
-                  Game Settings
-                </div>
+            </div>
+          )}
 
+          {activeTab === 'options' && (
+            <div className="p-1">
+              <h3 className="text-lg font-bold text-amber-900 mb-3 uppercase tracking-wide">⚙️ Game Settings</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {optionsList.map(opt => (
-                  <div
+                  <button
                     key={opt.key}
                     onClick={() => toggleOption(opt.key)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                      padding: '11px 14px',
-                      borderBottom: '1px solid #2a1508',
-                      cursor: 'pointer',
-                      userSelect: 'none',
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(80,40,10,0.4)'}
-                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    className={`text-left bg-gradient-to-br from-white to-amber-50 border-4 rounded-lg p-4 shadow-xl transition transform hover:scale-102 flex items-center gap-4 ${
+                      gameOptions[opt.key] ? 'border-green-500' : 'border-amber-300'
+                    }`}
                   >
-                    {/* Toggle pill */}
-                    <div style={{
-                      flexShrink: 0,
-                      width: 40,
-                      height: 22,
-                      borderRadius: 11,
-                      background: gameOptions[opt.key]
-                        ? 'linear-gradient(to right,#c8860a,#8B5E0A)'
-                        : 'linear-gradient(to right,#2a1508,#1a0d00)',
-                      border: `2px solid ${gameOptions[opt.key] ? '#8B5E0A' : '#4a2c0a'}`,
-                      position: 'relative',
-                      transition: 'background 0.2s, border-color 0.2s',
-                      boxShadow: gameOptions[opt.key] ? '0 0 6px rgba(200,134,10,0.4)' : 'none',
-                    }}>
-                      <div style={{
-                        position: 'absolute',
-                        top: 2,
-                        left: gameOptions[opt.key] ? 18 : 2,
-                        width: 14,
-                        height: 14,
-                        borderRadius: '50%',
-                        background: gameOptions[opt.key] ? '#ffd87a' : '#6b5030',
-                        transition: 'left 0.2s, background 0.2s',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                      }} />
+                    <div className={`flex-shrink-0 w-12 h-7 rounded-full border-4 relative transition-colors ${
+                      gameOptions[opt.key] ? 'bg-green-500 border-green-700' : 'bg-gray-300 border-gray-400'
+                    }`}>
+                      <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${
+                        gameOptions[opt.key] ? 'left-6' : 'left-0.5'
+                      }`} />
                     </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: 14,
-                        fontFamily: 'Georgia,serif',
-                        color: gameOptions[opt.key] ? '#ffd87a' : '#d4b896',
-                        fontWeight: gameOptions[opt.key] ? 'bold' : 'normal',
-                      }}>
-                        {opt.label}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#6b5030', marginTop: 2 }}>
-                        {opt.desc}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`font-bold ${gameOptions[opt.key] ? 'text-green-800' : 'text-amber-900'}`}>{opt.label}</div>
+                      <div className="text-xs text-amber-600 mt-0.5">{opt.desc}</div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
-            ) : (
-              <div /> /* fallback — should not reach */
-            )}
-          </div>
-
-          {/* RIGHT — item detail panel */}
-          <div className="flex flex-col" style={{
-            width: 240,
-            background: 'linear-gradient(160deg,#6b3f1f,#3b1f08)',
-            borderLeft: '2px solid #4a2c0a',
-          }}>
-            {selectedItem && activeTab === 'shop' ? (
-              <>
-                {/* Item name banner */}
-                <div style={{
-                  background: 'linear-gradient(to bottom,#8B5E3C,#5c3410)',
-                  borderBottom: '2px solid #4a2c0a',
-                  padding: '8px 10px',
-                  textAlign: 'center',
-                }}>
-                  <div style={{ fontSize: 40, lineHeight: 1 }}>{selectedItem.icon}</div>
-                  <div style={{
-                    color: '#ffd87a',
-                    fontFamily: 'Georgia,serif',
-                    fontWeight: 'bold',
-                    fontSize: 16,
-                    marginTop: 4,
-                    textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                  }}>
-                    {selectedItem.name}
-                  </div>
-                </div>
-
-                {/* Details parchment */}
-                <div className="flex-1 p-3" style={{ ...parchment, margin: 8, borderRadius: 6, overflow: 'auto' }}>
-                  <div style={{ marginBottom: 6 }}>
-                    <span style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold' }}>Price: </span>
-                    <span style={{ fontSize: 15, color: '#8B5E0A', fontWeight: 'bold' }}>{selectedItem.price.toLocaleString()} Gold</span>
-                  </div>
-                  {selectedItem.slot && (
-                    <div style={{ marginBottom: 6 }}>
-                      <span style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold' }}>Slot: </span>
-                      <span style={{ fontSize: 14, color: '#3b1f08', textTransform: 'capitalize' }}>{selectedItem.slot}</span>
-                    </div>
-                  )}
-                  <div style={{ borderTop: '1px solid #8B6914', paddingTop: 6, marginTop: 4 }}>
-                    <div style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Description</div>
-                    <div style={{ fontSize: 13, color: '#3b2010', lineHeight: 1.5 }}>
-                      {selectedItem.description}
-                    </div>
-                  </div>
-                  {selectedItem.elementBonuses && (
-                    <div style={{ borderTop: '1px solid #8B6914', paddingTop: 6, marginTop: 6 }}>
-                      <div style={{ fontSize: 13, color: '#5c3410', fontWeight: 'bold', marginBottom: 4 }}>Elements</div>
-                      {Object.entries(selectedItem.elementBonuses).map(([el, val]) => (
-                        <div key={el} style={{ fontSize: 13, color: '#3b2010', display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ textTransform: 'capitalize' }}>{el}</span>
-                          <span style={{ fontWeight: 'bold', color: '#8B5E0A' }}>+{val}%</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Buy button */}
-                <div className="p-3">
-                  <AqButton
-                    onClick={() => handlePurchase(selectedItem)}
-                    disabled={player.gold < selectedItem.price || isOwned(selectedItem)}
-                    className="w-full"
-                  >
-                    {isOwned(selectedItem)
-                      ? '✓ Already Owned'
-                      : player.gold >= selectedItem.price
-                        ? '💰 Buy Item'
-                        : '❌ Not Enough Gold'}
-                  </AqButton>
-                </div>
-              </>
-            ) : (
-              <div className="flex items-center justify-center flex-1" style={{ color: '#6b5030', fontSize: 12, padding: 16, textAlign: 'center' }}>
-                {activeTab === 'shop' ? 'Select an item to see details' : activeTab === 'inventory' ? 'Viewing your inventory' : 'Toggle options on the left'}
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
-        {/* Bottom bar — action buttons */}
-        <div className="flex items-center justify-between px-4 py-3" style={{
-          background: 'linear-gradient(to bottom,#3b1f08,#2a1508)',
-          borderTop: '2px solid #4a2c0a',
-          borderRadius: '0 0 4px 4px',
-        }}>
-          <div style={{ color: '#c4a87a', fontSize: 14, fontFamily: 'Georgia,serif' }}>
-            HP <span style={{ color: '#f87171', fontWeight: 'bold' }}>{player.hp}</span>
-            <span style={{ color: '#6b5030' }}> / {player.maxHp}</span>
-            {'  '}MP <span style={{ color: '#60a5fa', fontWeight: 'bold' }}>{player.mp}</span>
-            <span style={{ color: '#6b5030' }}> / {player.maxMp}</span>
-          </div>
-          <div className="flex gap-2">
-            <AqButton onClick={() => setActiveTab('shop')}>🛒 Buy Items</AqButton>
-            <AqButton onClick={() => setActiveTab('inventory')}>🎒 Inventory</AqButton>
-            <AqButton onClick={() => navigate('/town')}>🚪 Exit</AqButton>
-          </div>
+        {/* Return */}
+        <div className="mt-4 flex-shrink-0">
+          <button
+            onClick={() => navigate('/town')}
+            className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-8 rounded-lg border-4 border-gray-500 shadow-lg transform transition hover:scale-105 text-xl"
+          >
+            Return to Town
+          </button>
         </div>
       </div>
     </div>
@@ -800,4 +576,3 @@ const ShopScreen = () => {
 }
 
 export default ShopScreen
-
