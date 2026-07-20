@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { getTotalStat } from '../utils/playerStats'
+import goldenCity from '../assets/heavenly/golden-city.png'
+import heavenGate from '../assets/heavenly/heaven-gate.png'
 
 const makeTrainerEnemy = (playerLevel) => {
   const hp = 500 + playerLevel * 120
@@ -92,6 +94,42 @@ export default function StatTrainerScreen() {
         background: 'linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 30%, #fefce8 65%, #fff7ed 100%)',
       }}
     >
+      {/* Golden celestial city, glimpsed far in the distance */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '55%',
+        overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
+      }}>
+        <img
+          src={goldenCity}
+          alt=""
+          style={{
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top',
+            opacity: 0.4,
+            maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.9) 55%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.9) 55%, transparent 100%)',
+          }}
+        />
+      </div>
+
+      {/* Gates of Heaven — golden staircase guarded by angel statues */}
+      <div style={{
+        position: 'absolute', top: '2%', left: '50%', transform: 'translateX(-50%)',
+        width: 460, maxWidth: '80%', height: 320,
+        overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
+      }}>
+        <img
+          src={heavenGate}
+          alt=""
+          style={{
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top',
+            opacity: 0.85,
+            filter: 'drop-shadow(0 0 30px rgba(253,224,71,0.5))',
+            maskImage: 'radial-gradient(ellipse 70% 75% at 50% 35%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 75% at 50% 35%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+          }}
+        />
+      </div>
+
       {/* Heavenly light rays */}
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
         {[15, 35, 55, 70, 85].map((left, i) => (
@@ -125,6 +163,74 @@ export default function StatTrainerScreen() {
             background: '#fde68a',
             boxShadow: '0 0 8px 3px rgba(253,224,71,0.7)',
             animation: `portal-pulse ${1.5 + i * 0.4}s ease-in-out infinite`,
+          }} />
+        ))}
+      </div>
+
+      {/* Golden Gate — huge, immersive staircase filling the lower half, as if we're standing on it */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+        width: '135%', maxWidth: 1100, height: '68vh',
+        overflow: 'hidden', pointerEvents: 'none', zIndex: 0,
+      }}>
+        <img
+          src={heavenGate}
+          alt=""
+          style={{
+            width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%',
+            opacity: 0.95,
+            filter: 'drop-shadow(0 0 40px rgba(253,224,71,0.6))',
+            maskImage: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 12%, rgba(0,0,0,0.98) 30%, rgba(0,0,0,1) 100%)',
+            WebkitMaskImage: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.5) 12%, rgba(0,0,0,0.98) 30%, rgba(0,0,0,1) 100%)',
+          }}
+        />
+      </div>
+
+      {/* Heavenly floor glow, columns, and floating blessings near the bottom */}
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+        {/* Radiant marble floor glow */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: 140,
+          background: 'linear-gradient(180deg, transparent, rgba(255,251,235,0.55) 55%, rgba(253,230,138,0.35) 100%)',
+        }} />
+        {/* Marble floor columns */}
+        {[6, 92].map((left, i) => (
+          <div key={`col${i}`} style={{
+            position: 'absolute', bottom: 0, left: `${left}%`,
+            width: 24, height: 220,
+            background: 'linear-gradient(90deg, rgba(255,255,255,0.9), rgba(253,224,71,0.35), rgba(255,255,255,0.9))',
+            borderRadius: '4px 4px 0 0',
+            border: '1px solid rgba(253,224,71,0.5)',
+            boxShadow: '0 0 16px rgba(253,224,71,0.4)',
+          }} />
+        ))}
+        {/* Floating doves and feathers near the base */}
+        {[
+          { left: '14%', bottom: '18%', icon: '🕊️', size: 26, delay: 0 },
+          { left: '80%', bottom: '24%', icon: '🕊️', size: 22, delay: 0.4 },
+          { left: '30%', bottom: '10%', icon: '🪶', size: 20, delay: 0.8 },
+          { left: '64%', bottom: '8%', icon: '🪶', size: 18, delay: 1.2 },
+        ].map((d, i) => (
+          <div key={`bird${i}`} style={{
+            position: 'absolute', left: d.left, bottom: d.bottom,
+            fontSize: d.size,
+            filter: 'drop-shadow(0 0 8px rgba(253,224,71,0.6))',
+            animation: `portal-pulse ${2 + d.delay}s ease-in-out infinite`,
+          }}>
+            {d.icon}
+          </div>
+        ))}
+        {/* Golden sparkles near the base */}
+        {[8, 22, 38, 55, 70, 85, 95].map((left, i) => (
+          <div key={`bs${i}`} style={{
+            position: 'absolute',
+            bottom: `${4 + (i * 5) % 20}%`,
+            left: `${left}%`,
+            width: 6, height: 6,
+            borderRadius: '50%',
+            background: '#fde68a',
+            boxShadow: '0 0 8px 3px rgba(253,224,71,0.7)',
+            animation: `portal-pulse ${1.5 + i * 0.3}s ease-in-out infinite`,
           }} />
         ))}
       </div>

@@ -6,6 +6,8 @@ import { FLOOR_ENEMIES, scaleCastleEnemy } from './CastleScreen'
 import { ALL_SPELLS } from '../data/spells'
 import { ATTRIBUTE_ROWS, getCombatDefense, getTotalStat } from '../utils/playerStats'
 import { getScaledPetStats } from '../utils/petStats'
+import goldenCity from '../assets/heavenly/golden-city.png'
+import heavenGate from '../assets/heavenly/heaven-gate.png'
 
 // Full pet definitions mirrored from PetShopScreen so BattleScreen can read effect data
 const PET_DEFS = {
@@ -758,6 +760,36 @@ const BattleScreen = () => {
       {isHeavenlyBattle ? (
         /* ——— Heavenly battle background ——— */
         <div className="absolute inset-0" style={{ pointerEvents: 'none' }}>
+          {/* Golden celestial city, glimpsed far in the distance */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%', overflow: 'hidden' }}>
+            <img
+              src={goldenCity}
+              alt=""
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top',
+                opacity: 0.35,
+                maskImage: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.9) 50%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.9) 50%, transparent 100%)',
+              }}
+            />
+          </div>
+          {/* Gates of Heaven — golden staircase guarded by angel statues */}
+          <div style={{
+            position: 'absolute', top: '0%', left: '50%', transform: 'translateX(-50%)',
+            width: 380, maxWidth: '55%', height: 260, overflow: 'hidden',
+          }}>
+            <img
+              src={heavenGate}
+              alt=""
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top',
+                opacity: 0.8,
+                filter: 'drop-shadow(0 0 26px rgba(253,224,71,0.5))',
+                maskImage: 'radial-gradient(ellipse 70% 75% at 50% 30%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+                WebkitMaskImage: 'radial-gradient(ellipse 70% 75% at 50% 30%, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.6) 60%, transparent 100%)',
+              }}
+            />
+          </div>
           {/* Divine light rays */}
           {[12, 30, 50, 68, 86].map((left, i) => (
             <div key={i} style={{
@@ -819,6 +851,38 @@ const BattleScreen = () => {
               border: '1px solid rgba(253,224,71,0.5)',
               boxShadow: '0 0 16px rgba(253,224,71,0.3)',
             }} />
+          ))}
+          {/* Golden Gate — glimpsed at the base of the stairway, rising from below */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+            width: 420, maxWidth: '70%', height: 210,
+            overflow: 'hidden',
+          }}>
+            <img
+              src={heavenGate}
+              alt=""
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center bottom',
+                opacity: 0.5,
+                filter: 'drop-shadow(0 0 26px rgba(253,224,71,0.5))',
+                maskImage: 'radial-gradient(ellipse 75% 90% at 50% 100%, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 55%, transparent 100%)',
+                WebkitMaskImage: 'radial-gradient(ellipse 75% 90% at 50% 100%, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.5) 55%, transparent 100%)',
+              }}
+            />
+          </div>
+          {/* Floating doves near the base */}
+          {[
+            { left: '10%', bottom: '14%', icon: '🕊️', size: 22 },
+            { left: '88%', bottom: '20%', icon: '🕊️', size: 20 },
+          ].map((d, i) => (
+            <div key={`bird${i}`} style={{
+              position: 'absolute', left: d.left, bottom: d.bottom,
+              fontSize: d.size,
+              filter: 'drop-shadow(0 0 8px rgba(253,224,71,0.6))',
+              animation: `portal-pulse ${2 + i * 0.4}s ease-in-out infinite`,
+            }}>
+              {d.icon}
+            </div>
           ))}
         </div>
       ) : (
