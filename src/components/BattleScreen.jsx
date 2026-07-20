@@ -909,7 +909,34 @@ const BattleScreen = () => {
       <div className="relative z-10 w-full h-full flex items-center justify-center gap-20">
         {/* Player Character */}
         <div className={`flex flex-col items-center ${animating && selectedAction === 'attack' ? 'animate-bounce' : ''}`}>
-          <div className="text-8xl mb-4">⚔️</div>
+          {/* "The User" emblem — silhouette badge representing the player */}
+          <div className="flex flex-col items-center mb-3">
+            <div style={{
+              width: 132, height: 132, borderRadius: '50%',
+              background: 'radial-gradient(circle at 35% 30%, #fca5a5 0%, #dc2626 45%, #7f1d1d 100%)',
+              border: '6px solid #450a0a',
+              boxShadow: '0 10px 28px rgba(0,0,0,0.55), inset 0 0 24px rgba(0,0,0,0.35), 0 0 0 4px rgba(252,165,165,0.25)',
+              position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+            }}>
+              <div style={{ position: 'relative', width: 76, height: 76 }}>
+                {/* Head */}
+                <div style={{
+                  position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                  width: 34, height: 34, borderRadius: '50%',
+                  background: '#fef2f2', boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                }} />
+                {/* Shoulders / torso */}
+                <div style={{
+                  position: 'absolute', bottom: 0, left: '50%', transform: 'translateX(-50%)',
+                  width: 66, height: 42, borderRadius: '50% 50% 0 0',
+                  background: '#fef2f2', boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                }} />
+              </div>
+            </div>
+            <div className="mt-2 px-3 py-1 bg-red-950 border-2 border-red-600 rounded-full shadow-lg">
+              <span className="text-red-200 text-xs font-bold tracking-widest uppercase">⚔️ The User</span>
+            </div>
+          </div>
           <div className="bg-gradient-to-br from-red-800 to-red-900 border-4 border-red-700 rounded-lg px-4 py-2 shadow-2xl">
             {/* Hoverable name / portrait row */}
             <div
@@ -1180,8 +1207,37 @@ const BattleScreen = () => {
               }} />
             </div>
           ) : (
-            <div className="text-8xl mb-4">{enemy.icon || '👹'}</div>
+            /* "The Enemy" emblem — spiked badge framing this foe's own icon */
+            <div className="mb-1 flex flex-col items-center" style={{ position: 'relative' }}>
+              <div style={{
+                width: 132, height: 132, borderRadius: '50%',
+                background: 'radial-gradient(circle at 35% 30%, #c4b5fd 0%, #7c3aed 45%, #3b0764 100%)',
+                border: '6px solid #2e1065',
+                boxShadow: '0 10px 28px rgba(0,0,0,0.55), inset 0 0 24px rgba(0,0,0,0.4)',
+                position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 62,
+              }}>
+                {[0, 45, 90, 135, 180, 225, 270, 315].map(angle => (
+                  <div key={angle} style={{
+                    position: 'absolute', width: 0, height: 0,
+                    borderLeft: '7px solid transparent', borderRight: '7px solid transparent',
+                    borderBottom: '14px solid #2e1065',
+                    top: '50%', left: '50%',
+                    transform: `rotate(${angle}deg) translate(-7px, -76px)`,
+                  }} />
+                ))}
+                <span style={{ position: 'relative', zIndex: 1 }}>{enemy.icon || '👹'}</span>
+              </div>
+            </div>
           )}
+          <div className="mb-3 px-3 py-1 rounded-full shadow-lg" style={isHeavenlyBattle
+            ? { background: '#78350f', border: '2px solid #fbbf24' }
+            : { background: '#2e1065', border: '2px solid #a855f7' }
+          }>
+            <span className="text-xs font-bold tracking-widest uppercase" style={{ color: isHeavenlyBattle ? '#fde68a' : '#d8b4fe' }}>
+              💀 The Enemy
+            </span>
+          </div>
           <div
             className="border-4 rounded-lg px-4 py-2 shadow-2xl"
             style={isHeavenlyBattle
@@ -1454,7 +1510,7 @@ const BattleScreen = () => {
               { key: 'attack', label: 'Attack' },
               { key: 'spells', label: 'Spells' },
               { key: 'items',  label: 'Items'  },
-              { key: 'pets',   label: '🐾 Pets' },
+              { key: 'pets',   label: 'Pets' },
               { key: 'equipment', label: 'Equip' },
             ].map(({ key, label }) => (
               <button
