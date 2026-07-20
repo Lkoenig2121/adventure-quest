@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ALL_SPELLS } from '../data/spells'
+import { useArrowScroll } from '../utils/useArrowScroll'
 
 const elementColors = {
   Fire: 'bg-red-200 text-red-900 border-red-500',
@@ -18,6 +19,8 @@ const SpellShopScreen = () => {
   const navigate = useNavigate()
   const { player, purchaseSpell } = useGame()
   const [message, setMessage] = useState(null)
+  const scrollRef = useRef(null)
+  useArrowScroll(scrollRef)
 
   const isOwned = (spell) => (player.purchasedSpells || []).includes(spell.id)
 
@@ -80,7 +83,7 @@ const SpellShopScreen = () => {
         )}
 
         {/* Spell Grid */}
-        <div className="overflow-y-auto flex-1 min-h-0">
+        <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {ALL_SPELLS.map(spell => {
               const owned = isOwned(spell)

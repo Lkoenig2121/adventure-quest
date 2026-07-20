@@ -1,5 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
+import { useRef } from 'react'
+import { useArrowScroll } from '../utils/useArrowScroll'
 
 export const FLOOR_ENEMIES = {
   1:  { name: 'Iron Guardian',       icon:'🛡️',  hp: 600,  maxHp: 600,  mp: 150, maxMp: 150, level: 12, xpReward: 200,  goldReward: 80,  element: 'Light',    elementIcon: '✨', speed: 35, elementResistances: { fire: 100, water: 100, wind: 100, ice: 100, earth: 100, energy: 150, light: 50,  darkness: 200, physical: 80  } },
@@ -66,6 +68,8 @@ const CastleScreen = () => {
   const castleProgress = player.castleProgress || 0
   const nextFloor = Math.min(castleProgress + 1, 11)
   const carnaxUnlocked = castleProgress >= 10
+  const scrollRef = useRef(null)
+  useArrowScroll(scrollRef)
 
   const handleBattle = (floor) => {
     startBattle(scaleCastleEnemy(FLOOR_ENEMIES[floor], player.level, floor), 'castle', floor)
@@ -114,7 +118,7 @@ const CastleScreen = () => {
         </div>
 
         {/* Floor Grid */}
-        <div className="overflow-y-auto flex-1 min-h-0">
+        <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {regularFloors.map(([f, enemy]) => {
               const fn = parseInt(f)

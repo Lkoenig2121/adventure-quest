@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { getPetEffectLabel } from '../utils/petStats'
+import { useArrowScroll } from '../utils/useArrowScroll'
 
 const ALL_PETS = [
   {
@@ -105,6 +106,8 @@ const PetShopScreen = () => {
   const { player, purchasePet, setActivePet } = useGame()
   const [message, setMessage] = useState(null)
   const [selectedPet, setSelectedPet] = useState(null)
+  const scrollRef = useRef(null)
+  useArrowScroll(scrollRef)
 
   const ownedPets = player.pets || []
   const activePetId = player.activePetId
@@ -214,7 +217,7 @@ const PetShopScreen = () => {
         )}
 
         {/* Pet Grid */}
-        <div className="overflow-y-auto flex-1 min-h-0">
+        <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {ALL_PETS.map(pet => {
               const owned = isPetOwned(pet.id)

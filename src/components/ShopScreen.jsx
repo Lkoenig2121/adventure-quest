@@ -1,12 +1,15 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useArrowScroll } from '../utils/useArrowScroll'
 
 const ShopScreen = () => {
   const navigate = useNavigate()
   const { player, purchaseItem, sellItem } = useGame()
   const [purchaseMessage, setPurchaseMessage] = useState(null)
   const [activeTab, setActiveTab] = useState('shop')
+  const scrollRef = useRef(null)
+  useArrowScroll(scrollRef)
 
   const shopItems = [
     // Potions
@@ -371,7 +374,7 @@ const ShopScreen = () => {
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 min-h-0">
+        <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0">
           {activeTab === 'shop' && (
             <div className="p-1">
               {categories.map(cat => {

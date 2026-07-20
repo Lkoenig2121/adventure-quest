@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
+import { useArrowScroll } from '../utils/useArrowScroll'
 
 const REIGN_ITEMS = [
   {
@@ -50,6 +51,8 @@ export default function ReignShopScreen() {
   const navigate = useNavigate()
   const { player, purchaseItem } = useGame()
   const [message, setMessage] = useState(null)
+  const scrollRef = useRef(null)
+  useArrowScroll(scrollRef)
 
   const isOwned = (item) => {
     const inv = player.inventory || []
@@ -126,7 +129,7 @@ export default function ReignShopScreen() {
         )}
 
         {/* Item Grid */}
-        <div className="overflow-y-auto flex-1 min-h-0">
+        <div ref={scrollRef} className="overflow-y-auto flex-1 min-h-0">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-1">
             {REIGN_ITEMS.map(item => {
               const owned = isOwned(item)
