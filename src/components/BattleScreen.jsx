@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { FLOOR_ENEMIES, scaleCastleEnemy } from './CastleScreen'
 import { ALL_SPELLS } from '../data/spells'
 import { ATTRIBUTE_ROWS, getCombatDefense, getTotalStat } from '../utils/playerStats'
+import { getScaledPetStats } from '../utils/petStats'
 
 // Full pet definitions mirrored from PetShopScreen so BattleScreen can read effect data
 const PET_DEFS = {
@@ -58,25 +59,13 @@ const BattleScreen = () => {
     setBattleLog(prev => [...prev, message])
   }, [])
 
-  // Returns scaled pet stats based on player level
-  const getScaledPet = (petDef, lv) => {
-    if (!petDef) return {}
-    if (petDef.effect === 'heal') {
-      return { healAmount: petDef.effectAmount + lv * 2 }
-    }
-    return {
-      min: petDef.effectMin + lv * 4,
-      max: petDef.effectMax + lv * 6,
-    }
-  }
-
   const triggerPetEffect = useCallback(() => {
     const activePetId = player.activePetId
     if (!activePetId) return
     const petDef = PET_DEFS[activePetId]
     if (!petDef) return
     const lv = player.level || 1
-    const scaled = getScaledPet(petDef, lv)
+    const scaled = getScaledPetStats(petDef, lv)
     if (petDef.effect === 'attack') {
       const petDmg = Math.floor(Math.random() * (scaled.max - scaled.min + 1)) + scaled.min
       damageEnemy(petDmg)
@@ -1371,7 +1360,7 @@ const BattleScreen = () => {
             <div className="text-yellow-200 font-bold text-sm text-center leading-tight">{PET_DEFS[player.activePetId].name}</div>
             {(() => {
               const pd = PET_DEFS[player.activePetId]
-              const sc = getScaledPet(pd, player.level || 1)
+              const sc = getScaledPetStats(pd, player.level || 1)
               return (
                 <div className={`text-xs font-semibold text-center ${pd.effect === 'heal' ? 'text-green-300' : 'text-red-300'}`}>
                   {pd.effect === 'heal'
@@ -1695,7 +1684,7 @@ const BattleScreen = () => {
                           <div className="font-bold">{petDef.name}</div>
                           <div className="text-xs opacity-90">
                             {(() => {
-                              const sc = getScaledPet(petDef, player.level || 1)
+                              const sc = getScaledPetStats(petDef, player.level || 1)
                               return petDef.effect === 'heal'
                                 ? `💚 Heals ${sc.healAmount} HP per turn`
                                 : `⚔️ Deals ${sc.min}–${sc.max} dmg per turn`

@@ -1,17 +1,17 @@
 import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useState } from 'react'
+import { getPetEffectLabel } from '../utils/petStats'
 
 const ALL_PETS = [
   {
     id: 'nerfKitten',
     name: 'Nerf Kitten',
-    description: 'A fierce little kitten that attacks enemies with tiny but determined swipes.',
+    description: 'A fierce little kitten that attacks enemies with tiny but determined swipes. Its damage grows with your Level.',
     icon: '🐱',
     effect: 'attack',
     effectMin: 8,
     effectMax: 15,
-    effectLabel: 'Deals 8–15 damage per turn',
     price: 500,
     rarity: 'Rare',
     rarityColor: 'text-purple-700',
@@ -19,11 +19,10 @@ const ALL_PETS = [
   {
     id: 'moglinHealer',
     name: 'Moglin',
-    description: 'A friendly orange Moglin companion that heals you for 20 HP every turn.',
+    description: 'A friendly orange Moglin companion that heals you every turn. Its healing grows with your Level.',
     icon: '🧡',
     effect: 'heal',
     effectAmount: 20,
-    effectLabel: 'Heals you for 20 HP per turn',
     price: 400,
     rarity: 'Uncommon',
     rarityColor: 'text-green-700',
@@ -31,12 +30,11 @@ const ALL_PETS = [
   {
     id: 'babyDragon',
     name: 'Baby Dragon',
-    description: 'A tiny fire-breathing dragon hatchling that scorches enemies.',
+    description: 'A tiny fire-breathing dragon hatchling that scorches enemies. Its damage grows with your Level.',
     icon: '🐉',
     effect: 'attack',
     effectMin: 12,
     effectMax: 20,
-    effectLabel: 'Deals 12–20 fire damage per turn',
     price: 700,
     rarity: 'Rare',
     rarityColor: 'text-purple-700',
@@ -44,12 +42,11 @@ const ALL_PETS = [
   {
     id: 'zard',
     name: 'Zard',
-    description: 'A loyal reptilian companion from Lore. Nips at enemies every turn.',
+    description: 'A loyal reptilian companion from Lore. Nips at enemies every turn, dealing more damage as your Level increases.',
     icon: '🦎',
     effect: 'attack',
     effectMin: 5,
     effectMax: 12,
-    effectLabel: 'Deals 5–12 damage per turn',
     price: 250,
     rarity: 'Common',
     rarityColor: 'text-gray-600',
@@ -57,12 +54,11 @@ const ALL_PETS = [
   {
     id: 'shadowWolf',
     name: 'Shadow Wolf',
-    description: 'A spectral wolf that lunges at enemies with devastating force.',
+    description: 'A spectral wolf that lunges at enemies with devastating force. Its damage grows with your Level.',
     icon: '🐺',
     effect: 'attack',
     effectMin: 15,
     effectMax: 28,
-    effectLabel: 'Deals 15–28 damage per turn',
     price: 900,
     rarity: 'Epic',
     rarityColor: 'text-orange-600',
@@ -70,11 +66,10 @@ const ALL_PETS = [
   {
     id: 'healingSprite',
     name: 'Healing Sprite',
-    description: 'A tiny glowing fairy that restores some of your HP each turn.',
+    description: 'A tiny glowing fairy that restores some of your HP each turn. Its healing grows with your Level.',
     icon: '✨',
     effect: 'heal',
     effectAmount: 15,
-    effectLabel: 'Heals you for 15 HP per turn',
     price: 350,
     rarity: 'Uncommon',
     rarityColor: 'text-green-700',
@@ -82,12 +77,11 @@ const ALL_PETS = [
   {
     id: 'paxiaDragon',
     name: 'Paxia Dragon',
-    description: 'One of the legendary elemental dragon hatchlings of Paxia Isle.',
+    description: 'One of the legendary elemental dragon hatchlings of Paxia Isle. Its damage grows with your Level.',
     icon: '🐲',
     effect: 'attack',
     effectMin: 10,
     effectMax: 18,
-    effectLabel: 'Deals 10–18 elemental damage per turn',
     price: 600,
     rarity: 'Rare',
     rarityColor: 'text-purple-700',
@@ -95,12 +89,11 @@ const ALL_PETS = [
   {
     id: 'chibiLoco',
     name: 'Chibi Loco',
-    description: 'A chaotic little creature brimming with wild energy. Unpredictable but powerful.',
+    description: 'A chaotic little creature brimming with wild energy. Unpredictable but powerful, and its damage grows with your Level.',
     icon: '😈',
     effect: 'attack',
     effectMin: 6,
     effectMax: 22,
-    effectLabel: 'Deals 6–22 random damage per turn',
     price: 450,
     rarity: 'Uncommon',
     rarityColor: 'text-green-700',
@@ -248,7 +241,7 @@ const PetShopScreen = () => {
                       </div>
                       <p className="text-amber-700 text-sm mb-2">{pet.description}</p>
                       <div className={`text-sm font-bold mb-3 ${pet.effect === 'heal' ? 'text-green-700' : 'text-red-700'}`}>
-                        {pet.effect === 'heal' ? '💚' : '⚔️'} {pet.effectLabel}
+                        {pet.effect === 'heal' ? '💚' : '⚔️'} {getPetEffectLabel(pet, player.level)}
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         <div className="text-lg font-bold text-yellow-700">🪙 {pet.price} Gold</div>
