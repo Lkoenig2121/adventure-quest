@@ -3,6 +3,7 @@ import { useGame } from '../context/GameContext'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { ATTRIBUTE_ROWS, getCombatDefense, getTotalStat } from '../utils/playerStats'
+import { OPTIONS_LIST, useGameOptions } from '../utils/gameOptions'
 
 const TownScreen = ({ onLogout }) => {
   const navigate = useNavigate()
@@ -12,6 +13,8 @@ const TownScreen = ({ onLogout }) => {
   const [isHealing, setIsHealing] = useState(false)
   const [showStatsTooltip, setShowStatsTooltip] = useState(false)
   const [showTravelMap, setShowTravelMap] = useState(false)
+  const [showOptions, setShowOptions] = useState(false)
+  const { gameOptions, toggleOption } = useGameOptions()
   const portraitRef = useRef(null)
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 })
 
@@ -613,6 +616,42 @@ const TownScreen = ({ onLogout }) => {
 
         {/* Character Info Panel */}
         <div className="absolute bottom-4 left-4 bg-gradient-to-br from-amber-800 to-amber-900 border-4 border-amber-700 rounded-lg shadow-2xl p-4" style={{ zIndex: 10 }}>
+          {showOptions ? (
+            /* ── Options view — swapped in for the portrait/name/bars ── */
+            <div className="w-72">
+              <h3 className="text-yellow-200 font-bold text-lg mb-2">⚙️ Options</h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {OPTIONS_LIST.map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => toggleOption(opt.key)}
+                    className={`w-full text-left rounded-lg p-2 border-2 transition flex items-center gap-2 ${
+                      gameOptions[opt.key] ? 'bg-amber-950/60 border-green-500' : 'bg-amber-950/40 border-amber-700'
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 w-9 h-5 rounded-full border-2 relative transition-colors ${
+                      gameOptions[opt.key] ? 'bg-green-500 border-green-700' : 'bg-gray-600 border-gray-500'
+                    }`}>
+                      <div className={`absolute top-0.5 w-3.5 h-3.5 rounded-full bg-white shadow transition-all ${
+                        gameOptions[opt.key] ? 'left-[17px]' : 'left-0.5'
+                      }`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-xs font-bold ${gameOptions[opt.key] ? 'text-green-300' : 'text-yellow-200'}`}>{opt.label}</div>
+                      <div className="text-[10px] text-amber-300 truncate">{opt.desc}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setShowOptions(false)}
+                className="mt-2 w-full bg-amber-900 hover:bg-amber-950 text-yellow-200 font-bold py-1 px-3 rounded border-2 border-amber-700 text-xs"
+              >
+                User
+              </button>
+            </div>
+          ) : (
           <div className="flex items-start gap-4">
             {/* Character Portrait */}
             <div 
@@ -880,11 +919,15 @@ const TownScreen = ({ onLogout }) => {
                 </div>
               </div>
 
-              <button className="mt-2 w-full bg-amber-900 hover:bg-amber-950 text-yellow-200 font-bold py-1 px-3 rounded border-2 border-amber-700 text-xs">
+              <button
+                onClick={() => setShowOptions(true)}
+                className="mt-2 w-full bg-amber-900 hover:bg-amber-950 text-yellow-200 font-bold py-1 px-3 rounded border-2 border-amber-700 text-xs"
+              >
                 Options
               </button>
             </div>
           </div>
+          )}
         </div>
 
         {/* Game Title */}
@@ -1057,6 +1100,7 @@ const TownScreen = ({ onLogout }) => {
         </div>,
         document.body
       )}
+
     </div>
   )
 }

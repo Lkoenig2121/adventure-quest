@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useGame } from '../context/GameContext'
 import { useRef, useState } from 'react'
 import { useArrowScroll } from '../utils/useArrowScroll'
+import { OPTIONS_LIST, useGameOptions } from '../utils/gameOptions'
 
 const ShopScreen = () => {
   const navigate = useNavigate()
@@ -260,32 +261,7 @@ const ShopScreen = () => {
     '🧪 Potions', '⚔️ Weapons', '🪖 Helmets', '🛡️ Armor', '👢 Boots',
   ]))
 
-  const loadOptions = () => {
-    try { return JSON.parse(localStorage.getItem('gameOptions') || '{}') } catch { return {} }
-  }
-  const [gameOptions, setGameOptions] = useState(() => ({
-    showDamageNumbers: true,
-    fastBattleMode: false,
-    showElementTips: true,
-    confirmPurchases: false,
-    showStatChanges: true,
-    ...loadOptions(),
-  }))
-  const toggleOption = (key) => {
-    setGameOptions(prev => {
-      const next = { ...prev, [key]: !prev[key] }
-      localStorage.setItem('gameOptions', JSON.stringify(next))
-      return next
-    })
-  }
-
-  const optionsList = [
-    { key: 'showDamageNumbers', label: 'Show Damage Numbers',   desc: 'Display damage values during battle' },
-    { key: 'fastBattleMode',    label: 'Fast Battle Mode',       desc: 'Skip battle animations for quicker fights' },
-    { key: 'showElementTips',   label: 'Show Element Tips',      desc: 'Hint which elements are strong/weak' },
-    { key: 'confirmPurchases',  label: 'Confirm Purchases',      desc: 'Ask before spending gold in the shop' },
-    { key: 'showStatChanges',   label: 'Show Stat Changes',      desc: 'Highlight stat changes after level-up' },
-  ]
+  const { gameOptions, toggleOption } = useGameOptions()
 
   const toggleCategory = (label) => {
     setOpenCategories(prev => {
@@ -538,7 +514,7 @@ const ShopScreen = () => {
             <div className="p-1">
               <h3 className="text-lg font-bold text-amber-900 mb-3 uppercase tracking-wide">⚙️ Game Settings</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {optionsList.map(opt => (
+                {OPTIONS_LIST.map(opt => (
                   <button
                     key={opt.key}
                     onClick={() => toggleOption(opt.key)}
