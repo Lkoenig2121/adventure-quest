@@ -28,10 +28,11 @@ const getStrengthDamageBonus = (strength) =>
 const BattleScreen = () => {
   const navigate = useNavigate()
   const { player, enemy, endBattle, damagePlayer, damageEnemy, useMana, healPlayer, battleRewards, clearBattleRewards, battleSource, battleFloor, startBattle, resetPlayerStats, useHealthPotion, useManaPotion, equipItem, unequipItem, getElementModifiers, setActivePet } = useGame()
-  const [selectedAction, setSelectedAction] = useState('attack')
+  const [selectedAction, setSelectedAction] = useState(null)
   const [selectedSpell, setSelectedSpell] = useState(null)
   const equipScrollRef = useRef(null)
   useArrowScroll(equipScrollRef)
+  const [menuHidden, setMenuHidden] = useState(false)
 
   // Luck-based initiative — computed once at mount so log and turn are always in sync
   const [{ firstTurn: _firstTurn, initLog: _initLog }] = useState(() => {
@@ -160,6 +161,37 @@ const BattleScreen = () => {
       setPlayerTurn(false)
     }, 500)
   }, [playerTurn, animating, enemy, player, damageEnemy, triggerPetEffect, addLog])
+
+  // Unified Attack menu click — Obsidian Cloak opens Necro panel / Guardian Blade dragon chance
+  const triggerAttackClick = useCallback(() => {
+    const hasObsidianCloak = player.equipped?.armor?.name === 'Obsidian Cloak'
+    if (hasObsidianCloak) {
+      if (!playerTurn || animating) return
+      const isGB = player.equipped?.weapon?.name === 'Guardian Blade'
+      if (isGB && Math.random() < 0.25) {
+        setAnimating(true)
+        const EICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
+        const [weakEl] = Object.entries(enemy.elementResistances || {}).sort(([,a],[,b]) => b - a)[0] || ['physical', 100]
+        const weakIcon = EICONS[weakEl] || '⚔️'
+        const dragonBase = 1000 + Math.floor(Math.random() * 500)
+        const { finalDamage: dDmg, label: dLbl } = applyResistance(dragonBase, weakEl)
+        setTimeout(() => {
+          damageEnemy(dDmg)
+          addLog(`🐉 GUARDIAN DRAGON swoops in and strikes ${enemy.name} for ${dDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dLbl}`)
+          setDragonStrike({ element: weakEl, icon: weakIcon, damage: dDmg })
+          setTimeout(() => setDragonStrike(null), 1800)
+        }, 400)
+        triggerPetEffect()
+        setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 600)
+      } else {
+        setSelectedAction('attack')
+        setShowNecroPanel(true)
+      }
+    } else {
+      setSelectedAction('attack')
+      handleAttack()
+    }
+  }, [player, playerTurn, animating, enemy, damageEnemy, addLog, triggerPetEffect, handleAttack])
 
 
   const sourceNav = battleSource === 'castle' ? '/castle'
@@ -906,7 +938,7 @@ const BattleScreen = () => {
       )}
 
       {/* Battle Content */}
-      <div className="relative z-10 w-full h-full flex items-center justify-center gap-20">
+      <div className="relative z-10 w-full h-full flex items-center justify-between px-8 lg:px-16">
         {/* Player Character */}
         <div className={`flex flex-col items-center ${animating && selectedAction === 'attack' ? 'animate-bounce' : ''}`}>
           <div className="text-8xl mb-4">⚔️🛡️</div>
@@ -1440,479 +1472,416 @@ const BattleScreen = () => {
         </div>
       )}
 
-      {/* Action Menu */}
-      <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-        <div
-          className="border-4 rounded-lg shadow-2xl p-6"
-          style={isHeavenlyBattle
-            ? { background: 'rgba(255,255,255,0.88)', borderColor: '#fbbf24', backdropFilter: 'blur(8px)', boxShadow: '0 8px 32px rgba(251,191,36,0.3)' }
-            : { background: 'linear-gradient(135deg,#92400e,#78350f)', borderColor: '#d97706' }
-          }
-        >
-          <div className="grid grid-cols-5 gap-2 mb-4">
-            {[
-              { key: 'attack', label: 'Attack' },
-              { key: 'spells', label: 'Spells' },
-              { key: 'items',  label: 'Items'  },
-              { key: 'pets',   label: 'Pets' },
-              { key: 'equipment', label: 'Equip' },
-            ].map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => {
-                  if (key === 'attack') console.log('🎯 Attack tab clicked')
-                  setSelectedAction(key)
-                }}
-                className="px-4 py-3 font-bold rounded-lg border-2 transition"
-                style={selectedAction === key
-                  ? { background: isHeavenlyBattle ? '#fbbf24' : '#dc2626', borderColor: isHeavenlyBattle ? '#d97706' : '#991b1b', color: isHeavenlyBattle ? '#78350f' : '#fff' }
-                  : isHeavenlyBattle
-                    ? { background: 'rgba(253,224,71,0.15)', borderColor: '#fde68a', color: '#92400e' }
-                    : { background: '#78350f', borderColor: '#d97706', color: '#fde68a' }
-                }
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          {/* Flee button below tabs */}
-          <div className="mb-2">
-            <button
-              onClick={handleFlee}
-              className="w-full px-4 py-2 font-bold rounded-lg border-2 transition text-sm"
-              style={isHeavenlyBattle
-                ? { background: 'rgba(253,224,71,0.15)', borderColor: '#fde68a', color: '#92400e' }
-                : { background: '#78350f', borderColor: '#d97706', color: '#fde68a' }
-              }
+      {/* ── Adventure Quest style vertical attack pillar ── */}
+      {!menuHidden && (
+        <div className="absolute left-1/2 top-[46%] transform -translate-x-1/2 -translate-y-1/2 z-50 flex items-start gap-3">
+          {/* Detail panel (spells / items / equip / pets / necro) */}
+          {(selectedAction && selectedAction !== 'attack') || (selectedAction === 'attack' && showNecroPanel) ? (
+            <div
+              className="rounded-lg shadow-2xl p-3 border-4 max-h-[70vh] overflow-y-auto"
+              style={{
+                width: 280,
+                background: isHeavenlyBattle
+                  ? 'rgba(255,255,255,0.92)'
+                  : 'linear-gradient(180deg,#4b5563 0%,#374151 100%)',
+                borderColor: isHeavenlyBattle ? '#fbbf24' : '#9ca3af',
+              }}
             >
-              Flee
-            </button>
-          </div>
-
-          {/* Spell Selection */}
-          {selectedAction === 'spells' && (
-            <div className="space-y-2">
-              {spells.length === 0 ? (
-                <div className="text-center py-4 px-2">
-                  <div className="text-3xl mb-2">📚</div>
-                  <div className="text-yellow-200 text-sm font-bold">No spells learned yet!</div>
-                  <div className="text-yellow-400 text-xs mt-1 opacity-75">Visit the Intellect Building in town to purchase spells.</div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {spells.map((spell) => {
-                    const scaledValue = spell.type === 'attack'
-                      ? (spell.damage || 50) + Math.floor(totalIntellect * 2.0)
-                      : (spell.heal  || 50) + Math.floor(totalIntellect * 1.5)
-                    const valueLabel = spell.type === 'attack' ? `${scaledValue} dmg` : `+${scaledValue} HP`
-                    return (
-                      <button
-                        key={spell.name}
-                        onClick={() => handleSpell(spell)}
-                        disabled={!playerTurn || player.mp < spell.cost || animating}
-                        className="px-3 py-2 bg-amber-900 border-2 border-amber-700 text-yellow-200 font-bold rounded hover:bg-amber-800 disabled:opacity-50 disabled:cursor-not-allowed transition flex flex-col items-center gap-0.5"
-                      >
-                        <span>{spell.icon} {spell.name}</span>
-                        <span className="text-xs font-normal opacity-80">{spell.cost} MP · {valueLabel}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Attack Button / Necromancer Panel */}
-          {selectedAction === 'attack' && (() => {
-            const hasObsidianCloak = player.equipped?.armor?.name === 'Obsidian Cloak'
-
-            // ── Necromancer special moves panel (shown after clicking Attack) ──
-            if (hasObsidianCloak && showNecroPanel) {
-              const gridPos = (row, col) => ({ gridRow: row, gridColumn: col })
-              return (
-                <div style={{ pointerEvents: 'auto' }}>
-                  {/* Header */}
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <span className="text-2xl">💀</span>
-                    <div className="text-center">
-                      <div className="font-bold text-lg" style={{ color: '#dc2626', fontFamily: 'Georgia, serif', textShadow: '0 0 8px rgba(220,38,38,0.6)' }}>
-                        Necromancer
+              {/* Necromancer panel */}
+              {selectedAction === 'attack' && showNecroPanel && (() => {
+                const gridPos = (row, col) => ({ gridRow: row, gridColumn: col })
+                return (
+                  <div style={{ pointerEvents: 'auto' }}>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <span className="text-2xl">💀</span>
+                      <div className="text-center">
+                        <div className="font-bold text-lg" style={{ color: '#fca5a5', fontFamily: 'Georgia, serif' }}>Necromancer</div>
+                        <div className="text-xs text-gray-300">Choose your move</div>
                       </div>
-                      <div className="text-xs" style={{ color: '#9ca3af' }}>Choose your move</div>
+                      <span className="text-2xl">💀</span>
                     </div>
-                    <span className="text-2xl">💀</span>
-                  </div>
-
-                  {/* 3-column grid of moves */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, minWidth: 300 }}>
-                    {NECRO_MOVES.map(move => {
-                      const canUse = playerTurn && !animating && player.mp >= move.mpCost
-                      const isBig  = move.key === 'attack'
-                      return (
-                        <button
-                          key={move.key}
-                          onClick={() => handleNecroMove(move)}
-                          disabled={!canUse}
-                          style={{
-                            ...gridPos(move.row, move.col),
-                            background: isBig
-                              ? 'linear-gradient(135deg,#b91c1c,#7f1d1d)'
-                              : 'linear-gradient(135deg,#1c1c2e,#2d1b4e)',
-                            border: `2px solid ${isBig ? '#ef4444' : '#6d28d9'}`,
-                            borderRadius: 10,
-                            padding: isBig ? '10px 6px' : '8px 4px',
-                            color: '#fff',
-                            cursor: canUse ? 'pointer' : 'not-allowed',
-                            opacity: canUse ? 1 : 0.4,
-                            boxShadow: canUse ? `0 0 8px ${isBig ? 'rgba(239,68,68,0.5)' : 'rgba(109,40,217,0.5)'}` : 'none',
-                            transition: 'all 0.15s',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 2,
-                          }}
-                        >
-                          <span style={{ fontSize: isBig ? 20 : 16 }}>{move.icon}</span>
-                          <span style={{ fontSize: isBig ? 12 : 10, fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>
-                            {move.name}
-                          </span>
-                          <span style={{ fontSize: 9, color: move.mpCost === 0 ? '#86efac' : '#c4b5fd' }}>
-                            {move.mpCost === 0 ? 'Free' : `${move.mpCost} MP`}
-                          </span>
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Back + MP indicator */}
-                  <div className="flex items-center justify-between mt-2">
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+                      {NECRO_MOVES.map(move => {
+                        const canUse = playerTurn && !animating && player.mp >= move.mpCost
+                        const isBig = move.key === 'attack'
+                        return (
+                          <button
+                            key={move.key}
+                            onClick={() => handleNecroMove(move)}
+                            disabled={!canUse}
+                            style={{
+                              ...gridPos(move.row, move.col),
+                              background: isBig ? 'linear-gradient(135deg,#b91c1c,#7f1d1d)' : 'linear-gradient(135deg,#1c1c2e,#2d1b4e)',
+                              border: `2px solid ${isBig ? '#ef4444' : '#6d28d9'}`,
+                              borderRadius: 8, padding: isBig ? '10px 4px' : '8px 4px', color: '#fff',
+                              cursor: canUse ? 'pointer' : 'not-allowed', opacity: canUse ? 1 : 0.4,
+                              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                            }}
+                          >
+                            <span style={{ fontSize: isBig ? 18 : 14 }}>{move.icon}</span>
+                            <span style={{ fontSize: isBig ? 11 : 9, fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2 }}>{move.name}</span>
+                            <span style={{ fontSize: 8, color: move.mpCost === 0 ? '#86efac' : '#c4b5fd' }}>
+                              {move.mpCost === 0 ? 'Free' : `${move.mpCost} MP`}
+                            </span>
+                          </button>
+                        )
+                      })}
+                    </div>
                     <button
-                      onClick={() => setShowNecroPanel(false)}
-                      style={{ fontSize: 11, color: '#9ca3af', background: 'none', border: 'none', cursor: 'pointer' }}
+                      onClick={() => { setShowNecroPanel(false); setSelectedAction(null) }}
+                      className="mt-2 text-xs text-gray-300 hover:text-white"
                     >
                       ← Back
                     </button>
-                    <span className="text-xs" style={{ color: '#9ca3af' }}>
-                      MP: <span style={{ color: '#818cf8', fontWeight: 'bold' }}>{player.mp}</span> / {player.maxMp}
-                    </span>
                   </div>
-                </div>
-              )
-            }
+                )
+              })()}
 
-            // ── Attack button (opens Necromancer panel if cloak equipped, otherwise normal attack) ──
-            return (
-              <button
-                onClick={(e) => {
-                  e.preventDefault(); e.stopPropagation()
-                  if (hasObsidianCloak) {
-                    if (!playerTurn || animating) return
-                    const isGB = player.equipped?.weapon?.name === 'Guardian Blade'
-                    if (isGB && Math.random() < 0.25) {
-                      // Dragon replaces the attack — skip the Necro panel entirely
-                      setAnimating(true)
-                      const EICONS = { fire:'🔥', water:'💧', wind:'🌪️', ice:'❄️', earth:'🌍', energy:'⚡', light:'✨', darkness:'🌑', physical:'⚔️' }
-                      const [weakEl] = Object.entries(enemy.elementResistances || {}).sort(([,a],[,b]) => b - a)[0] || ['physical', 100]
-                      const weakIcon = EICONS[weakEl] || '⚔️'
-                      const dragonBase = 1000 + Math.floor(Math.random() * 500)
-                      const { finalDamage: dDmg, label: dLbl } = applyResistance(dragonBase, weakEl)
-                      setTimeout(() => {
-                        damageEnemy(dDmg)
-                        addLog(`🐉 GUARDIAN DRAGON swoops in and strikes ${enemy.name} for ${dDmg} ${weakIcon} ${weakEl.charAt(0).toUpperCase()+weakEl.slice(1)} damage! (their weakness!)${dLbl}`)
-                        setDragonStrike({ element: weakEl, icon: weakIcon, damage: dDmg })
-                        setTimeout(() => setDragonStrike(null), 1800)
-                      }, 400)
-                      triggerPetEffect()
-                      setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 600)
-                    } else {
-                      setShowNecroPanel(true)
-                    }
-                  } else {
-                    handleAttack()
-                  }
-                }}
-                disabled={!playerTurn || animating}
-                style={isHeavenlyBattle
-                  ? { pointerEvents: 'auto', zIndex: 1000, background: 'linear-gradient(135deg,#fbbf24,#d97706)', borderColor: '#b45309', color: '#fff', fontWeight: 'bold', textShadow: '0 1px 2px rgba(0,0,0,0.3)', boxShadow: '0 4px 16px rgba(251,191,36,0.5)' }
-                  : hasObsidianCloak
-                    ? { pointerEvents: 'auto', zIndex: 1000, background: 'linear-gradient(135deg,#7f1d1d,#1c1c2e)', borderColor: '#ef4444', color: '#fff', boxShadow: '0 0 12px rgba(220,38,38,0.4)' }
-                    : { pointerEvents: 'auto', zIndex: 1000 }
-                }
-                className={isHeavenlyBattle
-                  ? 'w-full font-bold py-4 px-6 rounded-lg border-2 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed'
-                  : 'w-full font-bold py-4 px-6 rounded-lg border-2 shadow-lg transform transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-white'
-                }
-              >
-                {hasObsidianCloak ? '💀 Attack' : `Attack! ${!playerTurn ? '(Not your turn)' : animating ? '(Animating)' : ''}`}
-              </button>
-            )
-          })()}
-
-          {/* Items */}
-          {selectedAction === 'items' && (
-            <div className="space-y-3">
-              {/* Health Potion */}
-              <button
-                onClick={() => {
-                  if (playerTurn && !animating && player.healthPotions > 0) {
-                    useHealthPotion()
-                    const healAmount = Math.floor(player.maxHp * 0.5)
-                    addLog(`${player.name} used a Health Potion and restored ${healAmount} HP!`)
-                    triggerPetEffect()
-                    setAnimating(true)
-                    setTimeout(() => {
-                      setAnimating(false)
-                      setPlayerTurn(false)
-                    }, 500)
-                  }
-                }}
-                disabled={!playerTurn || animating || player.healthPotions === 0}
-                className={`w-full px-4 py-3 font-bold rounded-lg border-2 transition ${
-                  !playerTurn || animating || player.healthPotions === 0
-                    ? 'bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-red-600 border-red-800 text-white hover:bg-red-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">🧪</span>
-                    <div className="text-left">
-                      <div className="font-bold">Health Potion</div>
-                      <div className="text-sm opacity-90">Restores 50% HP</div>
-                    </div>
-                  </div>
-                  <div className="text-xl font-bold">x{player.healthPotions || 0}</div>
-                </div>
-              </button>
-
-              {/* Mana Potion */}
-              <button
-                onClick={() => {
-                  if (playerTurn && !animating && player.manaPotions > 0) {
-                    useManaPotion()
-                    const restoreAmount = Math.floor(player.maxMp * 0.5)
-                    addLog(`${player.name} used a Mana Potion and restored ${restoreAmount} MP!`)
-                    triggerPetEffect()
-                    setAnimating(true)
-                    setTimeout(() => {
-                      setAnimating(false)
-                      setPlayerTurn(false)
-                    }, 500)
-                  }
-                }}
-                disabled={!playerTurn || animating || player.manaPotions === 0}
-                className={`w-full px-4 py-3 font-bold rounded-lg border-2 transition ${
-                  !playerTurn || animating || player.manaPotions === 0
-                    ? 'bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 border-blue-800 text-white hover:bg-blue-700'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-2xl">💧</span>
-                    <div className="text-left">
-                      <div className="font-bold">Mana Potion</div>
-                      <div className="text-sm opacity-90">Restores 50% MP</div>
-                    </div>
-                  </div>
-                  <div className="text-xl font-bold">x{player.manaPotions || 0}</div>
-                </div>
-              </button>
-
-            </div>
-          )}
-          
-          {/* Pets Tab */}
-          {selectedAction === 'pets' && (
-            <div className="space-y-3">
-              {(player.pets || []).length === 0 ? (
-                <div className="text-center py-6">
-                  <div className="text-5xl mb-3">🐾</div>
-                  <div className="text-yellow-200 font-bold text-lg mb-1">No pets yet!</div>
-                  <div className="text-yellow-300 text-sm">Visit the Pet Shop in town (left brown building) to buy a companion.</div>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {(player.pets || []).map(pet => {
-                    const petDef = PET_DEFS[pet.id] || pet
-                    const isActive = player.activePetId === pet.id
-                    return (
-                      <button
-                        key={pet.id}
-                        onClick={() => setActivePet(isActive ? null : pet.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border-2 font-bold transition ${
-                          isActive
-                            ? 'bg-green-600 border-green-800 text-white'
-                            : 'bg-amber-900 border-amber-700 text-yellow-200 hover:bg-amber-800'
-                        }`}
-                      >
-                        <span className="text-3xl">{petDef.icon}</span>
-                        <div className="text-left flex-1">
-                          <div className="font-bold">{petDef.name}</div>
-                          <div className="text-xs opacity-90">
-                            {(() => {
-                              const sc = getScaledPetStats(petDef, player.level || 1)
-                              return petDef.effect === 'heal'
-                                ? `💚 Heals ${sc.healAmount} HP per turn`
-                                : `⚔️ Deals ${sc.min}–${sc.max} dmg per turn`
-                            })()}
-                          </div>
-                        </div>
-                        {isActive && (
-                          <span className="bg-white text-green-700 text-xs font-bold px-2 py-1 rounded">ACTIVE</span>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Equipment Management */}
-          {selectedAction === 'equipment' && (
-            <div ref={equipScrollRef} className="space-y-3 overflow-y-auto" style={{ maxHeight: 320 }}>
-              <div className="bg-gradient-to-br from-purple-100 to-purple-50 border-4 border-purple-600 rounded-lg p-4 mb-3">
-                <h3 className="text-xl font-bold text-purple-900 mb-2">Current Element Modifiers</h3>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  <div className="flex justify-between">
-                    <span>Fire:</span>
-                    <span className="font-bold text-red-600">{Math.round(getElementModifiers().fire)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Water:</span>
-                    <span className="font-bold text-blue-600">{Math.round(getElementModifiers().water)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Wind:</span>
-                    <span className="font-bold text-green-600">{Math.round(getElementModifiers().wind)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Ice:</span>
-                    <span className="font-bold text-cyan-600">{Math.round(getElementModifiers().ice)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Earth:</span>
-                    <span className="font-bold text-amber-600">{Math.round(getElementModifiers().earth)}%</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Energy:</span>
-                    <span className="font-bold text-yellow-600">{Math.round(getElementModifiers().energy)}%</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Equipped Items */}
-              <div className="bg-gradient-to-br from-blue-100 to-blue-50 border-4 border-blue-600 rounded-lg p-3 mb-3">
-                <h3 className="text-lg font-bold text-blue-900 mb-2">Currently Equipped</h3>
+              {/* Spells detail */}
+              {selectedAction === 'spells' && (
                 <div className="space-y-2">
-                  {['weapon', 'helmet', 'armor', 'boots'].map(slot => {
-                    const equipped = player.equipped || {}
-                    const item = equipped[slot]
-                    const slotNames = { weapon: '⚔️ Weapon', helmet: '🪖 Helmet', armor: '🛡️ Armor', boots: '👢 Boots' }
-                    const primaryEl = item ? getItemPrimaryElement(item) : null
-
-                    return (
-                      <div key={slot} className="bg-white border-2 border-blue-400 rounded p-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <span className="text-lg flex-shrink-0">{slotNames[slot]}</span>
-                            {item ? (
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1 flex-wrap">
-                                  <span className="text-xl">{item.icon}</span>
-                                  <span className="font-bold text-blue-900 text-sm">{item.name}</span>
-                                </div>
-                                {primaryEl && (
-                                  <div className="flex items-center gap-1 mt-0.5">
-                                    <span className="text-xs text-gray-500">
-                                      {slot === 'weapon' ? 'Attacks with:' : 'Primary element:'}
-                                    </span>
-                                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                                      slot === 'weapon'
-                                        ? 'bg-orange-100 border border-orange-400 text-orange-700'
-                                        : 'bg-purple-100 border border-purple-400 text-purple-700'
-                                    }`}>
-                                      {primaryEl.icon} {primaryEl.name}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-gray-500 text-sm">Empty</span>
-                            )}
-                          </div>
-                          {item && (
-                            <button
-                              onClick={() => {
-                                unequipItem(slot)
-                                addLog(`Unequipped ${item.name}`)
-                              }}
-                              className="flex-shrink-0 px-2 py-1 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded"
-                            >
-                              Unequip
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {/* Inventory Items */}
-              <div className="bg-gradient-to-br from-green-100 to-green-50 border-4 border-green-600 rounded-lg p-3">
-                <h3 className="text-lg font-bold text-green-900 mb-2">Inventory</h3>
-                <div className="space-y-2">
-                  {(player.inventory || []).length > 0 ? (
-                    (player.inventory || []).map(item => {
-                      const primaryEl = getItemPrimaryElement(item)
+                  <div className="text-center font-bold text-white text-sm mb-2" style={{ textShadow: '1px 1px 2px #000' }}>Spells</div>
+                  {spells.length === 0 ? (
+                    <div className="text-center py-3 text-gray-200 text-xs">
+                      <div className="text-2xl mb-1">📚</div>
+                      No spells learned yet. Visit the Intellect Building in town.
+                    </div>
+                  ) : (
+                    spells.map((spell) => {
+                      const scaledValue = spell.type === 'attack'
+                        ? (spell.damage || 50) + Math.floor(totalIntellect * 2.0)
+                        : (spell.heal || 50) + Math.floor(totalIntellect * 1.5)
+                      const valueLabel = spell.type === 'attack' ? `${scaledValue} dmg` : `+${scaledValue} HP`
                       return (
-                        <div key={item.id} className="bg-white border-2 border-green-400 rounded p-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              <span className="text-xl flex-shrink-0">{item.icon}</span>
-                              <div className="min-w-0 flex-1">
-                                <div className="font-bold text-green-900 text-sm">{item.name}</div>
-                                <div className="text-xs text-gray-500">Slot: {item.slot}</div>
-                                {primaryEl && (
-                                  <div className="flex items-center gap-1 mt-0.5">
-                                    <span className="text-xs text-gray-500">
-                                      {item.slot === 'weapon' ? 'Attacks with:' : 'Primary element:'}
-                                    </span>
-                                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
-                                      item.slot === 'weapon'
-                                        ? 'bg-orange-100 border border-orange-400 text-orange-700'
-                                        : 'bg-purple-100 border border-purple-400 text-purple-700'
-                                    }`}>
-                                      {primaryEl.icon} {primaryEl.name}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => {
-                                equipItem(item.id, item.slot)
-                                addLog(`Equipped ${item.name}`)
-                              }}
-                              className="flex-shrink-0 px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded"
-                            >
-                              Equip
-                            </button>
+                        <button
+                          key={spell.name}
+                          onClick={() => handleSpell(spell)}
+                          disabled={!playerTurn || player.mp < spell.cost || animating}
+                          className="w-full px-2 py-2 bg-gray-600 border-2 border-gray-400 text-white font-bold rounded hover:bg-gray-500 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2 text-left"
+                        >
+                          <span className="text-xl">{spell.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm truncate">{spell.name}</div>
+                            <div className="text-[10px] opacity-80">{spell.cost} MP · {valueLabel}</div>
                           </div>
-                        </div>
+                        </button>
                       )
                     })
-                  ) : (
-                    <div className="text-center text-gray-500 py-2">No items in inventory</div>
                   )}
                 </div>
-              </div>
+              )}
+
+              {/* Items detail */}
+              {selectedAction === 'items' && (
+                <div className="space-y-2">
+                  <div className="text-center font-bold text-white text-sm mb-2" style={{ textShadow: '1px 1px 2px #000' }}>Items</div>
+                  <button
+                    onClick={() => {
+                      if (playerTurn && !animating && player.healthPotions > 0) {
+                        useHealthPotion()
+                        const healAmount = Math.floor(player.maxHp * 0.5)
+                        addLog(`${player.name} used a Health Potion and restored ${healAmount} HP!`)
+                        triggerPetEffect()
+                        setAnimating(true)
+                        setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 500)
+                      }
+                    }}
+                    disabled={!playerTurn || animating || player.healthPotions === 0}
+                    className={`w-full px-3 py-2 font-bold rounded border-2 transition ${
+                      !playerTurn || animating || player.healthPotions === 0
+                        ? 'bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-red-700 border-red-500 text-white hover:bg-red-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>🧪 Health Potion</span>
+                      <span>x{player.healthPotions || 0}</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (playerTurn && !animating && player.manaPotions > 0) {
+                        useManaPotion()
+                        const restoreAmount = Math.floor(player.maxMp * 0.5)
+                        addLog(`${player.name} used a Mana Potion and restored ${restoreAmount} MP!`)
+                        triggerPetEffect()
+                        setAnimating(true)
+                        setTimeout(() => { setAnimating(false); setPlayerTurn(false) }, 500)
+                      }
+                    }}
+                    disabled={!playerTurn || animating || player.manaPotions === 0}
+                    className={`w-full px-3 py-2 font-bold rounded border-2 transition ${
+                      !playerTurn || animating || player.manaPotions === 0
+                        ? 'bg-gray-700 border-gray-600 text-gray-400 cursor-not-allowed'
+                        : 'bg-blue-700 border-blue-500 text-white hover:bg-blue-600'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>💧 Mana Potion</span>
+                      <span>x{player.manaPotions || 0}</span>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {/* Pets detail */}
+              {selectedAction === 'pets' && (
+                <div className="space-y-2">
+                  <div className="text-center font-bold text-white text-sm mb-2" style={{ textShadow: '1px 1px 2px #000' }}>Pets</div>
+                  {(player.pets || []).length === 0 ? (
+                    <div className="text-center py-4 text-gray-200 text-xs">
+                      <div className="text-3xl mb-1">🐾</div>
+                      No pets yet. Visit the Pet Shop in town.
+                    </div>
+                  ) : (
+                    (player.pets || []).map(pet => {
+                      const petDef = PET_DEFS[pet.id] || pet
+                      const isActive = player.activePetId === pet.id
+                      return (
+                        <button
+                          key={pet.id}
+                          onClick={() => setActivePet(isActive ? null : pet.id)}
+                          className={`w-full flex items-center gap-2 px-2 py-2 rounded border-2 font-bold text-sm transition ${
+                            isActive
+                              ? 'bg-green-600 border-green-400 text-white'
+                              : 'bg-gray-600 border-gray-400 text-white hover:bg-gray-500'
+                          }`}
+                        >
+                          <span className="text-2xl">{petDef.icon}</span>
+                          <div className="text-left flex-1 min-w-0">
+                            <div className="truncate">{petDef.name}</div>
+                            <div className="text-[10px] opacity-80">
+                              {(() => {
+                                const sc = getScaledPetStats(petDef, player.level || 1)
+                                return petDef.effect === 'heal'
+                                  ? `💚 +${sc.healAmount} HP/turn`
+                                  : `⚔️ ${sc.min}–${sc.max} dmg`
+                              })()}
+                            </div>
+                          </div>
+                          {isActive && <span className="text-[9px] bg-white text-green-700 px-1 rounded">ON</span>}
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* Weapons / Shields / Armor equipment panels */}
+              {['weapon', 'shield', 'armor'].includes(selectedAction) && (() => {
+                const slotMap = { weapon: 'weapon', shield: 'helmet', armor: 'armor' }
+                const slot = slotMap[selectedAction]
+                const titles = { weapon: 'Weapons', shield: 'Shields', armor: 'Armor' }
+                const equipped = (player.equipped || {})[slot]
+                const invItems = (player.inventory || []).filter(i => i.slot === slot)
+                // Armor tab also shows boots
+                const extraSlot = selectedAction === 'armor' ? 'boots' : null
+                const extraEquipped = extraSlot ? (player.equipped || {})[extraSlot] : null
+                const extraInv = extraSlot ? (player.inventory || []).filter(i => i.slot === extraSlot) : []
+
+                const renderEquipRow = (item, itemSlot, isEquipped) => {
+                  const primaryEl = getItemPrimaryElement(item)
+                  return (
+                    <div key={item.id || itemSlot} className="bg-gray-700 border border-gray-500 rounded p-2 mb-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="text-lg">{item.icon}</span>
+                          <div className="min-w-0">
+                            <div className="text-white text-xs font-bold truncate">{item.name}</div>
+                            {primaryEl && (
+                              <div className="text-[10px] text-gray-300">{primaryEl.icon} {primaryEl.name}</div>
+                            )}
+                          </div>
+                        </div>
+                        {isEquipped ? (
+                          <button
+                            onClick={() => { unequipItem(itemSlot); addLog(`Unequipped ${item.name}`) }}
+                            className="text-[10px] px-2 py-1 bg-red-600 hover:bg-red-700 text-white font-bold rounded"
+                          >
+                            Unequip
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => { equipItem(item.id, item.slot); addLog(`Equipped ${item.name}`) }}
+                            className="text-[10px] px-2 py-1 bg-green-600 hover:bg-green-700 text-white font-bold rounded"
+                          >
+                            Equip
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div ref={equipScrollRef} className="space-y-2 overflow-y-auto" style={{ maxHeight: 360 }}>
+                    <div className="text-center font-bold text-white text-sm mb-1" style={{ textShadow: '1px 1px 2px #000' }}>
+                      {titles[selectedAction]}
+                    </div>
+                    <div className="text-[10px] text-gray-300 uppercase tracking-wide">Equipped</div>
+                    {equipped
+                      ? renderEquipRow(equipped, slot, true)
+                      : <div className="text-gray-400 text-xs py-1">Empty</div>}
+                    {extraSlot && (
+                      <>
+                        <div className="text-[10px] text-gray-300 uppercase tracking-wide mt-2">Boots</div>
+                        {extraEquipped
+                          ? renderEquipRow(extraEquipped, extraSlot, true)
+                          : <div className="text-gray-400 text-xs py-1">Empty</div>}
+                      </>
+                    )}
+                    <div className="text-[10px] text-gray-300 uppercase tracking-wide mt-2">Inventory</div>
+                    {[...invItems, ...extraInv].length > 0
+                      ? [...invItems, ...extraInv].map(item => renderEquipRow(item, item.slot, false))
+                      : <div className="text-gray-400 text-xs py-1">No items</div>}
+                  </div>
+                )
+              })()}
             </div>
-          )}
+          ) : null}
+
+          {/* Vertical pillar */}
+          <div
+            className="relative flex flex-col items-stretch select-none"
+            style={{
+              width: 148,
+              background: 'linear-gradient(180deg,#9ca3af 0%,#6b7280 8%,#4b5563 50%,#6b7280 92%,#9ca3af 100%)',
+              border: '3px solid #d1d5db',
+              borderRadius: 6,
+              boxShadow: '0 8px 28px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -2px 4px rgba(0,0,0,0.25)',
+            }}
+          >
+            {/* Ornate crown top */}
+            <div className="relative flex flex-col items-center pt-1 pb-0.5" style={{ background: 'linear-gradient(180deg,#e5e7eb,#9ca3af)', borderBottom: '2px solid #6b7280' }}>
+              <div className="flex items-end justify-center gap-1 leading-none" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>
+                <span style={{ fontSize: 14, transform: 'scaleX(-1)' }}>🐉</span>
+                <span style={{ fontSize: 18 }}>👑</span>
+                <span style={{ fontSize: 14 }}>🐉</span>
+              </div>
+              {/* Side wing banners */}
+              <div className="absolute left-0 top-1/2 -translate-x-full -translate-y-1/2 text-[10px] opacity-90" style={{ filter: 'drop-shadow(1px 1px 1px #000)' }}>🪽</div>
+              <div className="absolute right-0 top-1/2 translate-x-full -translate-y-1/2 text-[10px] opacity-90" style={{ filter: 'drop-shadow(1px 1px 1px #000)', transform: 'translateX(100%) translateY(-50%) scaleX(-1)' }}>🪽</div>
+            </div>
+
+            {[
+              { key: 'attack', label: 'Attack', action: 'attack' },
+              { key: 'ally', label: 'Ally Assist', disabled: true },
+              { key: 'spells', label: 'Spells', action: 'spells', hasSlots: true },
+              { key: 'skills', label: 'Skills', disabled: true },
+              { key: 'items', label: 'Items', action: 'items' },
+              { key: 'weapon', label: 'Weapons', action: 'weapon' },
+              { key: 'shield', label: 'Shields', action: 'shield' },
+              { key: 'armor', label: 'Armor', action: 'armor' },
+              { key: 'pets', label: 'Pets', action: 'pets' },
+              { key: 'flee', label: 'Flee', action: 'flee' },
+            ].map((item) => {
+              const isActive = selectedAction === item.action && !item.disabled
+              const baseBtn = {
+                width: '100%',
+                padding: '7px 6px',
+                fontSize: 13,
+                fontWeight: 700,
+                fontFamily: 'Arial, Helvetica, sans-serif',
+                color: item.disabled ? '#9ca3af' : '#f9fafb',
+                textShadow: item.disabled ? 'none' : '1px 1px 2px rgba(0,0,0,0.8)',
+                letterSpacing: '0.02em',
+                background: isActive
+                  ? 'linear-gradient(180deg,#60a5fa 0%,#2563eb 50%,#1d4ed8 100%)'
+                  : item.disabled
+                    ? 'linear-gradient(180deg,#6b7280,#4b5563)'
+                    : 'linear-gradient(180deg,#9ca3af 0%,#6b7280 45%,#4b5563 100%)',
+                borderTop: '1px solid rgba(255,255,255,0.35)',
+                borderBottom: '1px solid rgba(0,0,0,0.45)',
+                borderLeft: 'none',
+                borderRight: 'none',
+                cursor: item.disabled ? 'not-allowed' : 'pointer',
+                opacity: item.disabled ? 0.55 : 1,
+                boxShadow: isActive ? 'inset 0 0 8px rgba(255,255,255,0.25)' : 'inset 0 1px 0 rgba(255,255,255,0.2)',
+              }
+
+              return (
+                <div key={item.key}>
+                  <button
+                    type="button"
+                    disabled={item.disabled || (item.action === 'attack' && (!playerTurn || animating))}
+                    onClick={() => {
+                      if (item.disabled) return
+                      if (item.action === 'flee') {
+                        handleFlee()
+                        return
+                      }
+                      if (item.action === 'attack') {
+                        triggerAttackClick()
+                        return
+                      }
+                      setShowNecroPanel(false)
+                      setSelectedAction(prev => prev === item.action ? null : item.action)
+                    }}
+                    style={baseBtn}
+                    className="hover:brightness-110 active:brightness-90 transition"
+                  >
+                    {item.label}
+                  </button>
+
+                  {/* Spell element icon slots — shown under Spells like classic AQ */}
+                  {item.hasSlots && (
+                    <div
+                      className="flex flex-wrap gap-0.5 justify-center px-1 py-1"
+                      style={{
+                        background: 'linear-gradient(180deg,#6b7280,#4b5563)',
+                        borderBottom: '1px solid rgba(0,0,0,0.4)',
+                      }}
+                    >
+                      {Array.from({ length: 9 }).map((_, i) => {
+                        const spell = spells[i]
+                        return (
+                          <button
+                            key={i}
+                            type="button"
+                            disabled={!spell || !playerTurn || animating || (spell && player.mp < spell.cost)}
+                            onClick={() => {
+                              if (!spell) return
+                              setSelectedAction('spells')
+                              handleSpell(spell)
+                            }}
+                            title={spell ? `${spell.name} (${spell.cost} MP)` : 'Empty'}
+                            style={{
+                              width: 22, height: 22,
+                              fontSize: 12,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              background: spell ? 'linear-gradient(180deg,#e5e7eb,#9ca3af)' : '#374151',
+                              border: '1px solid #1f2937',
+                              borderRadius: 2,
+                              cursor: spell ? 'pointer' : 'default',
+                              opacity: spell ? 1 : 0.5,
+                              padding: 0,
+                            }}
+                          >
+                            {spell ? spell.icon : ''}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {/* Pillar base ornament */}
+            <div style={{ height: 8, background: 'linear-gradient(180deg,#d1d5db,#6b7280,#374151)', borderTop: '1px solid #e5e7eb' }} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Hide Menu toggle — AQ style */}
+      <button
+        type="button"
+        onClick={() => setMenuHidden(h => !h)}
+        className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-50 px-3 py-1 text-xs font-bold text-white rounded border border-gray-500"
+        style={{ background: 'linear-gradient(180deg,#4b5563,#1f2937)', textShadow: '1px 1px 1px #000' }}
+      >
+        {menuHidden ? 'Show Menu' : 'Hide Menu'}
+      </button>
 
       {/* Battle Log - last 4 lines only */}
       {battleLog.length > 0 && (
